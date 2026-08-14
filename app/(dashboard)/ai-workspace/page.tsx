@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   ArrowUp,
   CheckCircle2,
@@ -27,11 +28,6 @@ const suggestedPrompts = [
   'Which deals are at risk this month?',
   'Generate proposal for 3BHK in Bandra',
 ]
-
-// TODO: replace with a real call to the AI Gateway / agent endpoint once the copilot backend is wired up.
-async function callAiCopilot(message: string) {
-  console.log('[v0] callAiCopilot stub invoked with message:', message)
-}
 
 interface PlannerStat {
   label: string
@@ -94,11 +90,16 @@ const capabilities: Capability[] = [
 ]
 
 export default function AiWorkspacePage() {
+  const router = useRouter()
   const [message, setMessage] = useState('')
 
+  function goToCopilot(text: string) {
+    if (!text.trim()) return
+    router.push(`/ai-workspace/copilot?q=${encodeURIComponent(text.trim())}`)
+  }
+
   function handleSend() {
-    if (!message.trim()) return
-    callAiCopilot(message.trim())
+    goToCopilot(message)
     setMessage('')
   }
 
@@ -169,7 +170,7 @@ export default function AiWorkspacePage() {
               <button
                 key={prompt}
                 type="button"
-                onClick={() => callAiCopilot(prompt)}
+                onClick={() => goToCopilot(prompt)}
                 className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[12px] font-medium text-white/90 transition-colors hover:bg-white/20"
               >
                 {prompt}

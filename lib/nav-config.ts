@@ -100,9 +100,24 @@ export const adminNav: NavSection[] = [
   },
 ]
 
+function withoutGroups(sections: NavSection[], labelsToRemove: string[]): NavSection[] {
+  return sections
+    .map((section) => ({
+      ...section,
+      groups: section.groups.filter((group) => !labelsToRemove.includes(group.label)),
+    }))
+    .filter((section) => section.groups.length > 0)
+}
+
+// Manager: no Automation (workflow rules are an org-level admin concern).
+export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation'])
+
+// User: no Automation, no Analytics (individual contributors don't see org-wide reporting).
+export const userNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Analytics'])
+
 export const navByRole: Record<Role, NavSection[]> = {
   super_admin: adminNav,
   admin: adminNav,
-  manager: adminNav,
-  user: adminNav,
+  manager: managerNav,
+  user: userNav,
 }

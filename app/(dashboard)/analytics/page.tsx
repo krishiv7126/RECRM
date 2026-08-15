@@ -39,6 +39,7 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { currentUser } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
+import { useRole } from '@/lib/role-context'
 
 // --- Mock data (self-contained to this page) ---------------------------------
 
@@ -329,6 +330,7 @@ function Delta({ value, direction }: { value: number; direction: 'up' | 'down' }
 }
 
 export default function AnalyticsPage() {
+  const role = useRole()
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -587,7 +589,7 @@ export default function AnalyticsPage() {
 
       {/* Staff Performance — Admin-only */}
       {/* TODO: hide this section for Manager/User roles */}
-      {currentUser.role === 'admin' && (
+      {(role === 'admin' || role === 'super_admin') && (
         <Card className="rounded-2xl border-border shadow-sm">
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>

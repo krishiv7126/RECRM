@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { NavSection } from '@/lib/nav-config'
 import { currentUser, organization } from '@/lib/mock-data'
+import { useRole } from '@/lib/role-context'
 
 function initials(name: string) {
   return name
@@ -35,6 +36,7 @@ export function DashboardSidebar({
   collapsed: boolean
 }) {
   const pathname = usePathname()
+  const role = useRole()
 
   return (
     <aside
@@ -107,7 +109,7 @@ export function DashboardSidebar({
                   variant="secondary"
                   className="h-4.5 rounded-full bg-primary/15 px-1.5 text-[10px] text-primary"
                 >
-                  {roleLabels[currentUser.role]}
+                  {roleLabels[role]}
                 </Badge>
                 <span className="truncate">{organization.city} HQ</span>
               </span>

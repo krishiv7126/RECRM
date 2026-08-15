@@ -30,6 +30,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { currentUser, organization } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
+import { useRole } from '@/lib/role-context'
 import type { UserRole } from '@/lib/types'
 
 type TabKey = 'profile' | 'organization' | 'team' | 'integrations' | 'notifications' | 'danger'
@@ -117,8 +118,18 @@ function exportAllData() {
   console.log('[v0] exportAllData called')
 }
 
+function canAccessTab(tab: TabKey, role: UserRole) {
+  const isAdmin = role === 'admin' || role === 'super_admin'
+  // Team Management is the one adminOnly tab managers can still reach — scoped
+  // to their own reports once this page is wired to real data. Everything else
+  // adminOnly (organization, integrations, danger) stays strictly admin.
+  if (tab === 'team') return isAdmin || role === 'manager'
+  return isAdmin || !TABS.find((t) => t.key === tab)?.adminOnly
+}
+
 export default function SettingsPage() {
-  const isAdmin = currentUser.role === 'admin' || currentUser.role === 'super_admin'
+  const role = useRole()
+  const isAdmin = role === 'admin' || role === 'super_admin'
   const [activeTab, setActiveTab] = useState<TabKey>('profile')
 
   const [fullName, setFullName] = useState(currentUser.full_name)
@@ -154,7 +165,7 @@ export default function SettingsPage() {
           {/* Left tab nav */}
           <nav className="flex shrink-0 flex-col gap-1 lg:w-[220px]">
             {visibleTabs.map((tab) => {
-              const locked = tab.adminOnly && !isAdmin
+              const locked = !canAccessTab(tab.key, role)
               const isActive = activeTab === tab.key
               const button = (
                 <button
@@ -234,7 +245,7 @@ export default function SettingsPage() {
                         <span className="text-[12px] font-medium text-foreground/80">Role</span>
                         <div>
                           <Badge variant="outline" className="rounded-full border-0 bg-primary/10 capitalize text-primary">
-                            {currentUser.role.replace('_', ' ')}
+                            {role.replace('_', ' ')}
                           </Badge>
                         </div>
                       </div>
@@ -247,39 +258,6 @@ export default function SettingsPage() {
                     <div>
                       <Button size="sm" className="bg-foreground text-background hover:bg-foreground/85">
                         Save Changes
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="rounded-2xl border-border shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="font-heading text-base font-bold">Change Password</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-4">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <div className="flex flex-col gap-1.5">
-                        <label htmlFor="current_password" className="text-[12px] font-medium text-foreground/80">
-                          Current password
-                        </label>
-                        <Input id="current_password" type="password" placeholder="••••••••" />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label htmlFor="new_password" className="text-[12px] font-medium text-foreground/80">
-                          New password
-                        </label>
-                        <Input id="new_password" type="password" placeholder="••••••••" />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label htmlFor="confirm_password" className="text-[12px] font-medium text-foreground/80">
-                          Confirm password
-                        </label>
-                        <Input id="confirm_password" type="password" placeholder="••••••••" />
-                      </div>
-                    </div>
-                    <div>
-                      <Button variant="outline" size="sm">
-                        Update Password
                       </Button>
                     </div>
                   </CardContent>
@@ -316,7 +294,7 @@ export default function SettingsPage() {
               </Card>
             )}
 
-            {activeTab === 'team' && isAdmin && (
+            {activeTab === 'team' && canAccessTab('team', role) && (
               <Card className="rounded-2xl border-border shadow-sm">
                 <CardHeader className="flex flex-row items-center justify-between gap-4">
                   <CardTitle className="font-heading text-base font-bold">Team Management</CardTitle>

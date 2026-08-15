@@ -1,3 +1,6 @@
+'use client'
+
+import Link from 'next/link'
 import { ArrowRight, Flame, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCr } from '@/lib/dashboard-metrics'
@@ -58,11 +61,16 @@ export function AiDailyBrief({ topHotLead, biggestActiveDeal, hotLeadsCount, act
         </p>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <Button className="rounded-full bg-white text-foreground hover:bg-white/90">
+          <Button className="rounded-full bg-white text-foreground hover:bg-white/90" render={<Link href="/ai-workspace" />} nativeButton={false}>
             Open AI Planner
             <ArrowRight data-icon="inline-end" />
           </Button>
-          <Button variant="ghost" className="rounded-full text-white hover:bg-white/15 hover:text-white">
+          <Button
+            variant="ghost"
+            className="rounded-full text-white hover:bg-white/15 hover:text-white"
+            render={<Link href="/leads" />}
+            nativeButton={false}
+          >
             See hot leads
             <ArrowRight data-icon="inline-end" />
           </Button>

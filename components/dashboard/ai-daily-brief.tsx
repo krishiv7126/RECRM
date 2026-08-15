@@ -1,14 +1,15 @@
 import { ArrowRight, Flame, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCr } from '@/lib/dashboard-metrics'
-import { biggestActiveDeal, hotLeads, topHotLead } from '@/lib/dashboard-metrics'
-import { deals } from '@/lib/mock-data'
 
-const activePipelineValue = deals
-  .filter((d) => d.stage !== 'booked' && d.stage !== 'lost')
-  .reduce((sum, d) => sum + d.value, 0)
+interface Props {
+  topHotLead: { full_name: string; ai_score: number | null } | null
+  biggestActiveDeal: { title: string } | null
+  hotLeadsCount: number
+  activePipelineValue: number
+}
 
-export function AiDailyBrief() {
+export function AiDailyBrief({ topHotLead, biggestActiveDeal, hotLeadsCount, activePipelineValue }: Props) {
   return (
     <div className="relative isolate overflow-hidden rounded-2xl bg-gradient-to-br from-foreground via-foreground to-primary p-6 sm:p-7">
       <div
@@ -35,14 +36,25 @@ export function AiDailyBrief() {
         </div>
 
         <p className="max-w-2xl text-[15px] leading-relaxed text-white/90 text-pretty sm:text-base">
-          <span className="inline-flex items-center gap-1 font-semibold text-white">
-            <Flame className="size-4 text-orange-300" />
-            {topHotLead?.full_name}
-          </span>{' '}
-          is scoring {topHotLead?.ai_score}/100 and ready for a proposal, while the{' '}
-          <span className="font-semibold text-white">{biggestActiveDeal?.title}</span> deal remains
-          your largest live opportunity. Across the portfolio, {hotLeads.length} hot leads are
-          driving {formatCr(activePipelineValue)} in active pipeline this week.
+          {topHotLead ? (
+            <>
+              <span className="inline-flex items-center gap-1 font-semibold text-white">
+                <Flame className="size-4 text-orange-300" />
+                {topHotLead.full_name}
+              </span>{' '}
+              is scoring {topHotLead.ai_score ?? '—'}/100 and ready for a proposal
+              {biggestActiveDeal && (
+                <>
+                  , while the <span className="font-semibold text-white">{biggestActiveDeal.title}</span> deal
+                  remains your largest live opportunity
+                </>
+              )}
+              . Across the portfolio, {hotLeadsCount} hot lead{hotLeadsCount === 1 ? '' : 's'} are driving{' '}
+              {formatCr(activePipelineValue)} in active pipeline this week.
+            </>
+          ) : (
+            <>No hot leads yet — {formatCr(activePipelineValue)} is currently active across your pipeline.</>
+          )}
         </p>
 
         <div className="flex flex-wrap items-center gap-2.5">

@@ -31,9 +31,13 @@ const roleLabels: Record<string, string> = {
 export function DashboardSidebar({
   sections,
   collapsed,
+  mobileOpen,
+  onCloseMobile,
 }: {
   sections: NavSection[]
   collapsed: boolean
+  mobileOpen: boolean
+  onCloseMobile: () => void
 }) {
   const pathname = usePathname()
   const role = useRole()
@@ -41,8 +45,10 @@ export function DashboardSidebar({
   return (
     <aside
       className={cn(
-        'sticky top-0 flex h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200',
-        collapsed ? 'w-[76px]' : 'w-62',
+        'fixed inset-y-0 left-0 z-40 flex h-screen w-62 shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-200',
+        'md:sticky md:top-0 md:translate-x-0 md:transition-[width]',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        collapsed ? 'md:w-[76px]' : 'md:w-62',
       )}
     >
       <div className="flex h-16 shrink-0 items-center gap-3 px-4">

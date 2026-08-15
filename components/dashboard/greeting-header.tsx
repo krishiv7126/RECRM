@@ -1,6 +1,5 @@
 import { Download, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { currentUser } from '@/lib/mock-data'
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -9,8 +8,8 @@ function getGreeting() {
   return 'Good evening'
 }
 
-export function GreetingHeader() {
-  const firstName = currentUser.full_name.split(' ')[0]
+export function GreetingHeader({ fullName }: { fullName: string }) {
+  const firstName = fullName.split(' ')[0] || fullName
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

@@ -50,6 +50,7 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
   const searchBoxRef = useRef<HTMLDivElement>(null)
 
   const [notifications, setNotifications] = useState<NotificationRow[]>([])
+  const [meId, setMeId] = useState<string | null>(null)
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
 
       const { data: me } = await supabase.from('platform_users').select('id').eq('auth_user_id', user.id).single()
       if (!me || cancelled) return
+      setMeId(me.id)
 
       const { data } = await supabase
         .from('notifications')
@@ -126,6 +128,26 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
   function handleNotificationClick(notification: NotificationRow) {
     if (!notification.is_read) markAsRead(notification.id)
     if (notification.type === 'approval_pending') router.push('/approvals')
+  }
+
+  async function markAllAsRead() {
+    if (!meId || unreadCount === 0) return
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
+    const supabase = createClient()
+    await supabase.from('notifications').update({ is_read: true }).eq('recipient_id', meId).eq('is_read', false)
+  }
+
+  async function clearAll() {
+    if (!meId || notifications.length === 0) return
+    if (!window.confirm('Clear all notifications? This cannot be undone.')) return
+    const prev = notifications
+    setNotifications([])
+    const supabase = createClient()
+    const { error } = await supabase.from('notifications').delete().eq('recipient_id', meId)
+    if (error) {
+      setNotifications(prev)
+      window.alert(error.message)
+    }
   }
 
   function goToResult(result: SearchResult) {
@@ -206,7 +228,28 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
           />
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={unreadCount === 0}
+                    onClick={markAllAsRead}
+                    className="text-[11px] font-medium text-primary hover:underline disabled:pointer-events-none disabled:text-muted-foreground disabled:no-underline"
+                  >
+                    Mark all read
+                  </button>
+                  <span className="text-[11px] text-muted-foreground">·</span>
+                  <button
+                    type="button"
+                    disabled={notifications.length === 0}
+                    onClick={clearAll}
+                    className="text-[11px] font-medium text-destructive hover:underline disabled:pointer-events-none disabled:text-muted-foreground disabled:no-underline"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              </div>
               <DropdownMenuSeparator />
               {notifications.length === 0 ? (
                 <p className="px-2 py-3 text-[13px] text-muted-foreground">No notifications yet.</p>

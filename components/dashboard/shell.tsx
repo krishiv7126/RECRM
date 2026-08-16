@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardTopbar } from '@/components/dashboard/topbar'
+import { SessionWatchdog } from '@/components/dashboard/session-watchdog'
 import { navByRole, type Role } from '@/lib/nav-config'
 
 export function DashboardShell({
@@ -25,6 +26,7 @@ export function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-background">
+      <SessionWatchdog />
       {mobileOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/40 md:hidden"

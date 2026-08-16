@@ -357,16 +357,19 @@ export type Database = {
         Row: {
           conversation_id: string
           joined_at: string
+          last_read_at: string | null
           platform_user_id: string
         }
         Insert: {
           conversation_id: string
           joined_at?: string
+          last_read_at?: string | null
           platform_user_id: string
         }
         Update: {
           conversation_id?: string
           joined_at?: string
+          last_read_at?: string | null
           platform_user_id?: string
         }
         Relationships: [

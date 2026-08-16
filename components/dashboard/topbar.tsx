@@ -123,6 +123,11 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
     await supabase.from('notifications').update({ is_read: true }).eq('id', id)
   }
 
+  function handleNotificationClick(notification: NotificationRow) {
+    if (!notification.is_read) markAsRead(notification.id)
+    if (notification.type === 'approval_pending') router.push('/approvals')
+  }
+
   function goToResult(result: SearchResult) {
     setShowResults(false)
     setQuery('')
@@ -210,7 +215,7 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
                   <DropdownMenuItem
                     key={n.id}
                     className="flex flex-col items-start gap-0.5 py-2"
-                    onClick={() => !n.is_read && markAsRead(n.id)}
+                    onClick={() => handleNotificationClick(n)}
                   >
                     <span className="flex w-full items-center gap-2">
                       <span className={cn('size-1.5 shrink-0 rounded-full', n.is_read ? 'bg-transparent' : 'bg-primary')} />

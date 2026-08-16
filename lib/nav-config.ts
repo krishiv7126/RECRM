@@ -19,6 +19,7 @@ import {
   BarChart3,
   Inbox,
   Settings,
+  ShieldCheck,
 } from 'lucide-react'
 
 export interface NavLeaf {
@@ -95,6 +96,7 @@ export const adminNav: NavSection[] = [
     label: 'System',
     groups: [
       { label: 'Inbox', icon: Inbox, href: '/inbox' },
+      { label: 'Approvals', icon: ShieldCheck, href: '/approvals' },
       { label: 'Settings', icon: Settings, href: '/settings' },
     ],
   },
@@ -109,11 +111,13 @@ function withoutGroups(sections: NavSection[], labelsToRemove: string[]): NavSec
     .filter((section) => section.groups.length > 0)
 }
 
-// Manager: no Automation (workflow rules are an org-level admin concern).
-export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation'])
+// Manager: no Automation (workflow rules are an org-level admin concern), no
+// Approvals (only admins decide manager/user login approvals).
+export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Approvals'])
 
-// User: no Automation, no Analytics (individual contributors don't see org-wide reporting).
-export const userNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Analytics'])
+// User: no Automation, no Analytics (individual contributors don't see org-wide
+// reporting), no Approvals.
+export const userNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Analytics', 'Approvals'])
 
 export const navByRole: Record<Role, NavSection[]> = {
   super_admin: adminNav,

@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { NavSection } from '@/lib/nav-config'
-import { currentUser, organization } from '@/lib/mock-data'
 import { useRole } from '@/lib/role-context'
 
 function initials(name: string) {
@@ -30,11 +29,15 @@ const roleLabels: Record<string, string> = {
 
 export function DashboardSidebar({
   sections,
+  fullName,
+  city,
   collapsed,
   mobileOpen,
   onCloseMobile,
 }: {
   sections: NavSection[]
+  fullName: string
+  city: string | null
   collapsed: boolean
   mobileOpen: boolean
   onCloseMobile: () => void
@@ -102,13 +105,13 @@ export function DashboardSidebar({
         <div className="flex items-center gap-2.5 rounded-xl bg-sidebar-accent p-2.5">
           <Avatar className="size-9 shrink-0">
             <AvatarFallback className="bg-primary font-heading text-xs font-bold text-primary-foreground">
-              {initials(currentUser.full_name)}
+              {initials(fullName)}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-[13px] font-semibold text-sidebar-foreground">
-                {currentUser.full_name}
+                {fullName}
               </span>
               <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <Badge
@@ -117,7 +120,7 @@ export function DashboardSidebar({
                 >
                   {roleLabels[role]}
                 </Badge>
-                <span className="truncate">{organization.city} HQ</span>
+                {city && <span className="truncate">{city} HQ</span>}
               </span>
             </div>
           )}

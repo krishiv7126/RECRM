@@ -8,9 +8,13 @@ import { navByRole, type Role } from '@/lib/nav-config'
 
 export function DashboardShell({
   role,
+  fullName,
+  city,
   children,
 }: {
   role: Role
+  fullName: string
+  city: string | null
   children: React.ReactNode
 }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -36,6 +40,8 @@ export function DashboardShell({
       )}
       <DashboardSidebar
         sections={navByRole[role]}
+        fullName={fullName}
+        city={city}
         collapsed={collapsed}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}

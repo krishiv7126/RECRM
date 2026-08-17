@@ -14,12 +14,20 @@ export default async function DashboardGroupLayout({ children }: { children: Rea
   // Defensive only — proxy.ts already guarantees an approved session reaches here.
   if (!user) redirect('/login')
 
-  const { data: me } = await supabase.from('platform_users').select('role').eq('auth_user_id', user.id).single()
+  const { data: me } = await supabase
+    .from('platform_users')
+    .select('role, full_name, organizations(city)')
+    .eq('auth_user_id', user.id)
+    .single()
   const role = (me?.role ?? 'user') as UserRole
+  const fullName = me?.full_name ?? 'User'
+  const city = me?.organizations?.city ?? null
 
   return (
     <RoleProvider role={role}>
-      <DashboardShell role={role}>{children}</DashboardShell>
+      <DashboardShell role={role} fullName={fullName} city={city}>
+        {children}
+      </DashboardShell>
     </RoleProvider>
   )
 }

@@ -99,3 +99,66 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* AI surfaces: shared glow/gradient motion, used by the Copilot page and
+   future AI Workspace tools. Kept as plain CSS (not Tailwind utilities)
+   since they're conic-gradient + keyframe combos with no Tailwind
+   equivalent, and reused as named classes rather than one-off arbitrary
+   values. */
+@theme {
+  --animate-ai-spin: ai-spin 6s linear infinite;
+  --animate-ai-pulse: ai-pulse 2.4s ease-in-out infinite;
+  --animate-ai-shimmer: ai-shimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ai-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes ai-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.ai-conic-glow {
+  background: conic-gradient(
+    from 0deg,
+    var(--chart-1),
+    var(--chart-3),
+    var(--chart-7),
+    var(--chart-5),
+    var(--chart-1)
+  );
+}
+
+.ai-shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--muted-foreground) 40%,
+    var(--foreground) 50%,
+    var(--muted-foreground) 60%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: var(--animate-ai-shimmer);
+}

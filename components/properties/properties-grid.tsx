@@ -7,6 +7,7 @@ import {
   BedDouble,
   Download,
   Filter,
+  ImageOff,
   Loader2,
   MapPin,
   MoreHorizontal,
@@ -399,7 +400,11 @@ export function PropertiesGrid({
               key={property.id}
               className="flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-border transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className="relative h-36 w-full bg-gradient-to-br from-primary/25 via-accent to-secondary/60">
+              <div className="relative flex h-36 w-full items-center justify-center bg-muted">
+                <div className="flex flex-col items-center gap-1 text-muted-foreground/50">
+                  <ImageOff className="size-6" />
+                  <span className="text-[11px] font-medium">No photo</span>
+                </div>
                 <Badge variant="outline" className={cn('absolute right-3 top-3 gap-1.5 rounded-full border-0', meta.badge)}>
                   <span className={cn('size-1.5 shrink-0 rounded-full', meta.dot)} />
                   {meta.label}

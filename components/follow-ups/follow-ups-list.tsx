@@ -80,26 +80,6 @@ function linkedRecordLabel(fu: FollowUpWithRelations) {
 
 type FilterTab = 'all' | 'pending' | 'overdue' | 'done'
 
-const SEED_FOLLOW_UPS: {
-  type: FollowUpType
-  notes: string
-  day: number
-  hour: number
-  minute: number
-  status: FollowUpStatus
-}[] = [
-  { type: 'call', notes: 'Confirm budget flexibility before sending revised proposal.', day: 0, hour: 10, minute: 0, status: 'pending' },
-  { type: 'whatsapp', notes: 'Share site visit photos and floor plan PDF.', day: 0, hour: 9, minute: 30, status: 'pending' },
-  { type: 'email', notes: 'Send NRI documentation checklist and payment plan options.', day: 0, hour: 14, minute: 0, status: 'pending' },
-  { type: 'meeting', notes: 'Site walkthrough for the commercial unit with architect.', day: 0, hour: 16, minute: 30, status: 'pending' },
-  { type: 'call', notes: 'Discuss loan pre-approval status before negotiation.', day: -1, hour: 11, minute: 0, status: 'missed' },
-  { type: 'whatsapp', notes: 'Follow up on investment shortlist sent last week.', day: 1, hour: 9, minute: 0, status: 'pending' },
-  { type: 'email', notes: 'Send referral thank-you note and loyalty program details.', day: -5, hour: 15, minute: 0, status: 'done' },
-  { type: 'call', notes: 'Qualify budget range and preferred possession timeline.', day: 0, hour: 12, minute: 0, status: 'pending' },
-  { type: 'meeting', notes: 'Contract signing walkthrough at the sales office.', day: 2, hour: 11, minute: 30, status: 'pending' },
-  { type: 'whatsapp', notes: 'Send updated proposal with revised pricing.', day: -6, hour: 17, minute: 0, status: 'done' },
-]
-
 export function FollowUpsList({
   initialFollowUps,
   leads,
@@ -124,69 +104,6 @@ export function FollowUpsList({
   useEffect(() => {
     setFollowUps(initialFollowUps)
   }, [initialFollowUps])
-
-  useEffect(() => {
-    if (initialFollowUps.length > 0) return
-    let cancelled = false
-    ;(async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user || cancelled) return
-      const { data: me } = await supabase
-        .from('platform_users')
-        .select('id, org_id')
-        .eq('auth_user_id', user.id)
-        .single()
-      if (!me?.org_id || cancelled) return
-      const orgId = me.org_id
-      const ownerId = me.id
-
-      const categories = [
-        { kind: 'lead' as const, records: leads },
-        { kind: 'customer' as const, records: customers },
-        { kind: 'deal' as const, records: deals },
-      ].filter((c) => c.records.length > 0)
-
-      const now = new Date()
-
-      await supabase.from('follow_ups').insert(
-        SEED_FOLLOW_UPS.map((f, i) => {
-          const dueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + f.day, f.hour, f.minute)
-          let lead_id: string | null = null
-          let customer_id: string | null = null
-          let deal_id: string | null = null
-
-          if (categories.length > 0) {
-            const cat = categories[i % categories.length]
-            const rec = cat.records[Math.floor(i / categories.length) % cat.records.length]
-            if (cat.kind === 'lead') lead_id = rec.id
-            if (cat.kind === 'customer') customer_id = rec.id
-            if (cat.kind === 'deal') deal_id = rec.id
-          }
-
-          return {
-            org_id: orgId,
-            owner_id: ownerId,
-            type: f.type,
-            status: f.status,
-            due_at: dueDate.toISOString(),
-            notes: f.notes,
-            completed_at: f.status === 'done' ? dueDate.toISOString() : null,
-            lead_id,
-            customer_id,
-            deal_id,
-          }
-        }),
-      )
-      if (!cancelled) router.refresh()
-    })()
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const counts = useMemo(() => {
     const now = Date.now()

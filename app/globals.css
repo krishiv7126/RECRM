@@ -99,3 +99,55 @@
     @apply bg-background text-foreground;
   }
 }
+/* -------------------------------------------------------------------------- */
+/*  AI Copilot motion primitives                                              */
+/* -------------------------------------------------------------------------- */
+
+/* Animatable angle for the composer's tracing gradient border. */
+@property --copilot-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* Tracing light that travels around the composer border (border-only via mask). */
+.copilot-trace-border {
+  background: conic-gradient(
+    from var(--copilot-angle),
+    transparent 0deg,
+    var(--chart-1) 40deg,
+    var(--chart-7) 90deg,
+    var(--chart-5) 140deg,
+    transparent 200deg,
+    transparent 360deg
+  );
+  padding: 1.5px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: copilot-trace 4s linear infinite;
+}
+
+@keyframes copilot-trace {
+  to {
+    --copilot-angle: 360deg;
+  }
+}
+
+/* Sheen sweep used on suggestion pills and finished assistant bubbles. */
+@keyframes copilot-sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copilot-trace-border {
+    animation: none;
+  }
+}

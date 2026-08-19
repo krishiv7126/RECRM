@@ -14,3 +14,7 @@ node_modules
 .next/
 .DS_Store
 *.tsbuildinfo
+
+# v0 export used as the source for components/ai-copilot.tsx (not part of the app)
+copilotui/
+

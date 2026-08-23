@@ -40,22 +40,23 @@ export async function updateSession(request: NextRequest) {
     return response
   }
 
-  const { data: me } = await supabase.from("platform_users").select("id, role").eq("auth_user_id", user.id).single()
-
   // A valid Supabase session only proves the password was correct — it does NOT
   // mean the login was approved. Approval is what creates the login_sessions row
   // (see request-login-approval / decide-login-approval). Without an active row
   // here, this session must not reach protected routes, no matter how it got a
   // cookie — otherwise the approval queue is pure UI theater with no enforcement.
-  const { count: activeSessionCount } = me
-    ? await supabase
-        .from("login_sessions")
-        .select("id", { count: "exact", head: true })
-        .eq("platform_user_id", me.id)
-        .eq("is_active", true)
-    : { count: 0 }
+  //
+  // The active-session check is embedded rather than run as a second query: this
+  // runs on every single request, so each extra round-trip to Supabase is paid
+  // on every navigation in the app.
+  const { data: me } = await supabase
+    .from("platform_users")
+    .select("id, role, login_sessions(id)")
+    .eq("auth_user_id", user.id)
+    .eq("login_sessions.is_active", true)
+    .single()
 
-  const isApproved = (activeSessionCount ?? 0) > 0
+  const isApproved = (me?.login_sessions?.length ?? 0) > 0
 
   if (!isApproved) {
     // Keep the Supabase session (the /login page's own client logic re-checks

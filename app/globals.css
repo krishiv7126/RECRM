@@ -146,6 +146,37 @@
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Collapsible panels (sidebar nav groups)                                   */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Base UI publishes the measured panel height as --collapsible-panel-height,
+ * which is what makes height animatable here (height:auto is not). The panel
+ * stays mounted through the transition and is marked with data-starting-style
+ * / data-ending-style at the two ends, so both directions animate rather than
+ * snapping open.
+ */
+.collapsible-panel {
+  overflow: hidden;
+  height: var(--collapsible-panel-height);
+  transition:
+    height 220ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 160ms ease;
+}
+
+.collapsible-panel[data-starting-style],
+.collapsible-panel[data-ending-style] {
+  height: 0;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsible-panel {
+    transition: none;
+  }
+}
+
 /* Sheen sweep used on suggestion pills and finished assistant bubbles. */
 @keyframes copilot-sheen {
   0% {

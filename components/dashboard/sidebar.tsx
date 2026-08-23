@@ -225,7 +225,14 @@ function NavGroupItem({
       >
         {labelRow}
         <CollapsibleTrigger className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent-foreground/10">
-          <ChevronDown className={cn('size-3.5 shrink-0 transition-transform', open && 'rotate-180')} />
+          {/* Timing matches .collapsible-panel so the chevron and the panel
+              settle together rather than the arrow finishing first. */}
+          <ChevronDown
+            className={cn(
+              'size-3.5 shrink-0 transition-transform duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)]',
+              open && 'rotate-180',
+            )}
+          />
         </CollapsibleTrigger>
       </div>
       <CollapsibleContent className="flex flex-col gap-0.5 pt-0.5">

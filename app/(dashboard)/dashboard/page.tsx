@@ -4,20 +4,12 @@ import { KpiCards } from '@/components/dashboard/kpi-cards'
 import { LeadSourcesChart } from '@/components/dashboard/lead-sources-chart'
 import { RevenueChart } from '@/components/dashboard/revenue-chart'
 import { getDashboardData } from '@/lib/dashboard/get-dashboard-data'
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentProfile } from '@/lib/supabase/current-user'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const [{ data: me }, data] = await Promise.all([
-    user
-      ? supabase.from('platform_users').select('full_name').eq('auth_user_id', user.id).single()
-      : Promise.resolve({ data: null }),
-    getDashboardData(),
-  ])
+  // getCurrentProfile is request-cached and the layout already awaited it, so
+  // this resolves without another trip to Supabase.
+  const [me, data] = await Promise.all([getCurrentProfile(), getDashboardData()])
 
   return (
     <div className="flex flex-col gap-6">

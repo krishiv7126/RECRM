@@ -51,44 +51,54 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Green palette. Anchors, and why each landed where it did:
+ *   #D1F2EB Mint Whisper  → secondary / sidebar (the mid-light tint)
+ *   #50C878 Emerald       → success only. NOT primary: white text on it is
+ *                           ~2:1 contrast, so buttons would be unreadable.
+ *   #0B6E4F Deep green    → primary (white on it is ~5.6:1, passes AA)
+ *   #013220 Dark Evergreen→ foreground / darkest chart
+ * Keeping primary deep and success bright is what stops "won"/"approved"/
+ * "available" badges from blending into the now-green chrome.
+ */
 :root {
   color-scheme: light;
-  --background: #fbf1ff;
-  --foreground: #3a1c36;
+  --background: #f2fbf8;
+  --foreground: #013220;
   --card: #ffffff;
-  --card-foreground: #3a1c36;
+  --card-foreground: #013220;
   --popover: #ffffff;
-  --popover-foreground: #3a1c36;
-  --primary: #9b71b2;
+  --popover-foreground: #013220;
+  --primary: #0b6e4f;
   --primary-foreground: #ffffff;
-  --secondary: #e3d0ea;
-  --secondary-foreground: #3a1c36;
-  --muted: #f3e8f8;
-  --muted-foreground: #7a6b80;
-  --accent: #f0e0f6;
-  --accent-foreground: #3a1c36;
+  --secondary: #d1f2eb;
+  --secondary-foreground: #013220;
+  --muted: #e4f5ef;
+  --muted-foreground: #56796c;
+  --accent: #dcf2e9;
+  --accent-foreground: #013220;
   --destructive: #c24a4a;
-  --success: #1e8e5a;
+  --success: #2fa163;
   --danger: #c24a4a;
-  --border: #e3d0ea;
-  --input: #e3d0ea;
-  --ring: #9b71b2;
-  --chart-1: #9b71b2;
-  --chart-2: #3a1c36;
-  --chart-3: #c9a3d9;
-  --chart-4: #6b3f7a;
-  --chart-5: #e0b8ea;
-  --chart-6: #4f2f56;
-  --chart-7: #b98fc9;
+  --border: #c2e4d8;
+  --input: #c2e4d8;
+  --ring: #0b6e4f;
+  --chart-1: #0b6e4f;
+  --chart-2: #013220;
+  --chart-3: #50c878;
+  --chart-4: #17805c;
+  --chart-5: #a9e3cd;
+  --chart-6: #02261a;
+  --chart-7: #7fd1a6;
   --radius: 1rem;
-  --sidebar: #e3d0ea;
-  --sidebar-foreground: #3a1c36;
-  --sidebar-primary: #9b71b2;
+  --sidebar: #d1f2eb;
+  --sidebar-foreground: #013220;
+  --sidebar-primary: #0b6e4f;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f5eafa;
-  --sidebar-accent-foreground: #3a1c36;
-  --sidebar-border: #d3b8dd;
-  --sidebar-ring: #9b71b2;
+  --sidebar-accent: #eaf8f3;
+  --sidebar-accent-foreground: #013220;
+  --sidebar-border: #b2dccb;
+  --sidebar-ring: #0b6e4f;
 }
 
 @layer base {

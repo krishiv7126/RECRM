@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { FileSignature } from 'lucide-react'
 import { PageHeader } from '@/components/dashboard/page-header'
-import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { SelectField } from '@/components/ai-workspace/select-field'
 import { AiResult } from '@/components/ai-workspace/ai-result'
+import { AiGenerateButton, AiToolCard } from '@/components/ai-workspace/ai-tool-card'
 import { useAiGenerate } from '@/lib/ai-workspace/use-ai-generate'
 import { useCustomers, useDealsForCustomer } from '@/lib/ai-workspace/use-pickable'
 
@@ -35,7 +35,15 @@ export default function ProposalGeneratorPage() {
         description="Create a tailored property proposal message for a customer and deal."
       />
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
+      <AiToolCard
+        phase={loading ? 'thinking' : customerId ? 'listening' : 'idle'}
+        title={loading ? 'Drafting the proposal…' : 'Build a proposal'}
+        subtitle={
+          loading
+            ? 'Matching the property to what this customer is looking for.'
+            : 'Pick a customer, optionally a deal, and add any direction.'
+        }
+      >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <SelectField
             label="Customer"
@@ -59,6 +67,7 @@ export default function ProposalGeneratorPage() {
             options={deals.map((d) => ({ value: d.id, label: `${d.code} — ${d.title}` }))}
           />
         </div>
+
         <div className="flex flex-col gap-1.5">
           <label htmlFor="instructions" className="text-sm font-medium text-foreground">
             Extra instructions <span className="font-normal text-muted-foreground">(optional)</span>
@@ -70,9 +79,11 @@ export default function ProposalGeneratorPage() {
             placeholder="e.g. highlight the sea-facing unit, mention the festive discount…"
           />
         </div>
+
         <div>
-          <Button
-            disabled={!customerId || loading}
+          <AiGenerateButton
+            loading={loading}
+            disabled={!customerId}
             onClick={() =>
               generate({
                 type: 'proposal',
@@ -81,12 +92,12 @@ export default function ProposalGeneratorPage() {
                 extra_instructions: instructions || undefined,
               })
             }
-          >
-            <FileSignature data-icon="inline-start" />
-            Generate Proposal
-          </Button>
+            icon={FileSignature}
+            label="Generate Proposal"
+            loadingLabel="Drafting…"
+          />
         </div>
-      </div>
+      </AiToolCard>
 
       <AiResult output={output} loading={loading} error={error} loadingLabel="Drafting the proposal…" />
     </div>

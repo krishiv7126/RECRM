@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   CalendarClock,
   CheckCircle2,
@@ -26,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { RuleDialog } from '@/components/automation/rule-dialog'
+import { AuroraField } from '@/components/ai/ai-motion'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
@@ -187,9 +189,44 @@ export function AutomationManager({
         rule={editingRule ?? undefined}
       />
 
+      {/* Aurora only breathes while something is actually armed, so the page
+          reads as "live" at a glance rather than animating for decoration. */}
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
+        <AuroraField active={activeCount > 0} />
+        <div className="relative flex items-center gap-3 p-4">
+          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+            {activeCount > 0 && (
+              <motion.span
+                className="absolute inset-0 rounded-full bg-primary/25"
+                animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+                aria-hidden="true"
+              />
+            )}
+            <Zap className="relative size-4" />
+          </div>
+          <div className="flex flex-col leading-tight">
+            <p className="font-heading text-sm font-bold text-foreground">
+              {activeCount > 0 ? `${activeCount} rule${activeCount === 1 ? '' : 's'} running` : 'No rules running'}
+            </p>
+            <p className="text-[12px] text-muted-foreground">
+              {runsToday > 0
+                ? `${runsToday} action${runsToday === 1 ? '' : 's'} triggered today.`
+                : 'Nothing has triggered yet today.'}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col gap-3">
         <h2 className="font-heading text-sm font-bold uppercase tracking-wide text-muted-foreground">Rules</h2>
-        <div className="flex flex-col gap-2">
+        <motion.div
+          className="flex flex-col gap-2"
+          initial="hidden"
+          animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+        >
+          <AnimatePresence initial={false}>
           {rules.map((rule) => {
             const TriggerIcon = triggerIcon(rule.trigger_type)
             const entity = entityForTrigger(rule.trigger_type)
@@ -198,10 +235,17 @@ export function AutomationManager({
             const runs = runCountByRule.get(rule.id) ?? 0
 
             return (
-              <div
+              <motion.div
                 key={rule.id}
+                layout
+                variants={{
+                  hidden: { opacity: 0, y: 12 },
+                  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 380, damping: 30 } },
+                }}
+                exit={{ opacity: 0, x: -12, transition: { duration: 0.18 } }}
+                whileHover={{ y: -2 }}
                 className={cn(
-                  'flex items-center gap-4 rounded-2xl bg-card px-4 py-3.5 ring-1 ring-border transition-colors hover:bg-accent/40',
+                  'flex items-center gap-4 rounded-2xl bg-card px-4 py-3.5 ring-1 ring-border transition-[background-color,opacity] duration-300 hover:bg-accent/40 hover:shadow-md',
                   !rule.is_active && 'opacity-60',
                 )}
               >
@@ -253,16 +297,17 @@ export function AutomationManager({
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
+              </motion.div>
             )
           })}
+          </AnimatePresence>
 
           {rules.length === 0 && (
             <div className="rounded-2xl bg-card px-4 py-12 text-center text-muted-foreground ring-1 ring-border">
               No automation rules yet. Create one to start automating your pipeline.
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -282,8 +327,16 @@ export function AutomationManager({
                 </tr>
               </thead>
               <tbody>
-                {initialLogs.map((log) => (
-                  <tr key={log.id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-accent/30">
+                {initialLogs.map((log, i) => (
+                  <motion.tr
+                    key={log.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    // Cap the stagger so a long activity list doesn't leave the
+                    // last rows visibly trailing in.
+                    transition={{ duration: 0.25, delay: Math.min(i, 8) * 0.035, ease: 'easeOut' }}
+                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-accent/30"
+                  >
                     <td className="px-4 py-3 font-medium text-foreground">{log.rule?.name ?? '—'}</td>
                     <td className="px-4 py-3 text-foreground/80">
                       {log.target_type ?? '—'}
@@ -306,7 +359,7 @@ export function AutomationManager({
                         {timeAgo(log.triggered_at)}
                       </span>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
                 {initialLogs.length === 0 && (
                   <tr>

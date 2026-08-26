@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { DashboardShell } from '@/components/dashboard/shell'
+import { OnboardingTour } from '@/components/onboarding/onboarding-tour'
 import { RoleProvider } from '@/lib/role-context'
 import { getCurrentAuthUser, getCurrentProfile } from '@/lib/supabase/current-user'
 import type { UserRole } from '@/lib/types'
@@ -15,11 +16,16 @@ export default async function DashboardGroupLayout({ children }: { children: Rea
   const fullName = me?.full_name ?? 'User'
   const city = me?.organizations?.city ?? null
 
+  // First run only: once the tour is finished or skipped the timestamp is set
+  // on platform_users, so it never shows again — on any device.
+  const showTour = Boolean(me && !me.onboarding_completed_at)
+
   return (
     <RoleProvider role={role}>
       <DashboardShell role={role} fullName={fullName} city={city}>
         {children}
       </DashboardShell>
+      {showTour && me && <OnboardingTour role={role} platformUserId={me.id} />}
     </RoleProvider>
   )
 }

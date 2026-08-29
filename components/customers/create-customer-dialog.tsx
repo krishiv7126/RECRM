@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
   DialogClose,
@@ -26,12 +27,16 @@ export function CreateCustomerDialog({ trigger }: { trigger: React.ReactElement 
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [city, setCity] = useState('')
+  const [tags, setTags] = useState('')
+  const [notes, setNotes] = useState('')
 
   function reset() {
     setFullName('')
     setPhone('')
     setEmail('')
     setCity('')
+    setTags('')
+    setNotes('')
     setError(null)
   }
 
@@ -68,6 +73,8 @@ export function CreateCustomerDialog({ trigger }: { trigger: React.ReactElement 
       phone: phone.trim() || null,
       email: email.trim() || null,
       city: city.trim() || null,
+      tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
+      notes: notes.trim() || null,
     })
 
     setSubmitting(false)
@@ -120,6 +127,18 @@ export function CreateCustomerDialog({ trigger }: { trigger: React.ReactElement 
               City
             </label>
             <Input id="cust_city" value={city} onChange={(e) => setCity(e.target.value)} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="cust_tags" className="text-sm font-medium text-foreground">
+              Tags (comma separated)
+            </label>
+            <Input id="cust_tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Investor, Repeat Buyer" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="cust_notes" className="text-sm font-medium text-foreground">
+              Notes
+            </label>
+            <Textarea id="cust_notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           {error && <p className="text-[13px] text-destructive">{error}</p>}
           <div className="mt-1 flex justify-end gap-2">

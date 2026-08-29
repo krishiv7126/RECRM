@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, Loader2, Repeat, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Loader2, Mail, MessageCircle, Phone as PhoneIcon, Repeat, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
+import { autoScoreLead } from '@/lib/leads/auto-score'
 import type { LeadWithOwner } from '@/lib/leads/get-leads-data'
 
 const sources = ['Website', 'Referral', 'Meta Ads', 'Google', '99acres', 'Walk-in', 'Other']
@@ -28,12 +29,22 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [budgetMin, setBudgetMin] = useState(lead.budget_min?.toString() ?? '')
   const [budgetMax, setBudgetMax] = useState(lead.budget_max?.toString() ?? '')
   const [requirement, setRequirement] = useState(lead.requirement ?? '')
+  const [city, setCity] = useState(lead.city ?? '')
+  const [tags, setTags] = useState((lead.tags ?? []).join(', '))
+  const [notes, setNotes] = useState(lead.notes ?? '')
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [converting, setConverting] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [liveScore, setLiveScore] = useState(lead.ai_score)
+
+  useEffect(() => {
+    if (lead.ai_score !== null) return
+    autoScoreLead(lead.id, (score) => setLiveScore(score))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lead.id])
 
   async function handleSave() {
     setSaving(true)
@@ -52,6 +63,9 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
         budget_min: budgetMin ? Number(budgetMin) : null,
         budget_max: budgetMax ? Number(budgetMax) : null,
         requirement: requirement.trim() || null,
+        city: city.trim() || null,
+        tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
+        notes: notes.trim() || null,
       })
       .eq('id', lead.id)
     setSaving(false)
@@ -104,7 +118,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
           />
           <div className="flex items-center gap-2">
             {lead.owner?.full_name && <Badge variant="outline">Owner: {lead.owner.full_name}</Badge>}
-            {lead.ai_score !== null && <Badge className="bg-primary/15 text-primary">AI Score {lead.ai_score}</Badge>}
+            {liveScore !== null && <Badge className="bg-primary/15 text-primary">AI Score {liveScore}</Badge>}
           </div>
         </div>
       </div>
@@ -118,11 +132,49 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Phone</label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <div className="flex items-center gap-1.5">
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={!phone}
+                  aria-label={`Call ${lead.full_name}`}
+                  render={<a href={phone ? `tel:${phone}` : undefined} />}
+                  nativeButton={false}
+                >
+                  <PhoneIcon className="size-3.5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={!phone}
+                  aria-label={`WhatsApp ${lead.full_name}`}
+                  render={<a href={phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
+                  nativeButton={false}
+                >
+                  <MessageCircle className="size-3.5" />
+                </Button>
+              </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Email</label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <div className="flex items-center gap-1.5">
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={!email}
+                  aria-label={`Email ${lead.full_name}`}
+                  render={<a href={email ? `mailto:${email}` : undefined} />}
+                  nativeButton={false}
+                >
+                  <Mail className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">City</label>
+              <Input value={city} onChange={(e) => setCity(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Source</label>
@@ -180,6 +232,16 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-foreground">Requirement</label>
             <Textarea value={requirement} onChange={(e) => setRequirement(e.target.value)} />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground">Tags (comma separated)</label>
+            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="NRI, Urgent, Referral" />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground">Notes</label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
           {error && <p className="text-[13px] text-destructive">{error}</p>}

@@ -10,6 +10,17 @@ export async function getPropertiesData() {
   return data ?? []
 }
 
+export async function getPropertyById(id: string) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('properties')
+    .select('*, project:projects(name), owner:platform_users!properties_owner_id_fkey(full_name)')
+    .eq('id', id)
+    .single()
+
+  return data
+}
+
 export async function getPropertyFormOptions() {
   const supabase = await createClient()
   const { data: projects } = await supabase.from('projects').select('id, name').order('name')

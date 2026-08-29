@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { FollowUpDialog } from '@/components/follow-ups/follow-up-dialog'
+import { CelebrationBurst } from '@/components/ui/celebration-burst'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/types'
@@ -100,6 +101,36 @@ export function FollowUpsList({
   const [showFilter, setShowFilter] = useState(false)
   const [typeFilter, setTypeFilter] = useState('')
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUpWithRelations | null>(null)
+  const [celebratingId, setCelebratingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setFollowUps(initialFollowUps)
+  }, [initialFollowUps])
+
+  // New/updated follow-ups should appear without a manual reload. Postgres
+  // Changes + RLS is best-effort (see approvals-list.tsx), so a 15s poll
+  // backs it up.
+  useEffect(() => {
+    let cancelled = false
+    const supabase = createClient()
+    const channel = supabase.channel('follow-ups-live')
+
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'follow_ups' }, () => {
+      if (cancelled) return
+      router.refresh()
+    })
+    channel.subscribe()
+
+    const poll = setInterval(() => {
+      if (!cancelled) router.refresh()
+    }, 15000)
+
+    return () => {
+      cancelled = true
+      clearInterval(poll)
+      supabase.removeChannel(channel)
+    }
+  }, [router])
 
   useEffect(() => {
     setFollowUps(initialFollowUps)
@@ -157,7 +188,10 @@ export function FollowUpsList({
     if (error) {
       setFollowUps(prev)
       window.alert(error.message)
+      return
     }
+    setCelebratingId(followUp.id)
+    setTimeout(() => setCelebratingId((id) => (id === followUp.id ? null : id)), 900)
   }
 
   async function handleDelete(followUp: FollowUpWithRelations) {
@@ -334,7 +368,8 @@ export function FollowUpsList({
                 {statusLabels[followUp.status]}
               </Badge>
 
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="relative flex shrink-0 items-center gap-1">
+                <CelebrationBurst show={celebratingId === followUp.id} />
                 <Button
                   variant="outline"
                   size="sm"

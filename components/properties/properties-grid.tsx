@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Bath,
@@ -92,6 +93,35 @@ export function PropertiesGrid({
   const [typeFilter, setTypeFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
   const [editingProperty, setEditingProperty] = useState<PropertyWithRelations | null>(null)
+
+  useEffect(() => {
+    setProperties(initialProperties)
+  }, [initialProperties])
+
+  // New/updated properties should appear without a manual reload. Postgres
+  // Changes + RLS is best-effort (see approvals-list.tsx), so a 15s poll
+  // backs it up.
+  useEffect(() => {
+    let cancelled = false
+    const supabase = createClient()
+    const channel = supabase.channel('properties-live')
+
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, () => {
+      if (cancelled) return
+      router.refresh()
+    })
+    channel.subscribe()
+
+    const poll = setInterval(() => {
+      if (!cancelled) router.refresh()
+    }, 15000)
+
+    return () => {
+      cancelled = true
+      clearInterval(poll)
+      supabase.removeChannel(channel)
+    }
+  }, [router])
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -401,10 +431,15 @@ export function PropertiesGrid({
               className="flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-border transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className="relative flex h-36 w-full items-center justify-center bg-muted">
-                <div className="flex flex-col items-center gap-1 text-muted-foreground/50">
-                  <ImageOff className="size-6" />
-                  <span className="text-[11px] font-medium">No photo</span>
-                </div>
+                {property.images && property.images.length > 0 ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={property.images[0]} alt={property.title} className="size-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-muted-foreground/50">
+                    <ImageOff className="size-6" />
+                    <span className="text-[11px] font-medium">No photo</span>
+                  </div>
+                )}
                 <Badge variant="outline" className={cn('absolute right-3 top-3 gap-1.5 rounded-full border-0', meta.badge)}>
                   <span className={cn('size-1.5 shrink-0 rounded-full', meta.dot)} />
                   {meta.label}
@@ -487,7 +522,7 @@ export function PropertiesGrid({
                     </Avatar>
                     <span className="truncate text-[12px] text-foreground/80">{property.owner?.full_name ?? '—'}</span>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setEditingProperty(property)}>
+                  <Button variant="outline" size="sm" render={<Link href={`/properties/${property.id}`} />} nativeButton={false}>
                     View
                   </Button>
                 </div>

@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DealDialog } from '@/components/deals/deal-dialog'
+import { CelebrationBurst } from '@/components/ui/celebration-burst'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/types'
@@ -78,10 +79,36 @@ export function DealsBoard({
   const [view, setView] = useState<'board' | 'table'>('board')
   const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null)
   const [editingDeal, setEditingDeal] = useState<DealWithRelations | null>(null)
+  const [celebratingId, setCelebratingId] = useState<string | null>(null)
 
   useEffect(() => {
     setDeals(initialDeals)
   }, [initialDeals])
+
+  // New/updated deals should appear without a manual reload. Postgres
+  // Changes + RLS is best-effort (see approvals-list.tsx), so a 15s poll
+  // backs it up.
+  useEffect(() => {
+    let cancelled = false
+    const supabase = createClient()
+    const channel = supabase.channel('deals-live')
+
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'deals' }, () => {
+      if (cancelled) return
+      router.refresh()
+    })
+    channel.subscribe()
+
+    const poll = setInterval(() => {
+      if (!cancelled) router.refresh()
+    }, 15000)
+
+    return () => {
+      cancelled = true
+      clearInterval(poll)
+      supabase.removeChannel(channel)
+    }
+  }, [router])
 
   useEffect(() => {
     if (initialDeals.length > 0) return
@@ -139,6 +166,11 @@ export function DealsBoard({
     if (error) {
       setDeals(prevDeals)
       window.alert(error.message)
+      return
+    }
+    if (stage === 'booked') {
+      setCelebratingId(deal.id)
+      setTimeout(() => setCelebratingId((id) => (id === deal.id ? null : id)), 900)
     }
   }
 
@@ -268,8 +300,9 @@ export function DealsBoard({
                       key={deal.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, deal)}
-                      className="group flex cursor-grab flex-col gap-3 rounded-xl bg-card p-3.5 ring-1 ring-border transition-all hover:-translate-y-0.5 hover:shadow-md active:cursor-grabbing"
+                      className="group relative flex cursor-grab flex-col gap-3 rounded-xl bg-card p-3.5 ring-1 ring-border transition-all hover:-translate-y-0.5 hover:shadow-md active:cursor-grabbing"
                     >
+                      <CelebrationBurst show={celebratingId === deal.id} />
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                           {deal.code}

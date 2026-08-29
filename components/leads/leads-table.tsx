@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -32,11 +32,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { CreateLeadDialog } from '@/components/leads/create-lead-dialog'
 import { createClient } from '@/lib/supabase/client'
+import { autoScoreLead } from '@/lib/leads/auto-score'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/types'
 
 type LeadStage = Database['public']['Enums']['lead_stage']
 type LeadTemperature = Database['public']['Enums']['lead_temperature']
+const REFRESH_POLL_MS = 15000
 
 interface LeadRow {
   id: string
@@ -51,6 +53,8 @@ interface LeadRow {
   temperature: LeadTemperature
   ai_score: number | null
   created_at: string
+  city: string | null
+  tags: string[] | null
   owner: { full_name: string } | null
 }
 
@@ -114,11 +118,71 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   const [stageFilter, setStageFilter] = useState('')
   const [tempFilter, setTempFilter] = useState('')
   const [budgetMinFilter, setBudgetMinFilter] = useState('')
+  const [cityFilter, setCityFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState('')
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  useEffect(() => {
+    setLeads(initialLeads)
+  }, [initialLeads])
+
+  // New/updated leads should appear without a manual reload. Postgres
+  // Changes + RLS is best-effort (see approvals-list.tsx), so a 15s poll
+  // backs it up.
+  useEffect(() => {
+    let cancelled = false
+    const supabase = createClient()
+    const channel = supabase.channel('leads-live')
+
+    channel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'leads' },
+      () => {
+        if (cancelled) return
+        router.refresh()
+      },
+    )
+    channel.subscribe()
+
+    const poll = setInterval(() => {
+      if (!cancelled) router.refresh()
+    }, REFRESH_POLL_MS)
+
+    return () => {
+      cancelled = true
+      clearInterval(poll)
+      supabase.removeChannel(channel)
+    }
+  }, [router])
+
   const sources = useMemo(() => Array.from(new Set(leads.map((l) => l.source).filter(Boolean))) as string[], [leads])
+  const cities = useMemo(() => Array.from(new Set(leads.map((l) => l.city).filter(Boolean))) as string[], [leads])
+  const allTags = useMemo(() => Array.from(new Set(leads.flatMap((l) => l.tags ?? []))).sort(), [leads])
+
+  // Leads should show an AI score without anyone clicking "Score" — pick up
+  // any unscored leads in the background, a few at a time, and patch the
+  // score into local state as each one comes back.
+  const scoreAttempted = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const unscored = leads.filter((l) => l.ai_score === null && !scoreAttempted.current.has(l.id)).slice(0, 10)
+    if (unscored.length === 0) return
+    unscored.forEach((l) => scoreAttempted.current.add(l.id))
+
+    let cancelled = false
+    ;(async () => {
+      for (const lead of unscored) {
+        if (cancelled) return
+        await autoScoreLead(lead.id, (score) => {
+          setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, ai_score: score } : l)))
+        })
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [leads])
 
   const counts = useMemo(
     () => ({
@@ -151,10 +215,12 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
       const matchesStage = !stageFilter || lead.stage === stageFilter
       const matchesTemp = !tempFilter || lead.temperature === tempFilter
       const matchesBudget = !budgetMinFilter || (lead.budget_max ?? 0) >= Number(budgetMinFilter)
+      const matchesCity = !cityFilter || lead.city === cityFilter
+      const matchesTag = !tagFilter || (lead.tags ?? []).includes(tagFilter)
 
-      return matchesTab && matchesQuery && matchesSource && matchesStage && matchesTemp && matchesBudget
+      return matchesTab && matchesQuery && matchesSource && matchesStage && matchesTemp && matchesBudget && matchesCity && matchesTag
     })
-  }, [leads, activeTab, query, sourceFilter, stageFilter, tempFilter, budgetMinFilter])
+  }, [leads, activeTab, query, sourceFilter, stageFilter, tempFilter, budgetMinFilter, cityFilter, tagFilter])
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: counts.all },
@@ -163,13 +229,15 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     { key: 'won', label: 'Won', count: counts.won },
   ]
 
-  const activeFilterCount = [sourceFilter, stageFilter, tempFilter, budgetMinFilter].filter(Boolean).length
+  const activeFilterCount = [sourceFilter, stageFilter, tempFilter, budgetMinFilter, cityFilter, tagFilter].filter(Boolean).length
 
   function clearFilters() {
     setSourceFilter('')
     setStageFilter('')
     setTempFilter('')
     setBudgetMinFilter('')
+    setCityFilter('')
+    setTagFilter('')
   }
 
   async function handleDelete(lead: LeadRow) {
@@ -374,6 +442,36 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                   <label className="text-[12px] font-medium text-foreground/80">Min budget (₹)</label>
                   <Input type="number" value={budgetMinFilter} onChange={(e) => setBudgetMinFilter(e.target.value)} placeholder="e.g. 5000000" />
                 </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-medium text-foreground/80">City</label>
+                  <select
+                    value={cityFilter}
+                    onChange={(e) => setCityFilter(e.target.value)}
+                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
+                  >
+                    <option value="">Any</option>
+                    {cities.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-medium text-foreground/80">Tag</label>
+                  <select
+                    value={tagFilter}
+                    onChange={(e) => setTagFilter(e.target.value)}
+                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
+                  >
+                    <option value="">Any</option>
+                    {allTags.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex justify-between">
                   <Button variant="ghost" size="sm" onClick={clearFilters}>
                     Clear
@@ -413,7 +511,19 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                       </Avatar>
                       <div className="flex min-w-0 flex-col">
                         <span className="truncate font-medium text-foreground hover:underline">{lead.full_name}</span>
-                        <span className="truncate text-[12px] text-muted-foreground">{lead.email ?? '—'}</span>
+                        <span className="truncate text-[12px] text-muted-foreground">
+                          {lead.email ?? '—'}
+                          {lead.city ? ` · ${lead.city}` : ''}
+                        </span>
+                        {lead.tags && lead.tags.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {lead.tags.slice(0, 3).map((tag) => (
+                              <Badge key={tag} variant="outline" className="rounded-full px-1.5 py-0 text-[10px] font-normal text-muted-foreground">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </Link>
                   </td>

@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
+import { autoScoreLead } from '@/lib/leads/auto-score'
 
 const sources = ['Website', 'Referral', 'Meta Ads', 'Google', '99acres', 'Walk-in', 'Other']
 
@@ -32,6 +33,9 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
   const [budgetMin, setBudgetMin] = useState('')
   const [budgetMax, setBudgetMax] = useState('')
   const [requirement, setRequirement] = useState('')
+  const [city, setCity] = useState('')
+  const [tags, setTags] = useState('')
+  const [notes, setNotes] = useState('')
 
   function resetForm() {
     setFullName('')
@@ -41,6 +45,9 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     setBudgetMin('')
     setBudgetMax('')
     setRequirement('')
+    setCity('')
+    setTags('')
+    setNotes('')
     setError(null)
   }
 
@@ -71,16 +78,23 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
       return
     }
 
-    const { error: insertErr } = await supabase.from('leads').insert({
-      org_id: me.org_id,
-      full_name: fullName.trim(),
-      phone: phone.trim() || null,
-      email: email.trim() || null,
-      source: source || null,
-      budget_min: budgetMin ? Number(budgetMin) : null,
-      budget_max: budgetMax ? Number(budgetMax) : null,
-      requirement: requirement.trim() || null,
-    })
+    const { data: inserted, error: insertErr } = await supabase
+      .from('leads')
+      .insert({
+        org_id: me.org_id,
+        full_name: fullName.trim(),
+        phone: phone.trim() || null,
+        email: email.trim() || null,
+        source: source || null,
+        budget_min: budgetMin ? Number(budgetMin) : null,
+        budget_max: budgetMax ? Number(budgetMax) : null,
+        requirement: requirement.trim() || null,
+        city: city.trim() || null,
+        tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
+        notes: notes.trim() || null,
+      })
+      .select('id')
+      .single()
 
     setSubmitting(false)
 
@@ -92,6 +106,12 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     setOpen(false)
     resetForm()
     router.refresh()
+
+    // Score in the background so the new lead shows up with an AI score
+    // without anyone having to click into it and hit "Score".
+    if (inserted?.id) {
+      autoScoreLead(inserted.id, () => router.refresh())
+    }
   }
 
   return (
@@ -167,10 +187,31 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
+            <label htmlFor="lead_city" className="text-sm font-medium text-foreground">
+              City
+            </label>
+            <Input id="lead_city" value={city} onChange={(e) => setCity(e.target.value)} />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
             <label htmlFor="lead_requirement" className="text-sm font-medium text-foreground">
               Requirement
             </label>
             <Textarea id="lead_requirement" value={requirement} onChange={(e) => setRequirement(e.target.value)} placeholder="e.g. 3BHK in Powai, ready to move" />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="lead_tags" className="text-sm font-medium text-foreground">
+              Tags (comma separated)
+            </label>
+            <Input id="lead_tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="NRI, Urgent, Referral" />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="lead_notes" className="text-sm font-medium text-foreground">
+              Notes
+            </label>
+            <Textarea id="lead_notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
           {error && <p className="text-[13px] text-destructive">{error}</p>}

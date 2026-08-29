@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, Loader2, Sparkles, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Loader2, Mail, MessageCircle, Phone as PhoneIcon, Sparkles, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -108,11 +108,45 @@ export function CustomerDetail({ customer }: { customer: CustomerWithOwner }) {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Phone</label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <div className="flex items-center gap-1.5">
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={!phone}
+                  aria-label={`Call ${customer.full_name}`}
+                  render={<a href={phone ? `tel:${phone}` : undefined} />}
+                  nativeButton={false}
+                >
+                  <PhoneIcon className="size-3.5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={!phone}
+                  aria-label={`WhatsApp ${customer.full_name}`}
+                  render={<a href={phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
+                  nativeButton={false}
+                >
+                  <MessageCircle className="size-3.5" />
+                </Button>
+              </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Email</label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <div className="flex items-center gap-1.5">
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={!email}
+                  aria-label={`Email ${customer.full_name}`}
+                  render={<a href={email ? `mailto:${email}` : undefined} />}
+                  nativeButton={false}
+                >
+                  <Mail className="size-3.5" />
+                </Button>
+              </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">City</label>

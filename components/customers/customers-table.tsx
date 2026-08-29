@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -59,6 +59,35 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   const [showFilters, setShowFilters] = useState(false)
   const [tagFilter, setTagFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
+
+  useEffect(() => {
+    setCustomers(initialCustomers)
+  }, [initialCustomers])
+
+  // New/updated customers should appear without a manual reload. Postgres
+  // Changes + RLS is best-effort (see approvals-list.tsx), so a 15s poll
+  // backs it up.
+  useEffect(() => {
+    let cancelled = false
+    const supabase = createClient()
+    const channel = supabase.channel('customers-live')
+
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => {
+      if (cancelled) return
+      router.refresh()
+    })
+    channel.subscribe()
+
+    const poll = setInterval(() => {
+      if (!cancelled) router.refresh()
+    }, 15000)
+
+    return () => {
+      cancelled = true
+      clearInterval(poll)
+      supabase.removeChannel(channel)
+    }
+  }, [router])
 
   const allTags = useMemo(() => Array.from(new Set(customers.flatMap((c) => c.tags ?? []))), [customers])
   const allCities = useMemo(() => Array.from(new Set(customers.map((c) => c.city).filter(Boolean))) as string[], [customers])

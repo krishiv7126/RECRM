@@ -966,6 +966,7 @@ export type Database = {
           ai_score: number | null
           budget_max: number | null
           budget_min: number | null
+          city: string | null
           converted_customer_id: string | null
           created_at: string
           email: string | null
@@ -973,12 +974,14 @@ export type Database = {
           id: string
           interested_property_id: string | null
           is_archived: boolean
+          notes: string | null
           org_id: string
           owner_id: string | null
           phone: string | null
           requirement: string | null
           source: string | null
           stage: Database["public"]["Enums"]["lead_stage"]
+          tags: string[] | null
           temperature: Database["public"]["Enums"]["lead_temperature"]
           updated_at: string
         }
@@ -986,6 +989,7 @@ export type Database = {
           ai_score?: number | null
           budget_max?: number | null
           budget_min?: number | null
+          city?: string | null
           converted_customer_id?: string | null
           created_at?: string
           email?: string | null
@@ -993,12 +997,14 @@ export type Database = {
           id?: string
           interested_property_id?: string | null
           is_archived?: boolean
+          notes?: string | null
           org_id: string
           owner_id?: string | null
           phone?: string | null
           requirement?: string | null
           source?: string | null
           stage?: Database["public"]["Enums"]["lead_stage"]
+          tags?: string[] | null
           temperature?: Database["public"]["Enums"]["lead_temperature"]
           updated_at?: string
         }
@@ -1006,6 +1012,7 @@ export type Database = {
           ai_score?: number | null
           budget_max?: number | null
           budget_min?: number | null
+          city?: string | null
           converted_customer_id?: string | null
           created_at?: string
           email?: string | null
@@ -1013,12 +1020,14 @@ export type Database = {
           id?: string
           interested_property_id?: string | null
           is_archived?: boolean
+          notes?: string | null
           org_id?: string
           owner_id?: string | null
           phone?: string | null
           requirement?: string | null
           source?: string | null
           stage?: Database["public"]["Enums"]["lead_stage"]
+          tags?: string[] | null
           temperature?: Database["public"]["Enums"]["lead_temperature"]
           updated_at?: string
         }
@@ -1534,11 +1543,14 @@ export type Database = {
           amenities: string[] | null
           bathrooms: number | null
           bedrooms: number | null
+          brochure_url: string | null
           city: string | null
           created_at: string
           currency: string
+          description: string | null
           floor: string | null
           id: string
+          images: string[] | null
           notes: string | null
           org_id: string
           owner_id: string
@@ -1555,11 +1567,14 @@ export type Database = {
           amenities?: string[] | null
           bathrooms?: number | null
           bedrooms?: number | null
+          brochure_url?: string | null
           city?: string | null
           created_at?: string
           currency?: string
+          description?: string | null
           floor?: string | null
           id?: string
+          images?: string[] | null
           notes?: string | null
           org_id: string
           owner_id: string
@@ -1576,11 +1591,14 @@ export type Database = {
           amenities?: string[] | null
           bathrooms?: number | null
           bedrooms?: number | null
+          brochure_url?: string | null
           city?: string | null
           created_at?: string
           currency?: string
+          description?: string | null
           floor?: string | null
           id?: string
+          images?: string[] | null
           notes?: string | null
           org_id?: string
           owner_id?: string

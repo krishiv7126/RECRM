@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Calendar,
   Clock,
@@ -95,11 +95,16 @@ export function FollowUpsList({
   owners: { id: string; full_name: string }[]
 }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialTab = searchParams.get('tab')
   const [followUps, setFollowUps] = useState(initialFollowUps)
-  const [activeTab, setActiveTab] = useState<FilterTab>('all')
+  const [activeTab, setActiveTab] = useState<FilterTab>(
+    initialTab === 'pending' || initialTab === 'overdue' || initialTab === 'done' ? initialTab : 'all',
+  )
   const [query, setQuery] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [typeFilter, setTypeFilter] = useState('')
+  const [ownerFilter, setOwnerFilter] = useState('')
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUpWithRelations | null>(null)
   const [celebratingId, setCelebratingId] = useState<string | null>(null)
 
@@ -165,10 +170,11 @@ export function FollowUpsList({
         (f.notes ?? '').toLowerCase().includes(q)
 
       const matchesType = !typeFilter || f.type === typeFilter
+      const matchesOwner = !ownerFilter || f.owner_id === ownerFilter
 
-      return matchesTab && matchesQuery && matchesType
+      return matchesTab && matchesQuery && matchesType && matchesOwner
     })
-  }, [followUps, activeTab, query, typeFilter])
+  }, [followUps, activeTab, query, typeFilter, ownerFilter])
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: counts.all },
@@ -284,9 +290,9 @@ export function FollowUpsList({
           <Button variant="outline" size="sm" onClick={() => setShowFilter((v) => !v)}>
             <Filter data-icon="inline-start" />
             Filter
-            {typeFilter && (
+            {(typeFilter || ownerFilter) && (
               <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                1
+                {[typeFilter, ownerFilter].filter(Boolean).length}
               </span>
             )}
           </Button>
@@ -309,8 +315,32 @@ export function FollowUpsList({
                     ))}
                   </select>
                 </div>
+                {owners.length > 1 && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[12px] font-medium text-foreground/80">Employee</label>
+                    <select
+                      value={ownerFilter}
+                      onChange={(e) => setOwnerFilter(e.target.value)}
+                      className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
+                    >
+                      <option value="">Everyone</option>
+                      {owners.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="flex justify-between">
-                  <Button variant="ghost" size="sm" onClick={() => setTypeFilter('')}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setTypeFilter('')
+                      setOwnerFilter('')
+                    }}
+                  >
                     Clear
                   </Button>
                   <Button size="sm" onClick={() => setShowFilter(false)}>

@@ -1,7 +1,13 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 import { redirectPathForRole } from "@/lib/role-redirect"
+import { applyNavOverrides, groupLabelForPath, navByRole, type Role } from "@/lib/nav-config"
 import type { UserRole } from "@/lib/types"
+
+// Always reachable regardless of nav_overrides -- otherwise revoking the
+// wrong group could redirect-loop a user (the redirect target itself must
+// never be blockable), or lock them out of fixing their own access.
+const ALWAYS_ALLOWED_PATHS = ["/dashboard", "/settings"]
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -51,7 +57,7 @@ export async function updateSession(request: NextRequest) {
   // on every navigation in the app.
   const { data: me } = await supabase
     .from("platform_users")
-    .select("id, role, login_sessions(id)")
+    .select("id, role, nav_overrides, login_sessions(id)")
     .eq("auth_user_id", user.id)
     .eq("login_sessions.is_active", true)
     .single()
@@ -74,6 +80,26 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = me ? redirectPathForRole(me.role as UserRole) : "/dashboard"
     return NextResponse.redirect(url)
+  }
+
+  // Admin-configured per-user page access (Settings → Team Management →
+  // Manage Access), enforced here rather than only via hidden sidebar links
+  // so a revoked page isn't reachable by typing the URL directly.
+  if (me && !ALWAYS_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+    const role = me.role as Role
+    const overrides = me.nav_overrides as Record<string, boolean> | null
+    if (overrides && Object.keys(overrides).length > 0) {
+      const groupLabel = groupLabelForPath(pathname)
+      if (groupLabel) {
+        const effectiveSections = applyNavOverrides(navByRole[role] ?? navByRole.user, overrides)
+        const hasAccess = effectiveSections.some((s) => s.groups.some((g) => g.label === groupLabel))
+        if (!hasAccess) {
+          const url = request.nextUrl.clone()
+          url.pathname = "/dashboard"
+          return NextResponse.redirect(url)
+        }
+      }
+    }
   }
 
   return response

@@ -157,3 +157,65 @@ export const navByRole: Record<Role, NavSection[]> = {
   user: userNav,
   receptionist: receptionistNav,
 }
+
+/** Every togglable page/group, for the admin "manage access" UI. */
+export const allNavGroupLabels: string[] = adminNav.flatMap((section) => section.groups.map((g) => g.label))
+
+// (href prefix, owning group label) pairs, longest hrefs first so a more
+// specific route (e.g. /ai-workspace/copilot) matches before its parent
+// (/ai-workspace) would.
+const pathToGroupLabel: [string, string][] = adminNav
+  .flatMap((section) => section.groups)
+  .flatMap((group) => {
+    const hrefs = [group.href, ...(group.items?.map((i) => i.href) ?? [])].filter((h): h is string => !!h)
+    return hrefs.map((href) => [href, group.label] as [string, string])
+  })
+  .sort((a, b) => b[0].length - a[0].length)
+
+/** Which nav group "owns" a pathname, for middleware-level access checks. */
+export function groupLabelForPath(pathname: string): string | null {
+  const match = pathToGroupLabel.find(([href]) => pathname === href || pathname.startsWith(href + '/'))
+  return match?.[1] ?? null
+}
+
+function findGroupInAdminNav(label: string): { section: NavSection; group: NavGroup } | null {
+  for (const section of adminNav) {
+    const group = section.groups.find((g) => g.label === label)
+    if (group) return { section, group }
+  }
+  return null
+}
+
+/**
+ * Per-user overrides on top of the role default, set by an admin in Settings
+ * → Team Management. `true` grants a page the role wouldn't normally show;
+ * `false` revokes one it would. Absent keys fall through to the role default.
+ */
+export function applyNavOverrides(baseSections: NavSection[], overrides: Record<string, boolean> | null | undefined): NavSection[] {
+  if (!overrides || Object.keys(overrides).length === 0) return baseSections
+
+  let sections = baseSections.map((s) => ({ ...s, groups: [...s.groups] }))
+
+  for (const [label, allowed] of Object.entries(overrides)) {
+    const alreadyHasGroup = sections.some((s) => s.groups.some((g) => g.label === label))
+
+    if (allowed === false && alreadyHasGroup) {
+      sections = sections
+        .map((s) => ({ ...s, groups: s.groups.filter((g) => g.label !== label) }))
+        .filter((s) => s.groups.length > 0)
+    }
+
+    if (allowed === true && !alreadyHasGroup) {
+      const found = findGroupInAdminNav(label)
+      if (!found) continue
+      const targetIndex = sections.findIndex((s) => s.label === found.section.label)
+      if (targetIndex >= 0) {
+        sections[targetIndex] = { ...sections[targetIndex], groups: [...sections[targetIndex].groups, found.group] }
+      } else {
+        sections = [...sections, { ...found.section, groups: [found.group] }]
+      }
+    }
+  }
+
+  return sections
+}

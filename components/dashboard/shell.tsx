@@ -4,19 +4,22 @@ import { useState } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardTopbar } from '@/components/dashboard/topbar'
 import { SessionWatchdog } from '@/components/dashboard/session-watchdog'
-import { navByRole, type Role } from '@/lib/nav-config'
+import { applyNavOverrides, navByRole, type Role } from '@/lib/nav-config'
 
 export function DashboardShell({
   role,
   fullName,
   city,
+  navOverrides,
   children,
 }: {
   role: Role
   fullName: string
   city: string | null
+  navOverrides?: Record<string, boolean> | null
   children: React.ReactNode
 }) {
+  const sections = applyNavOverrides(navByRole[role], navOverrides)
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -39,7 +42,7 @@ export function DashboardShell({
         />
       )}
       <DashboardSidebar
-        sections={navByRole[role]}
+        sections={sections}
         fullName={fullName}
         city={city}
         collapsed={collapsed}

@@ -21,6 +21,7 @@ import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { ManageAccessDialog } from '@/components/settings/manage-access-dialog'
 import { InviteMemberDialog } from '@/components/settings/invite-member-dialog'
 import { ReassignDialog } from '@/components/settings/reassign-dialog'
 import { createClient } from '@/lib/supabase/client'
@@ -415,11 +416,23 @@ export function SettingsView({ data }: { data: SettingsData }) {
                               </div>
                             </td>
                             <td className="px-5 py-3 text-right">
-                              {isAdmin && member.role === 'user' && (
-                                <Button variant="outline" size="sm" onClick={() => setReassignTarget(member)}>
-                                  Reassign
-                                </Button>
-                              )}
+                              <div className="flex items-center justify-end gap-2">
+                                {isAdmin && member.role !== 'admin' && member.role !== 'super_admin' && (
+                                  <ManageAccessDialog
+                                    member={member}
+                                    trigger={
+                                      <Button variant="outline" size="sm">
+                                        Manage Access
+                                      </Button>
+                                    }
+                                  />
+                                )}
+                                {isAdmin && member.role === 'user' && (
+                                  <Button variant="outline" size="sm" onClick={() => setReassignTarget(member)}>
+                                    Reassign
+                                  </Button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}

@@ -12,11 +12,11 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
+import { deriveTemperature } from '@/lib/leads/temperature'
 import type { LeadWithOwner } from '@/lib/leads/get-leads-data'
 
 const sources = ['Website', 'Referral', 'Meta Ads', 'Google', '99acres', 'Walk-in', 'Other']
 const stages = ['new', 'contacted', 'qualified', 'proposal', 'site_visit', 'won', 'lost', 'archive'] as const
-const temperatures = ['hot', 'warm', 'cold'] as const
 
 export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const router = useRouter()
@@ -25,7 +25,6 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [email, setEmail] = useState(lead.email ?? '')
   const [source, setSource] = useState(lead.source ?? '')
   const [stage, setStage] = useState(lead.stage)
-  const [temperature, setTemperature] = useState(lead.temperature)
   const [budgetMin, setBudgetMin] = useState(lead.budget_min?.toString() ?? '')
   const [budgetMax, setBudgetMax] = useState(lead.budget_max?.toString() ?? '')
   const [requirement, setRequirement] = useState(lead.requirement ?? '')
@@ -59,7 +58,6 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
         email: email.trim() || null,
         source: source || null,
         stage,
-        temperature,
         budget_min: budgetMin ? Number(budgetMin) : null,
         budget_max: budgetMax ? Number(budgetMax) : null,
         requirement: requirement.trim() || null,
@@ -119,6 +117,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
           <div className="flex items-center gap-2">
             {lead.owner?.full_name && <Badge variant="outline">Owner: {lead.owner.full_name}</Badge>}
             {liveScore !== null && <Badge className="bg-primary/15 text-primary">AI Score {liveScore}</Badge>}
+            {deriveTemperature(liveScore) === 'hot' && <Badge className="bg-destructive/10 text-destructive">🔥 Hot</Badge>}
           </div>
         </div>
       </div>
@@ -201,20 +200,6 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
                 {stages.map((s) => (
                   <option key={s} value={s} className="capitalize">
                     {s.replace('_', ' ')}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground">Temperature</label>
-              <select
-                value={temperature}
-                onChange={(e) => setTemperature(e.target.value as typeof temperature)}
-                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm capitalize outline-none dark:bg-input/30"
-              >
-                {temperatures.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
                   </option>
                 ))}
               </select>

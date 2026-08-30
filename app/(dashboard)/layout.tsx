@@ -15,6 +15,7 @@ export default async function DashboardGroupLayout({ children }: { children: Rea
   const role = (me?.role ?? 'user') as UserRole
   const fullName = me?.full_name ?? 'User'
   const city = me?.organizations?.city ?? null
+  const navOverrides = (me?.nav_overrides ?? null) as Record<string, boolean> | null
 
   // First run only: once the tour is finished or skipped the timestamp is set
   // on platform_users, so it never shows again — on any device.
@@ -22,7 +23,7 @@ export default async function DashboardGroupLayout({ children }: { children: Rea
 
   return (
     <RoleProvider role={role}>
-      <DashboardShell role={role} fullName={fullName} city={city}>
+      <DashboardShell role={role} fullName={fullName} city={city} navOverrides={navOverrides}>
         {children}
       </DashboardShell>
       {showTour && me && <OnboardingTour role={role} platformUserId={me.id} />}

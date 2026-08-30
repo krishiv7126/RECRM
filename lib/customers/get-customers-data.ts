@@ -27,4 +27,15 @@ export async function getCustomerById(id: string) {
   return data
 }
 
+export async function getCustomerDeals(customerId: string) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('deals')
+    .select('id, code, title, stage, value, expected_close_date')
+    .eq('customer_id', customerId)
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
+
 export type CustomerWithOwner = NonNullable<Awaited<ReturnType<typeof getCustomerById>>>
+export type CustomerDeal = Awaited<ReturnType<typeof getCustomerDeals>>[number]

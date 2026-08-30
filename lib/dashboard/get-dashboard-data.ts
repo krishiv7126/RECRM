@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { slugifySource } from '@/lib/dashboard-metrics'
+import { deriveTemperature } from '@/lib/leads/temperature'
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
@@ -21,12 +22,20 @@ const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 export async function getDashboardData() {
   const supabase = await createClient()
 
-  const [{ data: leads }, { data: deals }, { data: siteVisits }, { data: revenueTargets }] = await Promise.all([
-    supabase.from('leads').select('id, source, temperature, stage, ai_score, full_name, created_at'),
-    supabase.from('deals').select('id, title, stage, value, closed_at, created_at'),
-    supabase.from('site_visits').select('id, scheduled_at'),
-    supabase.from('revenue_targets').select('period_start, target_value').order('period_start').limit(8),
-  ])
+  const [{ data: leads }, { data: deals }, { data: siteVisits }, { data: revenueTargets }, { data: followUps }] =
+    await Promise.all([
+      supabase.from('leads').select('id, source, stage, ai_score, full_name, created_at, owner:platform_users!leads_owner_id_fkey(full_name)'),
+      supabase.from('deals').select('id, title, stage, value, closed_at, created_at'),
+      supabase.from('site_visits').select('id, scheduled_at'),
+      supabase.from('revenue_targets').select('period_start, target_value').order('period_start').limit(8),
+      supabase
+        .from('follow_ups')
+        .select(
+          'id, type, status, due_at, lead:leads(full_name), customer:customers(full_name), owner:platform_users!follow_ups_owner_id_fkey(full_name)',
+        )
+        .neq('status', 'done')
+        .order('due_at', { ascending: true }),
+    ])
 
   const allLeads = leads ?? []
   const allDeals = deals ?? []
@@ -67,7 +76,7 @@ export async function getDashboardData() {
   const dealsPrevWeek = allDeals.filter((d) => new Date(d.created_at) >= twoWeeksAgo && new Date(d.created_at) < weekAgo).length
 
   const hotLeads = allLeads
-    .filter((l) => l.temperature === 'hot' && !['won', 'lost', 'archive'].includes(l.stage))
+    .filter((l) => deriveTemperature(l.ai_score) === 'hot' && !['won', 'lost', 'archive'].includes(l.stage))
     .sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0))
 
   const activePipelineValue = activeDealsList.reduce((sum, d) => sum + (d.value ?? 0), 0)
@@ -81,6 +90,31 @@ export async function getDashboardData() {
   const leadSourceBreakdown = Array.from(sourceCounts.entries())
     .map(([source, count]) => ({ source, slug: slugifySource(source), count }))
     .sort((a, b) => b.count - a.count)
+
+  // Priority queue -- the action items dashboard, not just KPIs. Each list is
+  // capped so the cards stay glanceable; "View all" links go to the full,
+  // filterable page. This same query is org-wide for admin (via RLS) and
+  // self-scoped for individual contributors, so one component serves both.
+  const allFollowUps = followUps ?? []
+  const overdueFollowUps = allFollowUps
+    .filter((f) => new Date(f.due_at).getTime() < now.getTime())
+    .slice(0, 8)
+  const dueTodayFollowUps = allFollowUps
+    .filter((f) => {
+      const d = new Date(f.due_at).getTime()
+      return d >= today.getTime() && d < today.getTime() + 86400000
+    })
+    .slice(0, 8)
+
+  const hotLeadsToContact = allLeads
+    .filter((l) => deriveTemperature(l.ai_score) === 'hot' && ['new', 'contacted', 'qualified'].includes(l.stage))
+    .sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0))
+    .slice(0, 8)
+
+  const freshLeads = allLeads
+    .filter((l) => l.stage === 'new')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 8)
 
   const monthlyRevenueSeries = (revenueTargets ?? []).map((t) => {
     const start = new Date(t.period_start)
@@ -109,5 +143,11 @@ export async function getDashboardData() {
     activePipelineValue,
     leadSourceBreakdown,
     monthlyRevenueSeries,
+    priorityQueue: {
+      overdueFollowUps,
+      dueTodayFollowUps,
+      hotLeadsToContact,
+      freshLeads,
+    },
   }
 }

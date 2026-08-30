@@ -37,7 +37,6 @@ function enumOpts(values: string[]) {
 
 export const fieldsByEntity: Record<Entity, FieldDef[]> = {
   leads: [
-    { value: 'temperature', label: 'Temperature', type: 'enum', options: enumOpts(['hot', 'warm', 'cold']) },
     { value: 'stage', label: 'Stage', type: 'enum', options: enumOpts(leadStages) },
     { value: 'source', label: 'Source', type: 'text' },
     { value: 'ai_score', label: 'AI score', type: 'number' },

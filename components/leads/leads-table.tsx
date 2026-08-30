@@ -17,6 +17,7 @@ import {
   Upload,
   X,
 } from 'lucide-react'
+import { deriveTemperature, type DerivedTemperature } from '@/lib/leads/temperature'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -37,7 +38,6 @@ import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/types'
 
 type LeadStage = Database['public']['Enums']['lead_stage']
-type LeadTemperature = Database['public']['Enums']['lead_temperature']
 const REFRESH_POLL_MS = 15000
 
 interface LeadRow {
@@ -50,7 +50,6 @@ interface LeadRow {
   budget_max: number | null
   source: string | null
   stage: LeadStage
-  temperature: LeadTemperature
   ai_score: number | null
   created_at: string
   city: string | null
@@ -94,7 +93,7 @@ const stageStyles: Record<LeadStage, string> = {
   archive: 'bg-muted text-muted-foreground',
 }
 
-const temperatureStyles: Record<LeadTemperature, string> = {
+const temperatureStyles: Record<DerivedTemperature, string> = {
   hot: 'border-destructive/30 bg-destructive/10 text-destructive',
   warm: 'border-primary/30 bg-primary/10 text-primary',
   cold: 'border-border bg-muted text-muted-foreground',
@@ -116,7 +115,6 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   const [showFilters, setShowFilters] = useState(false)
   const [sourceFilter, setSourceFilter] = useState('')
   const [stageFilter, setStageFilter] = useState('')
-  const [tempFilter, setTempFilter] = useState('')
   const [budgetMinFilter, setBudgetMinFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
   const [tagFilter, setTagFilter] = useState('')
@@ -187,7 +185,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   const counts = useMemo(
     () => ({
       all: leads.length,
-      hot: leads.filter((l) => l.temperature === 'hot').length,
+      hot: leads.filter((l) => deriveTemperature(l.ai_score) === 'hot').length,
       new: leads.filter((l) => l.stage === 'new').length,
       won: leads.filter((l) => l.stage === 'won').length,
     }),
@@ -200,7 +198,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     return leads.filter((lead) => {
       const matchesTab =
         activeTab === 'all' ||
-        (activeTab === 'hot' && lead.temperature === 'hot') ||
+        (activeTab === 'hot' && deriveTemperature(lead.ai_score) === 'hot') ||
         (activeTab === 'new' && lead.stage === 'new') ||
         (activeTab === 'won' && lead.stage === 'won')
 
@@ -213,14 +211,13 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
 
       const matchesSource = !sourceFilter || lead.source === sourceFilter
       const matchesStage = !stageFilter || lead.stage === stageFilter
-      const matchesTemp = !tempFilter || lead.temperature === tempFilter
       const matchesBudget = !budgetMinFilter || (lead.budget_max ?? 0) >= Number(budgetMinFilter)
       const matchesCity = !cityFilter || lead.city === cityFilter
       const matchesTag = !tagFilter || (lead.tags ?? []).includes(tagFilter)
 
-      return matchesTab && matchesQuery && matchesSource && matchesStage && matchesTemp && matchesBudget && matchesCity && matchesTag
+      return matchesTab && matchesQuery && matchesSource && matchesStage && matchesBudget && matchesCity && matchesTag
     })
-  }, [leads, activeTab, query, sourceFilter, stageFilter, tempFilter, budgetMinFilter, cityFilter, tagFilter])
+  }, [leads, activeTab, query, sourceFilter, stageFilter, budgetMinFilter, cityFilter, tagFilter])
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: counts.all },
@@ -229,12 +226,11 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     { key: 'won', label: 'Won', count: counts.won },
   ]
 
-  const activeFilterCount = [sourceFilter, stageFilter, tempFilter, budgetMinFilter, cityFilter, tagFilter].filter(Boolean).length
+  const activeFilterCount = [sourceFilter, stageFilter, budgetMinFilter, cityFilter, tagFilter].filter(Boolean).length
 
   function clearFilters() {
     setSourceFilter('')
     setStageFilter('')
-    setTempFilter('')
     setBudgetMinFilter('')
     setCityFilter('')
     setTagFilter('')
@@ -264,7 +260,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
 
   function handleExport() {
     const rows = [
-      ['Name', 'Email', 'Phone', 'Requirement', 'Budget Min', 'Budget Max', 'Source', 'Stage', 'Temperature', 'AI Score', 'Owner'],
+      ['Name', 'Email', 'Phone', 'Requirement', 'Budget Min', 'Budget Max', 'Source', 'Stage', 'AI Score', 'Owner'],
       ...filteredLeads.map((l) => [
         l.full_name,
         l.email ?? '',
@@ -274,7 +270,6 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
         l.budget_max?.toString() ?? '',
         l.source ?? '',
         l.stage,
-        l.temperature,
         l.ai_score?.toString() ?? '',
         l.owner?.full_name ?? '',
       ]),
@@ -306,7 +301,9 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
       setImportResult(data?.error ?? 'Import failed.')
       return
     }
-    setImportResult(`Imported ${data.inserted}/${data.total_rows} leads.`)
+    const ignored = data.ignored_columns as string[] | undefined
+    const ignoredNote = ignored && ignored.length > 0 ? ` (ignored column${ignored.length === 1 ? '' : 's'}: ${ignored.join(', ')})` : ''
+    setImportResult(`Imported ${data.inserted}/${data.total_rows} leads.${ignoredNote}`)
     router.refresh()
   }
 
@@ -426,19 +423,6 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] font-medium text-foreground/80">Temperature</label>
-                  <select
-                    value={tempFilter}
-                    onChange={(e) => setTempFilter(e.target.value)}
-                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
-                  >
-                    <option value="">Any</option>
-                    <option value="hot">Hot</option>
-                    <option value="warm">Warm</option>
-                    <option value="cold">Cold</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
                   <label className="text-[12px] font-medium text-foreground/80">Min budget (₹)</label>
                   <Input type="number" value={budgetMinFilter} onChange={(e) => setBudgetMinFilter(e.target.value)} placeholder="e.g. 5000000" />
                 </div>
@@ -502,7 +486,9 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
               </tr>
             </thead>
             <tbody>
-              {filteredLeads.map((lead) => (
+              {filteredLeads.map((lead) => {
+                const temp = deriveTemperature(lead.ai_score)
+                return (
                 <tr key={lead.id} className="border-b border-border/70 transition-colors last:border-b-0 hover:bg-accent/50">
                   <td className="px-4 py-3">
                     <Link href={`/leads/${lead.id}`} className="flex items-center gap-2.5">
@@ -547,10 +533,12 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                         </div>
                         <span className="text-[11px] font-semibold text-foreground">{lead.ai_score ?? '—'}</span>
                       </div>
-                      <Badge variant="outline" className={cn('rounded-full', temperatureStyles[lead.temperature])}>
-                        {lead.temperature === 'hot' && <Flame className="size-3" />}
-                        {lead.temperature}
-                      </Badge>
+                      {temp && (
+                        <Badge variant="outline" className={cn('rounded-full', temperatureStyles[temp])}>
+                          {temp === 'hot' && <Flame className="size-3" />}
+                          {temp}
+                        </Badge>
+                      )}
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{lead.owner?.full_name ?? '—'}</td>
@@ -607,7 +595,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
               {filteredLeads.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">

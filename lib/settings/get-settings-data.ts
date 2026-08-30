@@ -22,7 +22,7 @@ export async function getSettingsData() {
       // admin -> whole org, manager -> self + direct reports, user -> self only.
       supabase
         .from('platform_users')
-        .select('id, full_name, role, is_active, parent_id, manager:parent_id(full_name)')
+        .select('id, full_name, role, is_active, parent_id, nav_overrides, manager:parent_id(full_name)')
         .order('full_name'),
       me.role === 'admin' || me.role === 'super_admin'
         ? supabase.from('platform_users').select('id, full_name').eq('role', 'manager')

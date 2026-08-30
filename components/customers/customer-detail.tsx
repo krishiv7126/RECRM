@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, Loader2, Mail, MessageCircle, Phone as PhoneIcon, Sparkles, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Handshake, Loader2, Mail, MessageCircle, Phone as PhoneIcon, Sparkles, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,9 +11,25 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
-import type { CustomerWithOwner } from '@/lib/customers/get-customers-data'
+import { cn } from '@/lib/utils'
+import type { CustomerDeal, CustomerWithOwner } from '@/lib/customers/get-customers-data'
 
-export function CustomerDetail({ customer }: { customer: CustomerWithOwner }) {
+const dealStageStyles: Record<string, string> = {
+  new: 'bg-muted text-muted-foreground',
+  qualified: 'bg-secondary text-secondary-foreground',
+  proposal: 'bg-primary/15 text-primary',
+  negotiation: 'border border-primary/40 bg-transparent text-primary',
+  contract: 'bg-chart-4/15 text-chart-4',
+  booked: 'bg-success/15 text-success',
+  lost: 'bg-destructive/10 text-destructive',
+}
+
+function formatDealValue(value: number | null) {
+  if (!value) return '—'
+  return value >= 10000000 ? `₹${(value / 10000000).toFixed(1)}Cr` : `₹${Math.round(value / 100000)}L`
+}
+
+export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwner; deals: CustomerDeal[] }) {
   const router = useRouter()
   const [fullName, setFullName] = useState(customer.full_name)
   const [phone, setPhone] = useState(customer.phone ?? '')
@@ -98,6 +114,40 @@ export function CustomerDetail({ customer }: { customer: CustomerWithOwner }) {
           No AI summary yet — generate one in AI Workspace
         </Link>
       )}
+
+      <Card className="rounded-2xl border-border shadow-sm">
+        <CardContent className="flex flex-col gap-3 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-1.5 font-heading text-sm font-bold text-foreground">
+              <Handshake className="size-4 text-muted-foreground" />
+              Deals
+            </h2>
+            <Link href="/deals" className="text-[12px] text-primary hover:underline">
+              Open Deals board
+            </Link>
+          </div>
+          {deals.length === 0 ? (
+            <p className="text-[13px] text-muted-foreground">No deals linked to this customer yet.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {deals.map((deal) => (
+                <div key={deal.id} className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2.5">
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-[13px] font-medium text-foreground">{deal.title}</span>
+                    <span className="text-[12px] text-muted-foreground">{deal.code}</span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-[13px] font-semibold text-foreground">{formatDealValue(deal.value)}</span>
+                    <Badge variant="outline" className={cn('rounded-full', dealStageStyles[deal.stage] ?? 'bg-muted text-muted-foreground')}>
+                      {deal.stage.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="flex flex-col gap-4 p-5">

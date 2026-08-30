@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AIOrb, AuroraField, StreamingText, type Phase } from '@/components/ai/ai-motion'
 import { createClient } from '@/lib/supabase/client'
+import { deriveTemperature } from '@/lib/leads/temperature'
 import type { Database } from '@/lib/supabase/types'
 
 type LeadStage = Database['public']['Enums']['lead_stage']
-type LeadTemperature = Database['public']['Enums']['lead_temperature']
 
 interface LeadRow {
   id: string
@@ -20,7 +20,6 @@ interface LeadRow {
   budget_min: number | null
   budget_max: number | null
   stage: LeadStage
-  temperature: LeadTemperature
   ai_score: number | null
 }
 
@@ -46,7 +45,7 @@ const stageStyles: Record<LeadStage, string> = {
   archive: 'bg-muted text-muted-foreground',
 }
 
-const temperatureStyles: Record<LeadTemperature, string> = {
+const temperatureStyles: Record<'hot' | 'warm' | 'cold', string> = {
   hot: 'border-destructive/30 bg-destructive/10 text-destructive',
   warm: 'border-primary/30 bg-primary/10 text-primary',
   cold: 'border-border bg-muted text-muted-foreground',
@@ -144,7 +143,7 @@ export default function LeadIntelligencePage() {
     const supabase = createClient()
     supabase
       .from('leads')
-      .select('id, full_name, requirement, budget_min, budget_max, stage, temperature, ai_score')
+      .select('id, full_name, requirement, budget_min, budget_max, stage, ai_score')
       .not('stage', 'in', '(won,lost,archive)')
       .order('created_at', { ascending: false })
       .limit(50)
@@ -264,9 +263,14 @@ export default function LeadIntelligencePage() {
                           <Badge className={`rounded-full border-0 ${stageStyles[lead.stage]}`}>
                             {stageLabels[lead.stage]}
                           </Badge>
-                          <Badge variant="outline" className={`rounded-full ${temperatureStyles[lead.temperature]}`}>
-                            {lead.temperature}
-                          </Badge>
+                          {deriveTemperature(lead.ai_score) && (
+                            <Badge
+                              variant="outline"
+                              className={`rounded-full ${temperatureStyles[deriveTemperature(lead.ai_score)!]}`}
+                            >
+                              {deriveTemperature(lead.ai_score)}
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-[13px] text-muted-foreground">
                           {lead.requirement ?? 'No requirement noted'} ·{' '}

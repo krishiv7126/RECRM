@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { deriveTemperature } from '@/lib/leads/temperature'
 import type { RangeKey } from '@/lib/analytics/analytics-range'
 
 export type { RangeKey }
@@ -64,7 +65,7 @@ export async function getAnalyticsData(range: RangeKey = '30d') {
   const [{ data: users }, { data: leads }, { data: deals }, { data: siteVisits }, { data: followUps }] =
     await Promise.all([
       supabase.from('platform_users').select('id, full_name, role, parent_id, is_active'),
-      supabase.from('leads').select('id, owner_id, stage, temperature, source, created_at'),
+      supabase.from('leads').select('id, owner_id, stage, ai_score, source, created_at'),
       supabase.from('deals').select('id, owner_id, stage, value, closed_at, created_at, updated_at, lead_id'),
       supabase.from('site_visits').select('id, owner_id, status, scheduled_at'),
       supabase.from('follow_ups').select('id, owner_id, status, due_at'),
@@ -149,7 +150,7 @@ export async function getAnalyticsData(range: RangeKey = '30d') {
         role: u.role as 'manager' | 'user',
         reports_to: allUsers.find((m) => m.id === u.parent_id)?.full_name ?? null,
         total_leads: myLeads.length,
-        hot_leads: myLeads.filter((l) => l.temperature === 'hot').length,
+        hot_leads: myLeads.filter((l) => deriveTemperature(l.ai_score) === 'hot').length,
         lead_conversion_pct: myLeads.length > 0 ? Math.round((won / myLeads.length) * 1000) / 10 : 0,
         deals_closed: myBooked.length,
         revenue_generated: myBooked.reduce((s, d) => s + (d.value ?? 0), 0),

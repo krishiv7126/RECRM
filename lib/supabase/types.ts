@@ -1409,6 +1409,7 @@ export type Database = {
           id: string
           is_active: boolean
           must_reset_password: boolean
+          nav_overrides: Json | null
           onboarding_completed_at: string | null
           notification_preferences: Json
           org_id: string | null
@@ -1426,6 +1427,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           must_reset_password?: boolean
+          nav_overrides?: Json | null
           onboarding_completed_at?: string | null
           notification_preferences?: Json
           org_id?: string | null
@@ -1443,6 +1445,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           must_reset_password?: boolean
+          nav_overrides?: Json | null
           onboarding_completed_at?: string | null
           notification_preferences?: Json
           org_id?: string | null

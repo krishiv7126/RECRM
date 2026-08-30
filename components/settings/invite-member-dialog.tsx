@@ -43,7 +43,7 @@ export function InviteMemberDialog({
 
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
-  const [role, setRole] = useState<'manager' | 'user'>(isAdmin ? 'manager' : 'user')
+  const [role, setRole] = useState<'manager' | 'user' | 'receptionist'>(isAdmin ? 'manager' : 'user')
   const [parentId, setParentId] = useState('')
 
   useEffect(() => {
@@ -177,11 +177,12 @@ export function InviteMemberDialog({
                   <select
                     id="invite_role"
                     value={role}
-                    onChange={(e) => setRole(e.target.value as 'manager' | 'user')}
+                    onChange={(e) => setRole(e.target.value as 'manager' | 'user' | 'receptionist')}
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
                   >
                     <option value="manager">Manager</option>
                     <option value="user">User</option>
+                    <option value="receptionist">Receptionist</option>
                   </select>
                 </div>
               )}

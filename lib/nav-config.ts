@@ -20,6 +20,9 @@ import {
   Inbox,
   Settings,
   ShieldCheck,
+  ClipboardPlus,
+  ClipboardList,
+  MessageCircle,
 } from 'lucide-react'
 
 export interface NavLeaf {
@@ -40,7 +43,7 @@ export interface NavSection {
   groups: NavGroup[]
 }
 
-export type Role = 'super_admin' | 'admin' | 'manager' | 'user'
+export type Role = 'super_admin' | 'admin' | 'manager' | 'user' | 'receptionist'
 
 export const adminNav: NavSection[] = [
   {
@@ -69,6 +72,8 @@ export const adminNav: NavSection[] = [
           { label: 'Site Visits', href: '/site-visits', icon: CalendarCheck },
         ],
       },
+      { label: 'New Inquiry', icon: ClipboardPlus, href: '/inquiries/new' },
+      { label: 'Inquiries', icon: ClipboardList, href: '/inquiries' },
     ],
   },
   {
@@ -89,6 +94,7 @@ export const adminNav: NavSection[] = [
         ],
       },
       { label: 'Automation', icon: Workflow, href: '/automation' },
+      { label: 'WhatsApp Broadcast', icon: MessageCircle, href: '/whatsapp-broadcast' },
       { label: 'Analytics', icon: BarChart3, href: '/analytics' },
     ],
   },
@@ -112,16 +118,42 @@ function withoutGroups(sections: NavSection[], labelsToRemove: string[]): NavSec
 }
 
 // Manager: no Automation (workflow rules are an org-level admin concern), no
-// Approvals (only admins decide manager/user login approvals).
-export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Approvals'])
+// Approvals (only admins decide manager/user login approvals), no Inquiries
+// dashboard (that's an admin/receptionist front-desk view).
+export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Approvals', 'Inquiries'])
 
 // User: no Automation, no Analytics (individual contributors don't see org-wide
-// reporting), no Approvals.
-export const userNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Analytics', 'Approvals'])
+// reporting), no Approvals, no Inquiries dashboard, no WhatsApp Broadcast
+// (mass messaging is a manager/admin action) — but they do get New Inquiry,
+// since sales staff are exactly who logs a walk-in/offline inquiry.
+export const userNav: NavSection[] = withoutGroups(adminNav, [
+  'Automation',
+  'Analytics',
+  'Approvals',
+  'Inquiries',
+  'WhatsApp Broadcast',
+])
+
+// Receptionist: a narrow, front-desk-only role — not derived from adminNav
+// since it needs to exclude nearly everything rather than a few groups.
+export const receptionistNav: NavSection[] = [
+  {
+    label: 'Overview',
+    groups: [{ label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' }],
+  },
+  {
+    label: 'Front Desk',
+    groups: [
+      { label: 'New Inquiry', icon: ClipboardPlus, href: '/inquiries/new' },
+      { label: 'Inquiries', icon: ClipboardList, href: '/inquiries' },
+    ],
+  },
+]
 
 export const navByRole: Record<Role, NavSection[]> = {
   super_admin: adminNav,
   admin: adminNav,
   manager: managerNav,
   user: userNav,
+  receptionist: receptionistNav,
 }

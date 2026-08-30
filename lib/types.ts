@@ -1,7 +1,7 @@
 // Types mirror the real Supabase Postgres schema column-for-column.
 // Do not add fields that aren't real columns, and do not drop any listed columns.
 
-export type UserRole = 'super_admin' | 'admin' | 'manager' | 'user'
+export type UserRole = 'super_admin' | 'admin' | 'manager' | 'user' | 'receptionist'
 
 export interface Organization {
   id: string

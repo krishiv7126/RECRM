@@ -2013,6 +2013,63 @@ export type Database = {
           },
         ]
       }
+      whatsapp_campaigns: {
+        Row: {
+          audience_type: string
+          created_at: string
+          created_by: string
+          filters: Json
+          id: string
+          message: string
+          org_id: string
+          recipient_count: number
+          recipients: Json
+          status: string
+          title: string
+        }
+        Insert: {
+          audience_type: string
+          created_at?: string
+          created_by: string
+          filters?: Json
+          id?: string
+          message: string
+          org_id: string
+          recipient_count?: number
+          recipients?: Json
+          status?: string
+          title: string
+        }
+        Update: {
+          audience_type?: string
+          created_at?: string
+          created_by?: string
+          filters?: Json
+          id?: string
+          message?: string
+          org_id?: string
+          recipient_count?: number
+          recipients?: Json
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_campaigns_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       v_staff_performance: {
@@ -2214,7 +2271,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "overdue"
-      user_role: "super_admin" | "admin" | "manager" | "user"
+      user_role: "super_admin" | "admin" | "manager" | "user" | "receptionist"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2464,7 +2521,7 @@ export const Constants = {
         "cancelled",
         "overdue",
       ],
-      user_role: ["super_admin", "admin", "manager", "user"],
+      user_role: ["super_admin", "admin", "manager", "user", "receptionist"],
     },
   },
 } as const

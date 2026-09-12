@@ -1,24 +1,19 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, ArrowLeft, Check, ClipboardPlus, Loader2 } from 'lucide-react'
+import { ArrowLeft, Check, ClipboardPlus, Loader2 } from 'lucide-react'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
+import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
+import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
 
 const INQUIRY_SOURCE = 'Offline Inquiry'
-
-interface DuplicateMatch {
-  type: 'lead' | 'customer'
-  id: string
-  full_name: string
-  stage?: string
-}
 
 export function InquiryForm() {
   const [fullName, setFullName] = useState('')
@@ -32,47 +27,7 @@ export function InquiryForm() {
   const [error, setError] = useState<string | null>(null)
   const [justLogged, setJustLogged] = useState<string | null>(null)
 
-  const [checkingPhone, setCheckingPhone] = useState(false)
-  const [duplicateMatch, setDuplicateMatch] = useState<DuplicateMatch | null>(null)
-  const phoneCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const phoneCheckToken = useRef(0)
-
-  // Debounced so every keystroke doesn't hit Supabase — waits for a pause,
-  // then re-verifies against both leads and customers for this org (RLS-scoped).
-  useEffect(() => {
-    const trimmed = phone.trim()
-    if (phoneCheckTimer.current) clearTimeout(phoneCheckTimer.current)
-    phoneCheckToken.current += 1
-    const token = phoneCheckToken.current
-
-    if (trimmed.length < 7) {
-      setCheckingPhone(false)
-      setDuplicateMatch(null)
-      return
-    }
-
-    setCheckingPhone(true)
-    phoneCheckTimer.current = setTimeout(async () => {
-      const supabase = createClient()
-      const [{ data: leadMatch }, { data: customerMatch }] = await Promise.all([
-        supabase.from('leads').select('id, full_name, stage').eq('phone', trimmed).limit(1).maybeSingle(),
-        supabase.from('customers').select('id, full_name').eq('phone', trimmed).limit(1).maybeSingle(),
-      ])
-      if (phoneCheckToken.current !== token) return
-      setCheckingPhone(false)
-      if (customerMatch) {
-        setDuplicateMatch({ type: 'customer', id: customerMatch.id, full_name: customerMatch.full_name })
-      } else if (leadMatch) {
-        setDuplicateMatch({ type: 'lead', id: leadMatch.id, full_name: leadMatch.full_name, stage: leadMatch.stage })
-      } else {
-        setDuplicateMatch(null)
-      }
-    }, 500)
-
-    return () => {
-      if (phoneCheckTimer.current) clearTimeout(phoneCheckTimer.current)
-    }
-  }, [phone])
+  const { checking: checkingPhone, match: duplicateMatch } = useDuplicatePhoneCheck(phone)
 
   function resetForm() {
     setFullName('')
@@ -82,7 +37,6 @@ export function InquiryForm() {
     setRequirement('')
     setNotes('')
     setError(null)
-    setDuplicateMatch(null)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -176,22 +130,7 @@ export function InquiryForm() {
                   Phone
                 </label>
                 <Input id="inq_phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                {checkingPhone && (
-                  <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-                    <Loader2 className="size-3 animate-spin" />
-                    Checking existing records…
-                  </p>
-                )}
-                {!checkingPhone && duplicateMatch && (
-                  <Link
-                    href={duplicateMatch.type === 'lead' ? `/leads/${duplicateMatch.id}` : `/customers/${duplicateMatch.id}`}
-                    className="flex items-center gap-1.5 text-[12px] font-medium text-danger hover:underline"
-                  >
-                    <AlertTriangle className="size-3 shrink-0" />
-                    Already a {duplicateMatch.type}: {duplicateMatch.full_name}
-                    {duplicateMatch.stage ? ` · ${duplicateMatch.stage}` : ''}
-                  </Link>
-                )}
+                <DuplicatePhoneNotice checking={checkingPhone} match={duplicateMatch} />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="inq_email" className="text-sm font-medium text-foreground">

@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
+import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
+import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
 
 const sources = ['Website', 'Referral', 'Meta Ads', 'Google', '99acres', 'Walk-in', 'Other']
 
@@ -36,6 +38,8 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
   const [city, setCity] = useState('')
   const [tags, setTags] = useState('')
   const [notes, setNotes] = useState('')
+
+  const { checking: checkingPhone, match: duplicateMatch } = useDuplicatePhoneCheck(phone)
 
   function resetForm() {
     setFullName('')
@@ -143,6 +147,7 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
                 Phone
               </label>
               <Input id="lead_phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <DuplicatePhoneNotice checking={checkingPhone} match={duplicateMatch} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="lead_email" className="text-sm font-medium text-foreground">

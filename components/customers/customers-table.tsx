@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowDownAZ,
   Clock,
-  Download,
   Filter,
   Mail,
   MessageCircle,
@@ -157,29 +156,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     router.push('/deals')
   }
 
-  function handleExport() {
-    const rows = [
-      ['Name', 'Email', 'Phone', 'City', 'Tags', 'Open Deals', 'Owner'],
-      ...filteredCustomers.map((c) => [
-        c.full_name,
-        c.email ?? '',
-        c.phone ?? '',
-        c.city ?? '',
-        (c.tags ?? []).join('; '),
-        c.open_deals.toString(),
-        c.owner?.full_name ?? '',
-      ]),
-    ]
-    const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `customers-export-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -189,10 +165,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
           description={`${customers.length} total customers · ${convertedThisMonth} added this month`}
         />
         <div className="flex shrink-0 items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download data-icon="inline-start" />
-            Export
-          </Button>
           <CreateCustomerDialog
             trigger={
               <Button size="sm" className="bg-foreground text-background hover:bg-foreground/85">

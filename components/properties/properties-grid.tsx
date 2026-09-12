@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import {
   Bath,
   BedDouble,
-  Download,
   Filter,
   ImageOff,
   Loader2,
@@ -179,33 +178,6 @@ export function PropertiesGrid({
     setProperties((prev) => prev.filter((p) => p.id !== property.id))
   }
 
-  function handleExport() {
-    const rows = [
-      ['Title', 'Type', 'Address', 'City', 'Size (sqft)', 'Bedrooms', 'Bathrooms', 'Price', 'Status', 'Project', 'Owner'],
-      ...filteredProperties.map((p) => [
-        p.title,
-        p.property_type,
-        p.address ?? '',
-        p.city ?? '',
-        p.size_sqft?.toString() ?? '',
-        p.bedrooms?.toString() ?? '',
-        p.bathrooms?.toString() ?? '',
-        p.price?.toString() ?? '',
-        p.status,
-        p.project?.name ?? '',
-        p.owner?.full_name ?? '',
-      ]),
-    ]
-    const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `properties-export-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -289,10 +261,6 @@ export function PropertiesGrid({
           <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
             {importing ? <Loader2 className="animate-spin" /> : <Upload data-icon="inline-start" />}
             Import
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download data-icon="inline-start" />
-            Export
           </Button>
           <PropertyDialog
             trigger={

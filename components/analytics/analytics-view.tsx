@@ -107,24 +107,6 @@ export function AnalyticsView({ data, range }: { data: AnalyticsData; range: Ran
     router.push(`/analytics?range=${key}`)
   }
 
-  function exportOverview() {
-    downloadCsv(
-      [
-        ['Metric', 'Value'],
-        ['Range', rangeLabel(range)],
-        ['Total Revenue', kpis.revenue.value.toString()],
-        ['Deals Closed', kpis.dealsClosed.value.toString()],
-        ['Avg Deal Size', Math.round(kpis.avgDeal.value).toString()],
-        ['Lead Conversion Rate %', kpis.conversion.value.toFixed(1)],
-        ['Site Visits', kpis.siteVisits.value.toString()],
-        [],
-        ['Lead Source', 'Total Leads', 'Converted', 'Conversion %', 'Revenue'],
-        ...leadSources.map((s) => [s.source, s.total, s.converted, s.conversion, s.revenue]),
-      ],
-      `analytics-${range}-${new Date().toISOString().slice(0, 10)}.csv`,
-    )
-  }
-
   function downloadStaffReport() {
     downloadCsv(
       [
@@ -178,10 +160,6 @@ export function AnalyticsView({ data, range }: { data: AnalyticsData; range: Ran
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm" onClick={exportOverview}>
-            <Download data-icon="inline-start" />
-            Export
-          </Button>
         </div>
       </div>
 

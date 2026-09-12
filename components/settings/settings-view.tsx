@@ -2,17 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  AlertTriangle,
-  Building2,
-  Camera,
-  Download,
-  Loader2,
-  Lock,
-  Megaphone,
-  MessageCircle,
-  Plus,
-} from 'lucide-react'
+import { Camera, Loader2, Lock, Megaphone, MessageCircle, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -28,13 +18,12 @@ import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { SettingsData } from '@/lib/settings/get-settings-data'
 
-type TabKey = 'profile' | 'organization' | 'team' | 'integrations' | 'notifications' | 'danger'
+type TabKey = 'profile' | 'organization' | 'team' | 'integrations' | 'notifications'
 
 interface TabDef {
   key: TabKey
   label: string
   adminOnly: boolean
-  danger?: boolean
 }
 
 const TABS: TabDef[] = [
@@ -43,7 +32,6 @@ const TABS: TabDef[] = [
   { key: 'team', label: 'Team Management', adminOnly: true },
   { key: 'integrations', label: 'Integrations', adminOnly: true },
   { key: 'notifications', label: 'Notifications', adminOnly: false },
-  { key: 'danger', label: 'Danger Zone', adminOnly: true, danger: true },
 ]
 
 const integrationMeta: Record<string, { icon: typeof MessageCircle; color: string }> = {
@@ -72,17 +60,6 @@ function canAccessTab(tab: TabKey, role: string) {
   return isAdmin || !TABS.find((t) => t.key === tab)?.adminOnly
 }
 
-function downloadCsv(rows: (string | number)[][], filename: string) {
-  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
 export function SettingsView({ data }: { data: SettingsData }) {
   const router = useRouter()
   const { me, organization, staff, managers, providers, orgIntegrations } = data
@@ -101,8 +78,6 @@ export function SettingsView({ data }: { data: SettingsData }) {
 
   const [staffRows, setStaffRows] = useState(staff)
   const [reassignTarget, setReassignTarget] = useState<(typeof staff)[number] | null>(null)
-
-  const [exporting, setExporting] = useState(false)
 
   const initialPrefs = (me.notification_preferences ?? {}) as Record<string, boolean>
   const [prefs, setPrefs] = useState<Record<string, boolean>>(
@@ -170,36 +145,6 @@ export function SettingsView({ data }: { data: SettingsData }) {
     if (error) window.alert(error.message)
   }
 
-  async function exportAllData() {
-    setExporting(true)
-    const supabase = createClient()
-    const stamp = new Date().toISOString().slice(0, 10)
-
-    const [{ data: leads }, { data: customers }, { data: deals }, { data: properties }] = await Promise.all([
-      supabase.from('leads').select('full_name, email, phone, stage, temperature, source, created_at'),
-      supabase.from('customers').select('full_name, email, phone, city, created_at'),
-      supabase.from('deals').select('code, title, stage, value, expected_close_date, created_at'),
-      supabase.from('properties').select('title, property_type, status, city, price, created_at'),
-    ])
-
-    const tables: [string, { data: Record<string, unknown>[] | null }][] = [
-      ['leads', { data: leads }],
-      ['customers', { data: customers }],
-      ['deals', { data: deals }],
-      ['properties', { data: properties }],
-    ]
-
-    for (const [name, { data: rows }] of tables) {
-      if (!rows || rows.length === 0) continue
-      const headers = Object.keys(rows[0])
-      downloadCsv([headers, ...rows.map((r) => headers.map((h) => String(r[h] ?? '')))], `${name}-export-${stamp}.csv`)
-      // Small gap so the browser doesn't treat rapid downloads as a popup flood.
-      await new Promise((resolve) => setTimeout(resolve, 250))
-    }
-
-    setExporting(false)
-  }
-
   return (
     <TooltipProvider>
       <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-6">
@@ -224,9 +169,7 @@ export function SettingsView({ data }: { data: SettingsData }) {
                     'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors',
                     isActive && !locked
                       ? 'bg-primary text-primary-foreground'
-                      : tab.danger
-                        ? 'text-destructive hover:bg-destructive/10'
-                        : 'text-foreground/80 hover:bg-muted',
+                      : 'text-foreground/80 hover:bg-muted',
                     locked && 'cursor-not-allowed text-muted-foreground opacity-60 hover:bg-transparent',
                   )}
                 >
@@ -540,34 +483,6 @@ export function SettingsView({ data }: { data: SettingsData }) {
                     >
                       {savingPrefs && <Loader2 className="animate-spin" data-icon="inline-start" />}
                       Save Preferences
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {activeTab === 'danger' && isAdmin && (
-              <Card className="rounded-2xl border-destructive/30 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-heading text-base font-bold text-destructive">
-                    <AlertTriangle className="size-4" />
-                    Danger Zone
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between gap-4 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-4">
-                    <div className="flex items-start gap-3">
-                      <Building2 className="mt-0.5 size-5 shrink-0 text-destructive" />
-                      <div>
-                        <p className="text-[13px] font-semibold text-foreground">Export All Data</p>
-                        <p className="text-[12px] text-muted-foreground">
-                          Download CSV exports of your organization&apos;s leads, customers, deals, and properties.
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="destructive" size="sm" className="shrink-0" disabled={exporting} onClick={exportAllData}>
-                      {exporting ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Download data-icon="inline-start" />}
-                      Export
                     </Button>
                   </div>
                 </CardContent>

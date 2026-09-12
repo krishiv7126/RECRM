@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Download,
   Filter,
   Flame,
   Loader2,
@@ -258,32 +257,6 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     router.refresh()
   }
 
-  function handleExport() {
-    const rows = [
-      ['Name', 'Email', 'Phone', 'Requirement', 'Budget Min', 'Budget Max', 'Source', 'Stage', 'AI Score', 'Owner'],
-      ...filteredLeads.map((l) => [
-        l.full_name,
-        l.email ?? '',
-        l.phone ?? '',
-        l.requirement ?? '',
-        l.budget_min?.toString() ?? '',
-        l.budget_max?.toString() ?? '',
-        l.source ?? '',
-        l.stage,
-        l.ai_score?.toString() ?? '',
-        l.owner?.full_name ?? '',
-      ]),
-    ]
-    const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `leads-export-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -320,10 +293,6 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
           <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
             {importing ? <Loader2 className="animate-spin" /> : <Upload data-icon="inline-start" />}
             Import
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download data-icon="inline-start" />
-            Export
           </Button>
           <CreateLeadDialog
             trigger={

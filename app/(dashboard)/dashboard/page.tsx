@@ -14,16 +14,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <GreetingHeader
-        fullName={me?.full_name ?? 'there'}
-        exportData={{
-          totalLeads: data.totalLeads,
-          activeDeals: data.activeDeals,
-          revenueMtd: data.revenueMtd,
-          visitsToday: data.visitsToday,
-          monthlyRevenueSeries: data.monthlyRevenueSeries,
-        }}
-      />
+      <GreetingHeader fullName={me?.full_name ?? 'there'} />
       <AiDailyBrief
         topHotLead={data.topHotLead}
         biggestActiveDeal={data.biggestActiveDeal}

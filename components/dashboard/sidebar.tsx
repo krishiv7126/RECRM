@@ -125,6 +125,9 @@ export function DashboardSidebar({
             </div>
           )}
         </div>
+        {!collapsed && (
+          <p className="mt-2 px-1 text-center text-[10px] text-muted-foreground/70">built by ZeroBites</p>
+        )}
       </div>
     </aside>
   )

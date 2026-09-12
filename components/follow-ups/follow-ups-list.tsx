@@ -55,7 +55,7 @@ const statusStyles: Record<FollowUpStatus, string> = {
 
 const statusLabels: Record<FollowUpStatus, string> = {
   pending: 'Pending',
-  done: 'Done',
+  done: 'Complete',
   missed: 'Missed',
 }
 
@@ -158,7 +158,8 @@ export function FollowUpsList({
       today: followUps.filter((f) => f.status !== 'done' && isToday(f.due_at)).length,
       pending: followUps.filter((f) => f.status === 'pending').length,
       overdue: followUps.filter((f) => f.status !== 'done' && new Date(f.due_at).getTime() < now).length,
-      done: followUps.filter((f) => f.status === 'done').length,
+      // Complete tab is a daily log, not lifetime history — only today's completions count.
+      done: followUps.filter((f) => f.status === 'done' && f.completed_at && isToday(f.completed_at)).length,
     }
   }, [followUps])
 
@@ -173,7 +174,7 @@ export function FollowUpsList({
         (activeTab === 'today' && f.status !== 'done' && isToday(f.due_at)) ||
         (activeTab === 'pending' && f.status === 'pending') ||
         (activeTab === 'overdue' && overdue) ||
-        (activeTab === 'done' && f.status === 'done')
+        (activeTab === 'done' && f.status === 'done' && !!f.completed_at && isToday(f.completed_at))
 
       const q = query.trim().toLowerCase()
       const matchesQuery =
@@ -193,7 +194,7 @@ export function FollowUpsList({
     { key: 'today', label: 'Today', count: counts.today },
     { key: 'pending', label: 'Pending', count: counts.pending },
     { key: 'overdue', label: 'Overdue', count: counts.overdue },
-    { key: 'done', label: 'Done', count: counts.done },
+    { key: 'done', label: 'Complete', count: counts.done },
   ]
 
   async function handleMarkDone(followUp: FollowUpWithRelations) {
@@ -420,7 +421,7 @@ export function FollowUpsList({
                   className="text-[12px]"
                   onClick={() => handleMarkDone(followUp)}
                 >
-                  Mark done
+                  Mark complete
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger

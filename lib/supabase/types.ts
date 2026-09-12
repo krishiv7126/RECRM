@@ -978,6 +978,7 @@ export type Database = {
           org_id: string
           owner_id: string | null
           phone: string | null
+          reference: string | null
           requirement: string | null
           source: string | null
           stage: Database["public"]["Enums"]["lead_stage"]
@@ -1001,6 +1002,7 @@ export type Database = {
           org_id: string
           owner_id?: string | null
           phone?: string | null
+          reference?: string | null
           requirement?: string | null
           source?: string | null
           stage?: Database["public"]["Enums"]["lead_stage"]
@@ -1024,6 +1026,7 @@ export type Database = {
           org_id?: string
           owner_id?: string | null
           phone?: string | null
+          reference?: string | null
           requirement?: string | null
           source?: string | null
           stage?: Database["public"]["Enums"]["lead_stage"]

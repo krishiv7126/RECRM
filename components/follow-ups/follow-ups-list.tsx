@@ -79,7 +79,15 @@ function linkedRecordLabel(fu: FollowUpWithRelations) {
   return '—'
 }
 
-type FilterTab = 'all' | 'pending' | 'overdue' | 'done'
+type FilterTab = 'all' | 'today' | 'pending' | 'overdue' | 'done'
+
+function isToday(iso: string) {
+  const d = new Date(iso)
+  const now = new Date()
+  return (
+    d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+  )
+}
 
 export function FollowUpsList({
   initialFollowUps,
@@ -99,7 +107,9 @@ export function FollowUpsList({
   const initialTab = searchParams.get('tab')
   const [followUps, setFollowUps] = useState(initialFollowUps)
   const [activeTab, setActiveTab] = useState<FilterTab>(
-    initialTab === 'pending' || initialTab === 'overdue' || initialTab === 'done' ? initialTab : 'all',
+    initialTab === 'today' || initialTab === 'pending' || initialTab === 'overdue' || initialTab === 'done'
+      ? initialTab
+      : 'all',
   )
   const [query, setQuery] = useState('')
   const [showFilter, setShowFilter] = useState(false)
@@ -145,6 +155,7 @@ export function FollowUpsList({
     const now = Date.now()
     return {
       all: followUps.length,
+      today: followUps.filter((f) => f.status !== 'done' && isToday(f.due_at)).length,
       pending: followUps.filter((f) => f.status === 'pending').length,
       overdue: followUps.filter((f) => f.status !== 'done' && new Date(f.due_at).getTime() < now).length,
       done: followUps.filter((f) => f.status === 'done').length,
@@ -159,6 +170,7 @@ export function FollowUpsList({
       const overdue = f.status !== 'done' && new Date(f.due_at).getTime() < now
       const matchesTab =
         activeTab === 'all' ||
+        (activeTab === 'today' && f.status !== 'done' && isToday(f.due_at)) ||
         (activeTab === 'pending' && f.status === 'pending') ||
         (activeTab === 'overdue' && overdue) ||
         (activeTab === 'done' && f.status === 'done')
@@ -178,6 +190,7 @@ export function FollowUpsList({
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: counts.all },
+    { key: 'today', label: 'Today', count: counts.today },
     { key: 'pending', label: 'Pending', count: counts.pending },
     { key: 'overdue', label: 'Overdue', count: counts.overdue },
     { key: 'done', label: 'Done', count: counts.done },

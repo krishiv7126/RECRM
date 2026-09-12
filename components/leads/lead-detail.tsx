@@ -29,6 +29,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [budgetMax, setBudgetMax] = useState(lead.budget_max?.toString() ?? '')
   const [requirement, setRequirement] = useState(lead.requirement ?? '')
   const [city, setCity] = useState(lead.city ?? '')
+  const [reference, setReference] = useState(lead.reference ?? '')
   const [tags, setTags] = useState((lead.tags ?? []).join(', '))
   const [notes, setNotes] = useState(lead.notes ?? '')
 
@@ -62,6 +63,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
         budget_max: budgetMax ? Number(budgetMax) : null,
         requirement: requirement.trim() || null,
         city: city.trim() || null,
+        reference: reference.trim() || null,
         tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
         notes: notes.trim() || null,
       })
@@ -211,6 +213,10 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Budget max (₹)</label>
               <Input type="number" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">Reference</label>
+              <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. Referred by Rohan Kapoor" />
             </div>
           </div>
 

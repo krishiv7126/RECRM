@@ -20,6 +20,9 @@ export function InquiryForm() {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [city, setCity] = useState('')
+  const [budgetMin, setBudgetMin] = useState('')
+  const [budgetMax, setBudgetMax] = useState('')
+  const [reference, setReference] = useState('')
   const [requirement, setRequirement] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -34,6 +37,9 @@ export function InquiryForm() {
     setPhone('')
     setEmail('')
     setCity('')
+    setBudgetMin('')
+    setBudgetMax('')
+    setReference('')
     setRequirement('')
     setNotes('')
     setError(null)
@@ -73,6 +79,9 @@ export function InquiryForm() {
         phone: phone.trim() || null,
         email: email.trim() || null,
         city: city.trim() || null,
+        budget_min: budgetMin ? Number(budgetMin) : null,
+        budget_max: budgetMax ? Number(budgetMax) : null,
+        reference: reference.trim() || null,
         requirement: requirement.trim() || null,
         notes: notes.trim() || null,
         source: INQUIRY_SOURCE,
@@ -145,6 +154,33 @@ export function InquiryForm() {
                 City
               </label>
               <Input id="inq_city" value={city} onChange={(e) => setCity(e.target.value)} />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="inq_budget_min" className="text-sm font-medium text-foreground">
+                  Budget min (₹)
+                </label>
+                <Input id="inq_budget_min" type="number" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="inq_budget_max" className="text-sm font-medium text-foreground">
+                  Budget max (₹)
+                </label>
+                <Input id="inq_budget_max" type="number" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="inq_reference" className="text-sm font-medium text-foreground">
+                Reference
+              </label>
+              <Input
+                id="inq_reference"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="e.g. Referred by Rohan Kapoor"
+              />
             </div>
 
             <div className="flex flex-col gap-1.5">

@@ -19,6 +19,15 @@ import { ProjectDialog } from '@/components/projects/project-dialog'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { ProjectWithRelations } from '@/lib/projects/get-projects-data'
+import type { Database } from '@/lib/supabase/types'
+
+type ProjectType = Database['public']['Enums']['project_type']
+
+const projectTypeLabels: Record<ProjectType, string> = {
+  residential: 'Residential',
+  commercial: 'Commercial',
+  mixed_use: 'Mixed-Use',
+}
 
 function formatPrice(amount: number) {
   return amount >= 10000000 ? `₹${(amount / 10000000).toFixed(1)}Cr` : `₹${Math.round(amount / 100000)}L`
@@ -144,13 +153,17 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: ProjectWith
               className="flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-border transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className="relative h-40 w-full bg-gradient-to-br from-primary/25 via-accent to-secondary/60">
-                <Badge
-                  variant="outline"
-                  className="absolute left-3 top-3 gap-1.5 rounded-full border-0 bg-card/90 text-foreground/80"
-                >
-                  <Building2 className="size-3.5" />
-                  {stats.availableUnits} units available
-                </Badge>
+                <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
+                  <Badge variant="outline" className="gap-1.5 rounded-full border-0 bg-card/90 text-foreground/80">
+                    <Building2 className="size-3.5" />
+                    {stats.availableUnits} units available
+                  </Badge>
+                  {project.project_type && (
+                    <Badge variant="outline" className="rounded-full border-0 bg-card/90 text-foreground/80">
+                      {projectTypeLabels[project.project_type]}
+                    </Badge>
+                  )}
+                </div>
                 <div className="absolute right-3 top-3">
                   <DropdownMenu>
                     <DropdownMenuTrigger
@@ -189,6 +202,10 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: ProjectWith
                     </span>
                   </div>
                 </div>
+
+                {project.usp && (
+                  <p className="text-[12px] font-medium text-primary">{project.usp}</p>
+                )}
 
                 {project.description && (
                   <p className="line-clamp-2 text-[13px] leading-relaxed text-foreground/80">{project.description}</p>

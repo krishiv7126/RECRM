@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -1410,8 +1410,8 @@ export type Database = {
           is_active: boolean
           must_reset_password: boolean
           nav_overrides: Json | null
-          onboarding_completed_at: string | null
           notification_preferences: Json
+          onboarding_completed_at: string | null
           org_id: string | null
           parent_id: string | null
           phone: string | null
@@ -1428,8 +1428,8 @@ export type Database = {
           is_active?: boolean
           must_reset_password?: boolean
           nav_overrides?: Json | null
-          onboarding_completed_at?: string | null
           notification_preferences?: Json
+          onboarding_completed_at?: string | null
           org_id?: string | null
           parent_id?: string | null
           phone?: string | null
@@ -1446,8 +1446,8 @@ export type Database = {
           is_active?: boolean
           must_reset_password?: boolean
           nav_overrides?: Json | null
-          onboarding_completed_at?: string | null
           notification_preferences?: Json
+          onboarding_completed_at?: string | null
           org_id?: string | null
           parent_id?: string | null
           phone?: string | null
@@ -1490,7 +1490,9 @@ export type Database = {
           name: string
           org_id: string
           owner_id: string
+          project_type: Database["public"]["Enums"]["project_type"] | null
           updated_at: string
+          usp: string | null
         }
         Insert: {
           city?: string | null
@@ -1502,7 +1504,9 @@ export type Database = {
           name: string
           org_id: string
           owner_id: string
+          project_type?: Database["public"]["Enums"]["project_type"] | null
           updated_at?: string
+          usp?: string | null
         }
         Update: {
           city?: string | null
@@ -1514,7 +1518,9 @@ export type Database = {
           name?: string
           org_id?: string
           owner_id?: string
+          project_type?: Database["public"]["Enums"]["project_type"] | null
           updated_at?: string
+          usp?: string | null
         }
         Relationships: [
           {
@@ -2065,6 +2071,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "whatsapp_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_staff_performance"
+            referencedColumns: ["staff_id"]
+          },
+          {
             foreignKeyName: "whatsapp_campaigns_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
@@ -2108,8 +2121,16 @@ export type Database = {
     }
     Functions: {
       fn_auto_assign_lead: { Args: { p_org_id: string }; Returns: string }
+      fn_can_access_conversation: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
+      }
       fn_can_access_record: {
         Args: { record_org_id: string; record_owner_id: string }
+        Returns: boolean
+      }
+      fn_can_view_login_request: {
+        Args: { p_platform_user_id: string }
         Returns: boolean
       }
       fn_condition_matches: {
@@ -2147,6 +2168,10 @@ export type Database = {
           subtitle: string
           title: string
         }[]
+      }
+      fn_is_conversation_participant: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
       }
       fn_is_in_scope: {
         Args: { target_org_id: string; target_owner_id: string }
@@ -2233,6 +2258,7 @@ export type Database = {
         | "site_visit_reminder"
         | "system"
         | "other"
+      project_type: "residential" | "commercial" | "mixed_use"
       property_status: "available" | "on_hold" | "sold" | "rented"
       property_type:
         | "apartment"
@@ -2290,12 +2316,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2319,11 +2345,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2344,11 +2370,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2369,11 +2395,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2386,11 +2412,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2479,6 +2505,7 @@ export const Constants = {
         "system",
         "other",
       ],
+      project_type: ["residential", "commercial", "mixed_use"],
       property_status: ["available", "on_hold", "sold", "rented"],
       property_type: [
         "apartment",

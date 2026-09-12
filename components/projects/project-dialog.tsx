@@ -16,6 +16,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
+import type { Database } from '@/lib/supabase/types'
+
+type ProjectType = Database['public']['Enums']['project_type']
+
+const projectTypeLabels: Record<ProjectType, string> = {
+  residential: 'Residential',
+  commercial: 'Commercial',
+  mixed_use: 'Mixed-Use',
+}
 
 interface EditableProject {
   id: string
@@ -24,6 +33,8 @@ interface EditableProject {
   location: string | null
   city: string | null
   description: string | null
+  usp: string | null
+  project_type: ProjectType | null
 }
 
 export function ProjectDialog({
@@ -47,16 +58,20 @@ export function ProjectDialog({
 
   const [name, setName] = useState('')
   const [developerName, setDeveloperName] = useState('')
-  const [location, setLocation] = useState('')
+  const [area, setArea] = useState('')
   const [city, setCity] = useState('')
+  const [projectType, setProjectType] = useState<ProjectType | ''>('')
+  const [usp, setUsp] = useState('')
   const [description, setDescription] = useState('')
 
   useEffect(() => {
     if (!open) return
     setName(project?.name ?? '')
     setDeveloperName(project?.developer_name ?? '')
-    setLocation(project?.location ?? '')
+    setArea(project?.location ?? '')
     setCity(project?.city ?? '')
+    setProjectType(project?.project_type ?? '')
+    setUsp(project?.usp ?? '')
     setDescription(project?.description ?? '')
     setError(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,8 +90,10 @@ export function ProjectDialog({
     const fields = {
       name: name.trim(),
       developer_name: developerName.trim() || null,
-      location: location.trim() || null,
+      location: area.trim() || null,
       city: city.trim() || null,
+      project_type: projectType || null,
+      usp: usp.trim() || null,
       description: description.trim() || null,
     }
 
@@ -141,26 +158,58 @@ export function ProjectDialog({
             <Input id="proj_name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Skyline Residency" />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="proj_developer" className="text-sm font-medium text-foreground">
-              Developer
-            </label>
-            <Input id="proj_developer" value={developerName} onChange={(e) => setDeveloperName(e.target.value)} />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="proj_developer" className="text-sm font-medium text-foreground">
+                Developer
+              </label>
+              <Input id="proj_developer" value={developerName} onChange={(e) => setDeveloperName(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="proj_type" className="text-sm font-medium text-foreground">
+                Type
+              </label>
+              <select
+                id="proj_type"
+                value={projectType}
+                onChange={(e) => setProjectType(e.target.value as ProjectType | '')}
+                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              >
+                <option value="">Select…</option>
+                {Object.entries(projectTypeLabels).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="proj_location" className="text-sm font-medium text-foreground">
-                Location
-              </label>
-              <Input id="proj_location" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="proj_city" className="text-sm font-medium text-foreground">
                 City
               </label>
               <Input id="proj_city" value={city} onChange={(e) => setCity(e.target.value)} />
             </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="proj_area" className="text-sm font-medium text-foreground">
+                Area
+              </label>
+              <Input id="proj_area" value={area} onChange={(e) => setArea(e.target.value)} placeholder="e.g. Andheri West" />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="proj_usp" className="text-sm font-medium text-foreground">
+              USP
+            </label>
+            <Input
+              id="proj_usp"
+              value={usp}
+              onChange={(e) => setUsp(e.target.value)}
+              placeholder="e.g. Sea-facing, 5 min from metro"
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">

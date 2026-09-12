@@ -1,6 +1,9 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { LeadDetail } from '@/components/leads/lead-detail'
 import { getLeadById } from '@/lib/leads/get-leads-data'
+
+export const metadata: Metadata = { title: 'Lead Details' }
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

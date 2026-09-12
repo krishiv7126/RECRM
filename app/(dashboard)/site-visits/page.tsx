@@ -1,5 +1,8 @@
+import type { Metadata } from 'next'
 import { SiteVisitsList } from '@/components/site-visits/site-visits-list'
 import { getSiteVisitFormOptions, getSiteVisitsData } from '@/lib/site-visits/get-site-visits-data'
+
+export const metadata: Metadata = { title: 'Site Visits' }
 
 export default async function SiteVisitsPage() {
   const [visits, formOptions] = await Promise.all([getSiteVisitsData(), getSiteVisitFormOptions()])

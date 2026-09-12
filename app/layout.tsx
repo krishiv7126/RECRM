@@ -17,7 +17,10 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Estatly — Real Estate CRM',
+  title: {
+    default: 'Estatly — Real Estate CRM',
+    template: '%s · Estatly',
+  },
   description: 'AI-powered multi-tenant real estate CRM for modern brokerages.',
   generator: 'v0.app',
   icons: {

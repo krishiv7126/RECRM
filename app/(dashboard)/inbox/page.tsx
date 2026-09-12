@@ -1,5 +1,8 @@
+import type { Metadata } from 'next'
 import { InboxView } from '@/components/inbox/inbox-view'
 import { getInboxData } from '@/lib/inbox/get-inbox-data'
+
+export const metadata: Metadata = { title: 'Inbox' }
 
 export default async function InboxPage() {
   const { me, conversations, teammates } = await getInboxData()

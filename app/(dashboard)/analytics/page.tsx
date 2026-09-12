@@ -1,5 +1,8 @@
+import type { Metadata } from 'next'
 import { AnalyticsView } from '@/components/analytics/analytics-view'
 import { getAnalyticsData, type RangeKey } from '@/lib/analytics/get-analytics-data'
+
+export const metadata: Metadata = { title: 'Analytics' }
 
 const validRanges: RangeKey[] = ['7d', '30d', '90d', 'ytd']
 

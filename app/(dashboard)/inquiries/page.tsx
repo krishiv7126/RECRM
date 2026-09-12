@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { InquiriesView } from '@/components/inquiries/inquiries-view'
 import { getInquiriesData } from '@/lib/inquiries/get-inquiries-data'
 import { getCurrentProfile } from '@/lib/supabase/current-user'
+
+export const metadata: Metadata = { title: 'Inquiries' }
 
 export default async function InquiriesPage() {
   const profile = await getCurrentProfile()

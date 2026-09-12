@@ -1,5 +1,8 @@
+import type { Metadata } from 'next'
 import { DealsBoard } from '@/components/deals/deals-board'
 import { getDealFormOptions, getDealsData } from '@/lib/deals/get-deals-data'
+
+export const metadata: Metadata = { title: 'Deals' }
 
 export default async function DealsPage() {
   const [deals, formOptions] = await Promise.all([getDealsData(), getDealFormOptions()])

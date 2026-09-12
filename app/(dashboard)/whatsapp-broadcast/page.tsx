@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { WhatsappBroadcastView } from '@/components/whatsapp/whatsapp-broadcast-view'
 import { getWhatsappAudienceData, getWhatsappCampaigns } from '@/lib/whatsapp/get-whatsapp-data'
 import { getCurrentProfile } from '@/lib/supabase/current-user'
+
+export const metadata: Metadata = { title: 'WhatsApp Broadcast' }
 
 export default async function WhatsappBroadcastPage() {
   const profile = await getCurrentProfile()

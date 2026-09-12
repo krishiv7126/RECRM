@@ -1,5 +1,8 @@
+import type { Metadata } from 'next'
 import { ApprovalsList } from '@/components/approvals/approvals-list'
 import { getApprovalsData } from '@/lib/approvals/get-approvals-data'
+
+export const metadata: Metadata = { title: 'Approvals' }
 
 export default async function ApprovalsPage() {
   const data = await getApprovalsData()

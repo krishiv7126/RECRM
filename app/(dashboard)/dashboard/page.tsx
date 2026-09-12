@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { AiDailyBrief } from '@/components/dashboard/ai-daily-brief'
 import { GreetingHeader } from '@/components/dashboard/greeting-header'
 import { KpiCards } from '@/components/dashboard/kpi-cards'
@@ -6,6 +7,8 @@ import { PriorityQueue } from '@/components/dashboard/priority-queue'
 import { RevenueChart } from '@/components/dashboard/revenue-chart'
 import { getDashboardData } from '@/lib/dashboard/get-dashboard-data'
 import { getCurrentProfile } from '@/lib/supabase/current-user'
+
+export const metadata: Metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {
   // getCurrentProfile is request-cached and the layout already awaited it, so

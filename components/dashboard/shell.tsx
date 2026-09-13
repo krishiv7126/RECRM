@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardTopbar } from '@/components/dashboard/topbar'
 import { SessionWatchdog } from '@/components/dashboard/session-watchdog'
+import { FloatingInquiryButton } from '@/components/dashboard/floating-inquiry-button'
 import { applyNavOverrides, navByRole, type Role } from '@/lib/nav-config'
 
 export function DashboardShell({
@@ -53,6 +54,7 @@ export function DashboardShell({
         <DashboardTopbar onToggleSidebar={toggleSidebar} />
         <main className="flex-1 px-4 py-6 sm:px-6 md:px-8">{children}</main>
       </div>
+      <FloatingInquiryButton />
     </div>
   )
 }

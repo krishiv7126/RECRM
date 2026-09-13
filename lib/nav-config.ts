@@ -20,7 +20,6 @@ import {
   Inbox,
   Settings,
   ShieldCheck,
-  ClipboardPlus,
   ClipboardList,
   MessageCircle,
 } from 'lucide-react'
@@ -72,7 +71,6 @@ export const adminNav: NavSection[] = [
           { label: 'Site Visits', href: '/site-visits', icon: CalendarCheck },
         ],
       },
-      { label: 'New Inquiry', icon: ClipboardPlus, href: '/inquiries/new' },
       { label: 'Inquiries', icon: ClipboardList, href: '/inquiries' },
     ],
   },
@@ -124,8 +122,8 @@ export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', '
 
 // User: no Automation, no Analytics (individual contributors don't see org-wide
 // reporting), no Approvals, no Inquiries dashboard, no WhatsApp Broadcast
-// (mass messaging is a manager/admin action) — but they do get New Inquiry,
-// since sales staff are exactly who logs a walk-in/offline inquiry.
+// (mass messaging is a manager/admin action). New Inquiry itself isn't a nav
+// item — it's the floating action button, shown to every role.
 export const userNav: NavSection[] = withoutGroups(adminNav, [
   'Automation',
   'Analytics',
@@ -143,10 +141,7 @@ export const receptionistNav: NavSection[] = [
   },
   {
     label: 'Front Desk',
-    groups: [
-      { label: 'New Inquiry', icon: ClipboardPlus, href: '/inquiries/new' },
-      { label: 'Inquiries', icon: ClipboardList, href: '/inquiries' },
-    ],
+    groups: [{ label: 'Inquiries', icon: ClipboardList, href: '/inquiries' }],
   },
 ]
 

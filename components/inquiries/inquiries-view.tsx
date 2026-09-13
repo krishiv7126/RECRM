@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ClipboardList, ClipboardPlus, Mail, Phone } from 'lucide-react'
+import { ClipboardList, Mail, Phone } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -88,17 +87,11 @@ export function InquiriesView({ initialInquiries }: { initialInquiries: InquiryR
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <PageHeader
-          crumbs={[{ label: 'Sales' }, { label: 'Front Desk' }, { label: 'Inquiries' }]}
-          title="Inquiries"
-          description="Every offline inquiry logged at the front desk, live."
-        />
-        <Button size="sm" render={<Link href="/inquiries/new" />} nativeButton={false}>
-          <ClipboardPlus data-icon="inline-start" />
-          New Inquiry
-        </Button>
-      </div>
+      <PageHeader
+        crumbs={[{ label: 'Sales' }, { label: 'Front Desk' }, { label: 'Inquiries' }]}
+        title="Inquiries"
+        description="Every offline inquiry logged at the front desk, live."
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map((s) => (

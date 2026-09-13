@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   ClipboardList,
   MessageCircle,
+  UserCog,
 } from 'lucide-react'
 
 export interface NavLeaf {
@@ -99,6 +100,7 @@ export const adminNav: NavSection[] = [
   {
     label: 'System',
     groups: [
+      { label: 'Staff', icon: UserCog, href: '/staff' },
       { label: 'Inbox', icon: Inbox, href: '/inbox' },
       { label: 'Approvals', icon: ShieldCheck, href: '/approvals' },
       { label: 'Settings', icon: Settings, href: '/settings' },
@@ -117,19 +119,21 @@ function withoutGroups(sections: NavSection[], labelsToRemove: string[]): NavSec
 
 // Manager: no Automation (workflow rules are an org-level admin concern), no
 // Approvals (only admins decide manager/user login approvals), no Inquiries
-// dashboard (that's an admin/receptionist front-desk view).
-export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Approvals', 'Inquiries'])
+// dashboard (that's an admin/receptionist front-desk view), no Staff (org-wide
+// performance + access control is an admin-only concern).
+export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Approvals', 'Inquiries', 'Staff'])
 
 // User: no Automation, no Analytics (individual contributors don't see org-wide
 // reporting), no Approvals, no Inquiries dashboard, no WhatsApp Broadcast
-// (mass messaging is a manager/admin action). New Inquiry itself isn't a nav
-// item — it's the floating action button, shown to every role.
+// (mass messaging is a manager/admin action), no Staff. New Inquiry itself
+// isn't a nav item — it's the floating action button, shown to every role.
 export const userNav: NavSection[] = withoutGroups(adminNav, [
   'Automation',
   'Analytics',
   'Approvals',
   'Inquiries',
   'WhatsApp Broadcast',
+  'Staff',
 ])
 
 // Receptionist: a narrow, front-desk-only role — not derived from adminNav
@@ -153,8 +157,14 @@ export const navByRole: Record<Role, NavSection[]> = {
   receptionist: receptionistNav,
 }
 
-/** Every togglable page/group, for the admin "manage access" UI. */
-export const allNavGroupLabels: string[] = adminNav.flatMap((section) => section.groups.map((g) => g.label))
+/**
+ * Every togglable page/group, for the admin "manage access" UI. Staff is
+ * excluded — it's hard-gated to admin/super_admin in the page itself, so
+ * granting it via override would show a nav link that 404s into a redirect.
+ */
+export const allNavGroupLabels: string[] = adminNav
+  .flatMap((section) => section.groups.map((g) => g.label))
+  .filter((label) => label !== 'Staff')
 
 // (href prefix, owning group label) pairs, longest hrefs first so a more
 // specific route (e.g. /ai-workspace/copilot) matches before its parent

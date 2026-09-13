@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ClipboardList, ClipboardPlus, Mail, MessageCircle, Phone } from 'lucide-react'
+import { ClipboardList, ClipboardPlus, Mail, Phone } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -164,7 +165,7 @@ export function InquiriesView({ initialInquiries }: { initialInquiries: InquiryR
                         render={<a href={inquiry.phone ? `https://wa.me/${inquiry.phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
                         nativeButton={false}
                       >
-                        <MessageCircle className="size-3.5" />
+                        <WhatsAppIcon className="size-3.5" />
                       </Button>
                       <Button
                         variant="ghost"

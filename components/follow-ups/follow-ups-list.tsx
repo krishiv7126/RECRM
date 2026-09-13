@@ -7,12 +7,12 @@ import {
   Clock,
   Filter,
   Mail,
-  MessageCircle,
   MoreHorizontal,
   Phone,
   Plus,
   Search,
 } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { FollowUpDialog } from '@/components/follow-ups/follow-up-dialog'
 import { CelebrationBurst } from '@/components/ui/celebration-burst'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/types'
@@ -39,9 +40,12 @@ function getInitials(name: string) {
   return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 }
 
-const typeConfig: Record<FollowUpType, { icon: typeof Phone; className: string; label: string }> = {
+const typeConfig: Record<
+  FollowUpType,
+  { icon: React.ComponentType<{ className?: string }>; className: string; label: string }
+> = {
   call: { icon: Phone, className: 'bg-primary/15 text-primary', label: 'Call' },
-  whatsapp: { icon: MessageCircle, className: 'bg-success/15 text-success', label: 'WhatsApp' },
+  whatsapp: { icon: WhatsAppIcon, className: 'bg-success/15 text-success', label: 'WhatsApp' },
   email: { icon: Mail, className: 'bg-secondary text-secondary-foreground', label: 'Email' },
   meeting: { icon: Calendar, className: 'border border-primary/40 bg-transparent text-primary', label: 'Meeting' },
   other: { icon: Clock, className: 'bg-muted text-muted-foreground', label: 'Other' },
@@ -117,6 +121,7 @@ export function FollowUpsList({
   const [ownerFilter, setOwnerFilter] = useState('')
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUpWithRelations | null>(null)
   const [celebratingId, setCelebratingId] = useState<string | null>(null)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     setFollowUps(initialFollowUps)
@@ -215,7 +220,13 @@ export function FollowUpsList({
   }
 
   async function handleDelete(followUp: FollowUpWithRelations) {
-    if (!window.confirm('Delete this follow-up? This cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete follow-up?',
+      description: 'Are you sure you want to delete this follow-up? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error } = await supabase.from('follow_ups').delete().eq('id', followUp.id)
     if (error) {
@@ -454,6 +465,7 @@ export function FollowUpsList({
           </div>
         )}
       </div>
+      <ConfirmDialog />
     </div>
   )
 }

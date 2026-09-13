@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { CreateLeadDialog } from '@/components/leads/create-lead-dialog'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -52,6 +53,7 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
   const [notifications, setNotifications] = useState<NotificationRow[]>([])
   const [meId, setMeId] = useState<string | null>(null)
   const unreadCount = notifications.filter((n) => !n.is_read).length
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     const supabase = createClient()
@@ -139,7 +141,13 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
 
   async function clearAll() {
     if (!meId || notifications.length === 0) return
-    if (!window.confirm('Clear all notifications? This cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Clear all notifications?',
+      description: 'Are you sure you want to clear all notifications? This action cannot be undone.',
+      confirmLabel: 'Clear all',
+      destructive: true,
+    })
+    if (!ok) return
     const prev = notifications
     setNotifications([])
     const supabase = createClient()
@@ -281,6 +289,7 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
           }
         />
       </div>
+      <ConfirmDialog />
     </header>
   )
 }

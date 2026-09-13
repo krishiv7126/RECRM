@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { RuleDialog } from '@/components/automation/rule-dialog'
 import { AuroraField } from '@/components/ai/ai-motion'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
@@ -96,6 +97,7 @@ export function AutomationManager({
   const router = useRouter()
   const [rules, setRules] = useState(initialRules)
   const [editingRule, setEditingRule] = useState<AutomationRuleRow | null>(null)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     setRules(initialRules)
@@ -149,7 +151,13 @@ export function AutomationManager({
   }
 
   async function handleDelete(rule: AutomationRuleRow) {
-    if (!window.confirm(`Delete rule "${rule.name}"? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: 'Delete automation rule?',
+      description: `Are you sure you want to delete "${rule.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error } = await supabase.from('automation_rules').delete().eq('id', rule.id)
     if (error) {
@@ -373,6 +381,7 @@ export function AutomationManager({
           </div>
         </div>
       </div>
+      <ConfirmDialog />
     </div>
   )
 }

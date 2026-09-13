@@ -51,6 +51,16 @@ export function InquiryForm() {
       setError('Full name is required.')
       return
     }
+    if (checkingPhone) {
+      setError('Still checking this number against existing records — try again in a moment.')
+      return
+    }
+    if (duplicateMatch) {
+      setError(
+        `This number already belongs to an existing ${duplicateMatch.type} (${duplicateMatch.full_name}). Open the existing record instead of creating a duplicate.`,
+      )
+      return
+    }
     setSubmitting(true)
     setError(null)
 
@@ -202,9 +212,24 @@ export function InquiryForm() {
               <Textarea id="inq_notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything else worth flagging for sales" />
             </div>
 
-            {error && <p className="text-[13px] text-destructive">{error}</p>}
+            {error && (
+              <p className="text-[13px] text-destructive">
+                {error}
+                {duplicateMatch && (
+                  <>
+                    {' '}
+                    <Link
+                      href={duplicateMatch.type === 'lead' ? `/leads/${duplicateMatch.id}` : `/customers/${duplicateMatch.id}`}
+                      className="font-medium underline"
+                    >
+                      Open existing {duplicateMatch.type}
+                    </Link>
+                  </>
+                )}
+              </p>
+            )}
 
-            <Button type="submit" disabled={submitting} className="w-fit">
+            <Button type="submit" disabled={submitting || checkingPhone || !!duplicateMatch} className="w-fit">
               {submitting ? <Loader2 className="animate-spin" /> : <ClipboardPlus data-icon="inline-start" />}
               Log Inquiry
             </Button>

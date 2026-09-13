@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -59,6 +60,16 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     e.preventDefault()
     if (!fullName.trim()) {
       setError('Full name is required.')
+      return
+    }
+    if (checkingPhone) {
+      setError('Still checking this number against existing records — try again in a moment.')
+      return
+    }
+    if (duplicateMatch) {
+      setError(
+        `This number already belongs to an existing ${duplicateMatch.type} (${duplicateMatch.full_name}). Open the existing record instead of creating a duplicate.`,
+      )
       return
     }
     setSubmitting(true)
@@ -219,11 +230,26 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
             <Textarea id="lead_notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
-          {error && <p className="text-[13px] text-destructive">{error}</p>}
+          {error && (
+            <p className="text-[13px] text-destructive">
+              {error}
+              {duplicateMatch && (
+                <>
+                  {' '}
+                  <Link
+                    href={duplicateMatch.type === 'lead' ? `/leads/${duplicateMatch.id}` : `/customers/${duplicateMatch.id}`}
+                    className="font-medium underline"
+                  >
+                    Open existing {duplicateMatch.type}
+                  </Link>
+                </>
+              )}
+            </p>
+          )}
 
           <div className="mt-1 flex justify-end gap-2">
             <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
-            <Button type="submit" disabled={submitting}>
+            <Button type="submit" disabled={submitting || checkingPhone || !!duplicateMatch}>
               {submitting ? <Loader2 className="animate-spin" /> : <Plus data-icon="inline-start" />}
               Create Lead
             </Button>

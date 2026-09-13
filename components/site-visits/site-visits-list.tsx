@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SiteVisitDialog } from '@/components/site-visits/site-visit-dialog'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/types'
@@ -84,6 +85,7 @@ export function SiteVisitsList({
   const [showFilter, setShowFilter] = useState(false)
   const [cityFilter, setCityFilter] = useState('')
   const [editingVisit, setEditingVisit] = useState<SiteVisitWithRelations | null>(null)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     setVisits(initialVisits)
@@ -143,7 +145,13 @@ export function SiteVisitsList({
   }
 
   async function handleDelete(visit: SiteVisitWithRelations) {
-    if (!window.confirm('Delete this site visit? This cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete site visit?',
+      description: 'Are you sure you want to delete this site visit? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error } = await supabase.from('site_visits').delete().eq('id', visit.id)
     if (error) {
@@ -414,6 +422,7 @@ export function SiteVisitsList({
           </div>
         </div>
       </div>
+      <ConfirmDialog />
     </div>
   )
 }

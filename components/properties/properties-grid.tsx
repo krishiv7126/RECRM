@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { PropertyDialog } from '@/components/properties/property-dialog'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/types'
@@ -124,6 +125,7 @@ export function PropertiesGrid({
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   const types = useMemo(() => Array.from(new Set(properties.map((p) => p.property_type))), [properties])
   const cities = useMemo(
@@ -168,7 +170,13 @@ export function PropertiesGrid({
   const activeFilterCount = [typeFilter, cityFilter].filter(Boolean).length
 
   async function handleDelete(property: PropertyWithRelations) {
-    if (!window.confirm(`Delete "${property.title}"? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: 'Delete property?',
+      description: `Are you sure you want to delete "${property.title}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error } = await supabase.from('properties').delete().eq('id', property.id)
     if (error) {
@@ -505,6 +513,7 @@ export function PropertiesGrid({
           </div>
         )}
       </div>
+      <ConfirmDialog />
     </div>
   )
 }

@@ -8,7 +8,6 @@ import {
   Flame,
   Loader2,
   Mail,
-  MessageCircle,
   MoreHorizontal,
   Phone,
   Plus,
@@ -16,6 +15,7 @@ import {
   Upload,
   X,
 } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { deriveTemperature, type DerivedTemperature } from '@/lib/leads/temperature'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { CreateLeadDialog } from '@/components/leads/create-lead-dialog'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
 import { cn } from '@/lib/utils'
@@ -120,6 +121,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     setLeads(initialLeads)
@@ -236,7 +238,13 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   }
 
   async function handleDelete(lead: LeadRow) {
-    if (!window.confirm(`Delete ${lead.full_name}? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: 'Delete lead?',
+      description: `Are you sure you want to delete ${lead.full_name}? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error } = await supabase.from('leads').delete().eq('id', lead.id)
     if (error) {
@@ -247,7 +255,12 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   }
 
   async function handleConvert(lead: LeadRow) {
-    if (!window.confirm(`Convert ${lead.full_name} to a customer?`)) return
+    const ok = await confirm({
+      title: 'Convert to customer?',
+      description: `Convert ${lead.full_name} to a customer? They'll move out of the leads pipeline.`,
+      confirmLabel: 'Convert',
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error } = await supabase.rpc('fn_convert_lead_to_customer', { p_lead_id: lead.id })
     if (error) {
@@ -531,7 +544,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                         render={<a href={lead.phone ? `https://wa.me/${lead.phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
                         nativeButton={false}
                       >
-                        <MessageCircle className="size-3.5" />
+                        <WhatsAppIcon className="size-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -576,6 +589,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
           </table>
         </div>
       </div>
+      <ConfirmDialog />
     </>
   )
 }

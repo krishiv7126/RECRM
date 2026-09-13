@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Camera, Download, Loader2, Lock, Megaphone, MessageCircle, Plus } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -32,46 +33,33 @@ const TABS: TabDef[] = [
   { key: 'team', label: 'Team Management', adminOnly: true },
   { key: 'integrations', label: 'Integrations', adminOnly: true },
   { key: 'notifications', label: 'Notifications', adminOnly: false },
-  { key: 'export', label: 'Data Export', adminOnly: false },
+  { key: 'export', label: 'Full Data Export', adminOnly: true },
 ]
 
-interface ExportDef {
-  key: string
-  label: string
-  description: string
-  table: 'leads' | 'customers' | 'deals' | 'properties' | 'projects' | 'site_visits' | 'follow_ups'
-  columns: string[]
-}
-
-const exportDefs: ExportDef[] = [
+// Single ERP-defined export format — one file, fixed shape, not a per-table
+// picker. Keeps the export structure ours to control rather than whatever a
+// raw table dump happens to look like.
+const FULL_EXPORT_TABLES = [
   {
     key: 'leads',
-    label: 'Leads',
-    description: 'Every lead in your pipeline — contact info, requirement, stage, and AI score.',
     table: 'leads',
     columns: [
       'full_name', 'email', 'phone', 'requirement', 'budget_min', 'budget_max',
-      'source', 'stage', 'temperature', 'ai_score', 'city', 'created_at',
+      'reference', 'source', 'stage', 'temperature', 'ai_score', 'city', 'created_at',
     ],
   },
   {
     key: 'customers',
-    label: 'Customers',
-    description: 'Converted customers with contact details and city.',
     table: 'customers',
     columns: ['full_name', 'email', 'phone', 'city', 'address', 'created_at'],
   },
   {
     key: 'deals',
-    label: 'Deals',
-    description: 'Deals across every stage with value and expected close date.',
     table: 'deals',
     columns: ['code', 'title', 'stage', 'value', 'currency', 'expected_close_date', 'closed_at', 'created_at'],
   },
   {
     key: 'properties',
-    label: 'Properties',
-    description: 'Property inventory with pricing, size, and status.',
     table: 'properties',
     columns: [
       'title', 'property_type', 'status', 'city', 'address', 'price',
@@ -80,40 +68,23 @@ const exportDefs: ExportDef[] = [
   },
   {
     key: 'projects',
-    label: 'Projects',
-    description: 'Developer projects grouping your property inventory.',
     table: 'projects',
-    columns: ['name', 'developer_name', 'city', 'location', 'created_at'],
+    columns: ['name', 'developer_name', 'project_type', 'usp', 'city', 'location', 'created_at'],
   },
   {
     key: 'site_visits',
-    label: 'Site Visits',
-    description: 'Scheduled and completed site visits with feedback.',
     table: 'site_visits',
     columns: ['scheduled_at', 'status', 'feedback', 'created_at'],
   },
   {
     key: 'follow_ups',
-    label: 'Follow-ups',
-    description: 'Follow-up tasks across leads, customers, and deals.',
     table: 'follow_ups',
     columns: ['type', 'status', 'due_at', 'completed_at', 'notes', 'created_at'],
   },
-]
+] as const
 
-function downloadCsv(rows: (string | number)[][], filename: string) {
-  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-const integrationMeta: Record<string, { icon: typeof MessageCircle; color: string }> = {
-  whatsapp: { icon: MessageCircle, color: 'bg-emerald-500' },
+const integrationMeta: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string }> = {
+  whatsapp: { icon: WhatsAppIcon, color: 'bg-emerald-500' },
   facebook: { icon: Megaphone, color: 'bg-blue-600' },
   instagram: { icon: Camera, color: 'bg-pink-500' },
 }
@@ -163,7 +134,8 @@ export function SettingsView({ data }: { data: SettingsData }) {
   )
   const [savingPrefs, setSavingPrefs] = useState(false)
 
-  const [exportingKey, setExportingKey] = useState<string | null>(null)
+  const [exportingFull, setExportingFull] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   const integrationStatusByProvider = useMemo(() => {
     const map = new Map<string, string>()
@@ -225,24 +197,37 @@ export function SettingsView({ data }: { data: SettingsData }) {
     if (error) window.alert(error.message)
   }
 
-  async function exportTable(def: ExportDef) {
-    setExportingKey(def.key)
+  async function exportFullData() {
+    setExportingFull(true)
+    setExportError(null)
     const supabase = createClient()
-    const { data: rows, error } = await supabase.from(def.table).select(def.columns.join(', '))
-    setExportingKey(null)
-    if (error) {
-      window.alert(error.message)
+
+    const results = await Promise.all(
+      FULL_EXPORT_TABLES.map((def) => supabase.from(def.table).select(def.columns.join(', '))),
+    )
+
+    const failed = results.find((r) => r.error)
+    if (failed?.error) {
+      setExportingFull(false)
+      setExportError(failed.error.message)
       return
     }
-    if (!rows || rows.length === 0) {
-      window.alert('No data to export.')
-      return
+
+    const bundle = {
+      exported_at: new Date().toISOString(),
+      organization: organization?.name ?? null,
+      data: Object.fromEntries(FULL_EXPORT_TABLES.map((def, i) => [def.key, results[i].data ?? []])),
     }
-    const csvRows = [
-      def.columns,
-      ...rows.map((r) => def.columns.map((c) => String((r as unknown as Record<string, unknown>)[c] ?? ''))),
-    ]
-    downloadCsv(csvRows, `${def.key}-${new Date().toISOString().slice(0, 10)}.csv`)
+
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${(organization?.name ?? 'estatly').toLowerCase().replace(/\s+/g, '-')}-full-export-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+
+    setExportingFull(false)
   }
 
   return (
@@ -589,41 +574,27 @@ export function SettingsView({ data }: { data: SettingsData }) {
               </Card>
             )}
 
-            {activeTab === 'export' && (
+            {activeTab === 'export' && isAdmin && (
               <Card className="rounded-2xl border-border shadow-sm">
                 <CardHeader>
-                  <CardTitle className="font-heading text-base font-bold">Data Export</CardTitle>
-                  <CardDescription>Download a CSV of any page's data, scoped to what you can see.</CardDescription>
+                  <CardTitle className="font-heading text-base font-bold">Full Data Export</CardTitle>
+                  <CardDescription>
+                    One export of your organization's data — leads, customers, deals, properties, projects, site
+                    visits, and follow-ups — in a single file, structured the same way every time.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col gap-1">
-                  {exportDefs.map((def, index) => (
-                    <div
-                      key={def.key}
-                      className={cn(
-                        'flex items-center justify-between gap-4 py-3',
-                        index < exportDefs.length - 1 && 'border-b border-border/50',
+                <CardContent className="flex flex-col gap-4">
+                  {exportError && <p className="text-[13px] text-destructive">{exportError}</p>}
+                  <div>
+                    <Button size="sm" disabled={exportingFull} onClick={exportFullData}>
+                      {exportingFull ? (
+                        <Loader2 className="animate-spin" data-icon="inline-start" />
+                      ) : (
+                        <Download data-icon="inline-start" />
                       )}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-foreground">{def.label}</p>
-                        <p className="text-[12px] text-muted-foreground">{def.description}</p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
-                        disabled={exportingKey === def.key}
-                        onClick={() => exportTable(def)}
-                      >
-                        {exportingKey === def.key ? (
-                          <Loader2 className="animate-spin" data-icon="inline-start" />
-                        ) : (
-                          <Download data-icon="inline-start" />
-                        )}
-                        Export
-                      </Button>
-                    </div>
-                  ))}
+                      {exportingFull ? 'Exporting…' : 'Export All Data'}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}

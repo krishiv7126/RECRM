@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { DealDialog } from '@/components/deals/deal-dialog'
 import { CelebrationBurst } from '@/components/ui/celebration-burst'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/types'
@@ -80,6 +81,7 @@ export function DealsBoard({
   const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null)
   const [editingDeal, setEditingDeal] = useState<DealWithRelations | null>(null)
   const [celebratingId, setCelebratingId] = useState<string | null>(null)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     setDeals(initialDeals)
@@ -175,7 +177,13 @@ export function DealsBoard({
   }
 
   async function handleDelete(deal: DealWithRelations) {
-    if (!window.confirm(`Delete deal "${deal.title}"? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: 'Delete deal?',
+      description: `Are you sure you want to delete "${deal.title}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error } = await supabase.from('deals').delete().eq('id', deal.id)
     if (error) {
@@ -407,6 +415,7 @@ export function DealsBoard({
           </div>
         </div>
       )}
+      <ConfirmDialog />
     </>
   )
 }

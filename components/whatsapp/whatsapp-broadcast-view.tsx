@@ -1,13 +1,15 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { MessageCircle, Save, Trash2, Users } from 'lucide-react'
+import { Save, Trash2, Users } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { WhatsappCampaign } from '@/lib/whatsapp/get-whatsapp-data'
@@ -43,6 +45,7 @@ export function WhatsappBroadcastView({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [campaigns, setCampaigns] = useState(initialCampaigns)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   const pool = audienceType === 'leads' ? leads : customers
 
@@ -124,7 +127,13 @@ export function WhatsappBroadcastView({
   }
 
   async function handleDeleteCampaign(id: string) {
-    if (!window.confirm('Delete this campaign?')) return
+    const ok = await confirm({
+      title: 'Delete campaign?',
+      description: 'Are you sure you want to delete this campaign? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error: deleteErr } = await supabase.from('whatsapp_campaigns').delete().eq('id', id)
     if (deleteErr) {
@@ -262,7 +271,7 @@ export function WhatsappBroadcastView({
                     }
                     nativeButton={false}
                   >
-                    <MessageCircle className="size-3.5" />
+                    <WhatsAppIcon className="size-3.5" />
                   </Button>
                 </div>
               ))}
@@ -323,6 +332,7 @@ export function WhatsappBroadcastView({
           </div>
         </div>
       </div>
+      <ConfirmDialog />
     </div>
   )
 }

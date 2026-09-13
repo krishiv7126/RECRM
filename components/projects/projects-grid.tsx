@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ProjectDialog } from '@/components/projects/project-dialog'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { ProjectWithRelations } from '@/lib/projects/get-projects-data'
@@ -53,6 +54,7 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: ProjectWith
   const [query, setQuery] = useState('')
   const [cityFilter, setCityFilter] = useState('All Cities')
   const [editingProject, setEditingProject] = useState<ProjectWithRelations | null>(null)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   const cities = useMemo(
     () => ['All Cities', ...Array.from(new Set(projects.map((p) => p.city).filter(Boolean) as string[]))],
@@ -76,7 +78,13 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: ProjectWith
   }, [projects, cityFilter, query])
 
   async function handleDelete(project: ProjectWithRelations) {
-    if (!window.confirm(`Delete "${project.name}"? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: 'Delete project?',
+      description: `Are you sure you want to delete "${project.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error } = await supabase.from('projects').delete().eq('id', project.id)
     if (error) {
@@ -256,6 +264,7 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: ProjectWith
           </div>
         )}
       </div>
+      <ConfirmDialog />
     </div>
   )
 }

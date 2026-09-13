@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, Loader2, Mail, MessageCircle, Phone as PhoneIcon, Repeat, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Loader2, Mail, Phone as PhoneIcon, Repeat, Trash2 } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
 import { deriveTemperature } from '@/lib/leads/temperature'
@@ -39,6 +41,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [converting, setConverting] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [liveScore, setLiveScore] = useState(lead.ai_score)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     if (lead.ai_score !== null) return
@@ -79,7 +82,12 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   }
 
   async function handleConvert() {
-    if (!window.confirm(`Convert ${lead.full_name} to a customer?`)) return
+    const ok = await confirm({
+      title: 'Convert to customer?',
+      description: `Convert ${lead.full_name} to a customer? They'll move out of the leads pipeline.`,
+      confirmLabel: 'Convert',
+    })
+    if (!ok) return
     setConverting(true)
     const supabase = createClient()
     const { error: convertErr } = await supabase.rpc('fn_convert_lead_to_customer', { p_lead_id: lead.id })
@@ -92,7 +100,13 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete ${lead.full_name}? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: 'Delete lead?',
+      description: `Are you sure you want to delete ${lead.full_name}? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     setDeleting(true)
     const supabase = createClient()
     const { error: deleteErr } = await supabase.from('leads').delete().eq('id', lead.id)
@@ -153,7 +167,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
                   render={<a href={phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
                   nativeButton={false}
                 >
-                  <MessageCircle className="size-3.5" />
+                  <WhatsAppIcon className="size-3.5" />
                 </Button>
               </div>
             </div>
@@ -255,6 +269,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
           </div>
         </CardContent>
       </Card>
+      <ConfirmDialog />
     </div>
   )
 }

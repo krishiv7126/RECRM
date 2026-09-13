@@ -8,13 +8,13 @@ import {
   Clock,
   Filter,
   Mail,
-  MessageCircle,
   MoreHorizontal,
   Phone,
   Plus,
   Search,
   Sparkles,
 } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { CreateCustomerDialog } from '@/components/customers/create-customer-dialog'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -58,6 +59,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   const [showFilters, setShowFilters] = useState(false)
   const [tagFilter, setTagFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
+  const { confirm, ConfirmDialog } = useConfirm()
 
   useEffect(() => {
     setCustomers(initialCustomers)
@@ -121,7 +123,13 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   }, [customers, query, sortMode, tagFilter, cityFilter])
 
   async function handleDelete(customer: CustomerRow) {
-    if (!window.confirm(`Delete ${customer.full_name}? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: 'Delete customer?',
+      description: `Are you sure you want to delete ${customer.full_name}? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     const supabase = createClient()
     const { error } = await supabase.from('customers').delete().eq('id', customer.id)
     if (error) {
@@ -351,7 +359,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                         render={<a href={customer.phone ? `https://wa.me/${customer.phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
                         nativeButton={false}
                       >
-                        <MessageCircle className="size-3.5" />
+                        <WhatsAppIcon className="size-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -396,6 +404,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
           </table>
         </div>
       </div>
+      <ConfirmDialog />
     </div>
   )
 }

@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, Handshake, Loader2, Mail, MessageCircle, Phone as PhoneIcon, Sparkles, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Handshake, Loader2, Mail, Phone as PhoneIcon, Sparkles, Trash2 } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { CustomerDeal, CustomerWithOwner } from '@/lib/customers/get-customers-data'
@@ -43,6 +45,7 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   async function handleSave() {
     setSaving(true)
@@ -72,7 +75,13 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete ${customer.full_name}? This cannot be undone.`)) return
+    const ok = await confirm({
+      title: 'Delete customer?',
+      description: `Are you sure you want to delete ${customer.full_name}? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
     setDeleting(true)
     const supabase = createClient()
     const { error: deleteErr } = await supabase.from('customers').delete().eq('id', customer.id)
@@ -178,7 +187,7 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
                   render={<a href={phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
                   nativeButton={false}
                 >
-                  <MessageCircle className="size-3.5" />
+                  <WhatsAppIcon className="size-3.5" />
                 </Button>
               </div>
             </div>
@@ -231,6 +240,7 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
           </div>
         </CardContent>
       </Card>
+      <ConfirmDialog />
     </div>
   )
 }

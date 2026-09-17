@@ -12,6 +12,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
+import { MarkdownLite } from "@/components/ai/markdown-lite"
 
 /** Personality states that drive the orb + ambient intensity. */
 export type Phase = "idle" | "listening" | "thinking" | "responding"
@@ -266,7 +267,7 @@ export function StreamingText({
   }, [animate, reduce])
 
   if (reduce || !animate) {
-    return <p className="whitespace-pre-wrap text-pretty">{text}</p>
+    return <MarkdownLite text={text} />
   }
 
   return (

@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Manrope, Inter } from 'next/font/google'
+import { Toaster } from 'sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
 
@@ -18,10 +19,10 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Estatly — Real Estate CRM',
-    template: '%s · Estatly',
+    default: 'Vardaan ERP',
+    template: '%s · Vardaan ERP',
   },
-  description: 'AI-powered multi-tenant real estate CRM for modern brokerages.',
+  description: 'AI-powered multi-tenant real estate ERP for modern brokerages.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -57,6 +58,7 @@ export default function RootLayout({
     <html lang="en" className={`${manrope.variable} ${inter.variable} bg-background`}>
       <body className="antialiased font-sans">
         <TooltipProvider delayDuration={150}>{children}</TooltipProvider>
+        <Toaster position="top-right" richColors closeButton />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

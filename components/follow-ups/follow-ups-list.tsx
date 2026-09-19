@@ -12,6 +12,7 @@ import {
   Plus,
   Search,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -212,9 +213,10 @@ export function FollowUpsList({
       .eq('id', followUp.id)
     if (error) {
       setFollowUps(prev)
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
+    toast.success('Follow-up marked complete')
     setCelebratingId(followUp.id)
     setTimeout(() => setCelebratingId((id) => (id === followUp.id ? null : id)), 900)
   }
@@ -230,10 +232,11 @@ export function FollowUpsList({
     const supabase = createClient()
     const { error } = await supabase.from('follow_ups').delete().eq('id', followUp.id)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
     setFollowUps((prev) => prev.filter((f) => f.id !== followUp.id))
+    toast.success('Follow-up deleted')
   }
 
   function handleViewRecord(followUp: FollowUpWithRelations) {

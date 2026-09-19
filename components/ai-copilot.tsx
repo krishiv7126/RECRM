@@ -47,7 +47,7 @@ const SUGGESTIONS = [
 /* Fallback stub so the component is fully self-contained until wired up. */
 async function defaultSend(prompt: string): Promise<string> {
   await new Promise((r) => setTimeout(r, 1600))
-  return `Here's a draft based on "${prompt.trim()}". Connect me to your Supabase edge function to pull live CRM data — leads, pipeline value, and forecasts — and I'll return grounded, source-backed answers you can act on right away.`
+  return `Here's a draft based on "${prompt.trim()}". Connect me to your Supabase edge function to pull live ERP data — leads, pipeline value, and forecasts — and I'll return grounded, source-backed answers you can act on right away.`
 }
 
 function uid() {
@@ -513,7 +513,7 @@ export default function AICopilot({
               </div>
             </div>
             <p className="mt-2 px-1 text-center text-xs text-muted-foreground">
-              Estatly AI can make mistakes. Verify important CRM details.
+              Vardaan ERP AI can make mistakes. Verify important details.
             </p>
           </div>
         </div>

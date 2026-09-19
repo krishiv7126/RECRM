@@ -56,14 +56,14 @@ export function DashboardSidebar({
     >
       <div className="flex h-16 shrink-0 items-center gap-3 px-4">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-foreground text-sm font-heading font-extrabold text-white">
-          E
+          V
         </div>
         {!collapsed && (
           <div className="flex flex-col leading-none">
             <span className="font-heading text-[15px] font-extrabold text-sidebar-foreground">
-              Estatly
+              Vardaan ERP
             </span>
-            <span className="text-[11px] text-muted-foreground">Real Estate CRM</span>
+            <span className="text-[11px] text-muted-foreground">Real Estate ERP</span>
           </div>
         )}
       </div>

@@ -63,7 +63,7 @@ const STEPS: TourStep[] = [
   {
     icon: Workflow,
     title: 'Automation',
-    body: 'Set rules once — "when a lead turns hot, create a follow-up" — and let the CRM do the repetitive work.',
+    body: 'Set rules once — "when a lead turns hot, create a follow-up" — and let the ERP do the repetitive work.',
     roles: ['super_admin', 'admin', 'manager'],
   },
   {
@@ -75,7 +75,7 @@ const STEPS: TourStep[] = [
   {
     icon: Inbox,
     title: 'Team inbox',
-    body: 'Message your team in real time without leaving the CRM — direct messages and group chats.',
+    body: 'Message your team in real time without leaving the ERP — direct messages and group chats.',
   },
   {
     icon: ShieldCheck,

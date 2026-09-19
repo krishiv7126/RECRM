@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Loader2, MonitorSmartphone, ShieldCheck, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -88,12 +89,13 @@ export function ApprovalsList({
 
     if (error || data?.error) {
       console.error('[decide-login-approval]', error, data)
-      window.alert(data?.error ?? error?.message ?? 'Failed to record decision.')
+      toast.error(data?.error ?? error?.message ?? 'Failed to record decision.')
       return
     }
 
     setPending((prev) => prev.filter((r) => r.id !== row.id))
     setDecided((prev) => [{ ...row, status: decision, decided_at: new Date().toISOString() }, ...prev].slice(0, 20))
+    toast.success(decision === 'approved' ? `${row.platform_user?.full_name ?? 'Request'} approved` : `${row.platform_user?.full_name ?? 'Request'} rejected`)
   }
 
   return (

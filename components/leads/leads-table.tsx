@@ -15,6 +15,7 @@ import {
   Upload,
   X,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { deriveTemperature, type DerivedTemperature } from '@/lib/leads/temperature'
 import { PageHeader } from '@/components/dashboard/page-header'
@@ -35,6 +36,7 @@ import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
 import { cn } from '@/lib/utils'
+import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { Database } from '@/lib/supabase/types'
 
 type LeadStage = Database['public']['Enums']['lead_stage']
@@ -248,10 +250,11 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     const supabase = createClient()
     const { error } = await supabase.from('leads').delete().eq('id', lead.id)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
     setLeads((prev) => prev.filter((l) => l.id !== lead.id))
+    toast.success('Lead deleted')
   }
 
   async function handleConvert(lead: LeadRow) {
@@ -264,9 +267,10 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     const supabase = createClient()
     const { error } = await supabase.rpc('fn_convert_lead_to_customer', { p_lead_id: lead.id })
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
+    toast.success(`${lead.full_name} converted to customer`)
     router.refresh()
   }
 
@@ -406,7 +410,13 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[12px] font-medium text-foreground/80">Min budget (₹)</label>
-                  <Input type="number" value={budgetMinFilter} onChange={(e) => setBudgetMinFilter(e.target.value)} placeholder="e.g. 5000000" />
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    value={budgetMinFilter}
+                    onChange={(e) => setBudgetMinFilter(sanitizeDigits(e.target.value))}
+                    placeholder="e.g. 5000000"
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[12px] font-medium text-foreground/80">City</label>

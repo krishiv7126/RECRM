@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, Loader2, PanelLeft, Plus, Search, Sparkles } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
@@ -154,8 +155,10 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
     const { error } = await supabase.from('notifications').delete().eq('recipient_id', meId)
     if (error) {
       setNotifications(prev)
-      window.alert(error.message)
+      toast.error(error.message)
+      return
     }
+    toast.success('Notifications cleared')
   }
 
   function goToResult(result: SearchResult) {

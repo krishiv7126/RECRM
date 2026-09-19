@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2, ChevronDown, Filter, MapPin, MoreHorizontal, Plus, Search } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -88,10 +89,11 @@ export function ProjectsGrid({ initialProjects }: { initialProjects: ProjectWith
     const supabase = createClient()
     const { error } = await supabase.from('projects').delete().eq('id', project.id)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
     setProjects((prev) => prev.filter((p) => p.id !== project.id))
+    toast.success('Project deleted')
   }
 
   return (

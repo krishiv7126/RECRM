@@ -15,6 +15,7 @@ import {
   UserPlus,
   Zap,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -128,8 +129,10 @@ export function AutomationManager({
     const { error } = await supabase.from('automation_rules').update({ is_active: next }).eq('id', rule.id)
     if (error) {
       setRules(prev)
-      window.alert(error.message)
+      toast.error(error.message)
+      return
     }
+    toast.success(next ? `${rule.name} activated` : `${rule.name} paused`)
   }
 
   async function handleDuplicate(rule: AutomationRuleRow) {
@@ -144,9 +147,10 @@ export function AutomationManager({
       is_active: false,
     })
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
+    toast.success('Rule duplicated')
     router.refresh()
   }
 
@@ -161,10 +165,11 @@ export function AutomationManager({
     const supabase = createClient()
     const { error } = await supabase.from('automation_rules').delete().eq('id', rule.id)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
     setRules((p) => p.filter((r) => r.id !== rule.id))
+    toast.success('Rule deleted')
   }
 
   return (

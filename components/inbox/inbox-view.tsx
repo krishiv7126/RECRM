@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Info, Loader2, Mail, Plus, Search, Send, Users } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -253,7 +254,7 @@ export function InboxView({
 
     if (error) {
       setSending(false)
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
 

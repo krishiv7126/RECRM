@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { LayoutGrid, MoreHorizontal, Plus, Table2, User } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -167,9 +168,10 @@ export function DealsBoard({
 
     if (error) {
       setDeals(prevDeals)
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
+    toast.success(`Deal moved to ${stageMeta[stage].label}`)
     if (stage === 'booked') {
       setCelebratingId(deal.id)
       setTimeout(() => setCelebratingId((id) => (id === deal.id ? null : id)), 900)
@@ -187,10 +189,11 @@ export function DealsBoard({
     const supabase = createClient()
     const { error } = await supabase.from('deals').delete().eq('id', deal.id)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
     setDeals((prev) => prev.filter((d) => d.id !== deal.id))
+    toast.success('Deal deleted')
   }
 
   function handleDragStart(e: React.DragEvent, deal: DealWithRelations) {

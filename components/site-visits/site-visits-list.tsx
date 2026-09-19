@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2, Calendar, Clock, Filter, MoreHorizontal, Search } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -140,8 +141,10 @@ export function SiteVisitsList({
     const { error } = await supabase.from('site_visits').update({ status }).eq('id', visit.id)
     if (error) {
       setVisits(prev)
-      window.alert(error.message)
+      toast.error(error.message)
+      return
     }
+    toast.success(`Visit marked ${statusMeta[status].label.toLowerCase()}`)
   }
 
   async function handleDelete(visit: SiteVisitWithRelations) {
@@ -155,10 +158,11 @@ export function SiteVisitsList({
     const supabase = createClient()
     const { error } = await supabase.from('site_visits').delete().eq('id', visit.id)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
     setVisits((prev) => prev.filter((v) => v.id !== visit.id))
+    toast.success('Site visit deleted')
   }
 
   function handleViewProperty(visit: SiteVisitWithRelations) {

@@ -1,25 +1,25 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, Download, Loader2, Lock, Megaphone, MessageCircle, Plus } from 'lucide-react'
+import { Camera, Loader2, Lock, Megaphone, MessageCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ManageAccessDialog } from '@/components/settings/manage-access-dialog'
-import { InviteMemberDialog } from '@/components/settings/invite-member-dialog'
 import { ReassignDialog } from '@/components/settings/reassign-dialog'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { SettingsData } from '@/lib/settings/get-settings-data'
 
-type TabKey = 'profile' | 'organization' | 'team' | 'integrations' | 'notifications' | 'export'
+type TabKey = 'profile' | 'organization' | 'team' | 'integrations' | 'notifications'
 
 interface TabDef {
   key: TabKey
@@ -33,55 +33,7 @@ const TABS: TabDef[] = [
   { key: 'team', label: 'Team Management', adminOnly: true },
   { key: 'integrations', label: 'Integrations', adminOnly: true },
   { key: 'notifications', label: 'Notifications', adminOnly: false },
-  { key: 'export', label: 'Full Data Export', adminOnly: true },
 ]
-
-// Single ERP-defined export format — one file, fixed shape, not a per-table
-// picker. Keeps the export structure ours to control rather than whatever a
-// raw table dump happens to look like.
-const FULL_EXPORT_TABLES = [
-  {
-    key: 'leads',
-    table: 'leads',
-    columns: [
-      'full_name', 'email', 'phone', 'requirement', 'budget_min', 'budget_max',
-      'reference', 'source', 'stage', 'temperature', 'ai_score', 'city', 'created_at',
-    ],
-  },
-  {
-    key: 'customers',
-    table: 'customers',
-    columns: ['full_name', 'email', 'phone', 'city', 'address', 'created_at'],
-  },
-  {
-    key: 'deals',
-    table: 'deals',
-    columns: ['code', 'title', 'stage', 'value', 'currency', 'expected_close_date', 'closed_at', 'created_at'],
-  },
-  {
-    key: 'properties',
-    table: 'properties',
-    columns: [
-      'title', 'property_type', 'status', 'city', 'address', 'price',
-      'size_sqft', 'bedrooms', 'bathrooms', 'created_at',
-    ],
-  },
-  {
-    key: 'projects',
-    table: 'projects',
-    columns: ['name', 'developer_name', 'project_type', 'usp', 'city', 'location', 'created_at'],
-  },
-  {
-    key: 'site_visits',
-    table: 'site_visits',
-    columns: ['scheduled_at', 'status', 'feedback', 'created_at'],
-  },
-  {
-    key: 'follow_ups',
-    table: 'follow_ups',
-    columns: ['type', 'status', 'due_at', 'completed_at', 'notes', 'created_at'],
-  },
-] as const
 
 const integrationMeta: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string }> = {
   whatsapp: { icon: WhatsAppIcon, color: 'bg-emerald-500' },
@@ -120,6 +72,12 @@ export function SettingsView({ data }: { data: SettingsData }) {
   const [fullName, setFullName] = useState(me.full_name)
   const [phone, setPhone] = useState(me.phone ?? '')
   const [savingProfile, setSavingProfile] = useState(false)
+  // avatar_url isn't selected in get-settings-data.ts's query yet -- the
+  // `avatars` migration (see project notes) hasn't been applied to the
+  // database. Once it has, thread `me.avatar_url` through here the same way.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const [orgName, setOrgName] = useState(organization?.name ?? '')
   const [orgCity, setOrgCity] = useState(organization?.city ?? '')
@@ -133,9 +91,6 @@ export function SettingsView({ data }: { data: SettingsData }) {
     Object.fromEntries(notificationPrefs.map((p) => [p.key, initialPrefs[p.key] ?? true])),
   )
   const [savingPrefs, setSavingPrefs] = useState(false)
-
-  const [exportingFull, setExportingFull] = useState(false)
-  const [exportError, setExportError] = useState<string | null>(null)
 
   const integrationStatusByProvider = useMemo(() => {
     const map = new Map<string, string>()
@@ -152,9 +107,51 @@ export function SettingsView({ data }: { data: SettingsData }) {
       .eq('id', me.id)
     setSavingProfile(false)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
+    toast.success('Profile updated')
+    router.refresh()
+  }
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please choose an image file.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB.')
+      return
+    }
+
+    setUploadingAvatar(true)
+    const supabase = createClient()
+    const path = `${me.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`
+
+    const { error: uploadErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    if (uploadErr) {
+      setUploadingAvatar(false)
+      toast.error(uploadErr.message)
+      return
+    }
+
+    const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(path)
+    const { error: updateErr } = await supabase
+      .from('platform_users')
+      .update({ avatar_url: publicUrl.publicUrl })
+      .eq('id', me.id)
+    setUploadingAvatar(false)
+
+    if (updateErr) {
+      toast.error(updateErr.message)
+      return
+    }
+    setAvatarUrl(publicUrl.publicUrl)
+    toast.success('Photo updated')
     router.refresh()
   }
 
@@ -168,9 +165,10 @@ export function SettingsView({ data }: { data: SettingsData }) {
       .eq('id', organization.id)
     setSavingOrg(false)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
+    toast.success('Organization updated')
     router.refresh()
   }
 
@@ -182,8 +180,10 @@ export function SettingsView({ data }: { data: SettingsData }) {
     const { error } = await supabase.from('platform_users').update({ is_active: next }).eq('id', member.id)
     if (error) {
       setStaffRows(prev)
-      window.alert(error.message)
+      toast.error(error.message)
+      return
     }
+    toast.success(next ? `${member.full_name} activated` : `${member.full_name} deactivated`)
   }
 
   async function handleSavePrefs() {
@@ -194,40 +194,11 @@ export function SettingsView({ data }: { data: SettingsData }) {
       .update({ notification_preferences: prefs })
       .eq('id', me.id)
     setSavingPrefs(false)
-    if (error) window.alert(error.message)
-  }
-
-  async function exportFullData() {
-    setExportingFull(true)
-    setExportError(null)
-    const supabase = createClient()
-
-    const results = await Promise.all(
-      FULL_EXPORT_TABLES.map((def) => supabase.from(def.table).select(def.columns.join(', '))),
-    )
-
-    const failed = results.find((r) => r.error)
-    if (failed?.error) {
-      setExportingFull(false)
-      setExportError(failed.error.message)
+    if (error) {
+      toast.error(error.message)
       return
     }
-
-    const bundle = {
-      exported_at: new Date().toISOString(),
-      organization: organization?.name ?? null,
-      data: Object.fromEntries(FULL_EXPORT_TABLES.map((def, i) => [def.key, results[i].data ?? []])),
-    }
-
-    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${(organization?.name ?? 'estatly').toLowerCase().replace(/\s+/g, '-')}-full-export-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-
-    setExportingFull(false)
+    toast.success('Notification preferences saved')
   }
 
   return (
@@ -282,20 +253,27 @@ export function SettingsView({ data }: { data: SettingsData }) {
                 <CardContent className="flex flex-col gap-5">
                   <div className="flex items-center gap-4">
                     <Avatar size="lg" className="size-16">
+                      {avatarUrl && <AvatarImage src={avatarUrl} alt={me.full_name} />}
                       <AvatarFallback className="bg-primary/15 text-lg font-semibold text-primary">
                         {getInitials(me.full_name)}
                       </AvatarFallback>
                     </Avatar>
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button variant="outline" size="sm" disabled>
-                            Change photo
-                          </Button>
-                        }
-                      />
-                      <TooltipContent>Avatar uploads need storage set up first</TooltipContent>
-                    </Tooltip>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={uploadingAvatar}
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      {uploadingAvatar && <Loader2 className="animate-spin" data-icon="inline-start" />}
+                      {uploadingAvatar ? 'Uploading…' : 'Change photo'}
+                    </Button>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -383,18 +361,9 @@ export function SettingsView({ data }: { data: SettingsData }) {
 
             {activeTab === 'team' && canAccessTab('team', role) && (
               <Card className="rounded-2xl border-border shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between gap-4">
+                <CardHeader>
                   <CardTitle className="font-heading text-base font-bold">Team Management</CardTitle>
-                  <InviteMemberDialog
-                    callerRole={role}
-                    managers={managers}
-                    trigger={
-                      <Button size="sm" className="shrink-0 bg-foreground text-background hover:bg-foreground/85">
-                        <Plus data-icon="inline-start" />
-                        Invite Member
-                      </Button>
-                    }
-                  />
+                  <CardDescription>New team members are provisioned by the platform team from superCRM.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
@@ -574,30 +543,6 @@ export function SettingsView({ data }: { data: SettingsData }) {
               </Card>
             )}
 
-            {activeTab === 'export' && isAdmin && (
-              <Card className="rounded-2xl border-border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="font-heading text-base font-bold">Full Data Export</CardTitle>
-                  <CardDescription>
-                    One export of your organization's data — leads, customers, deals, properties, projects, site
-                    visits, and follow-ups — in a single file, structured the same way every time.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                  {exportError && <p className="text-[13px] text-destructive">{exportError}</p>}
-                  <div>
-                    <Button size="sm" disabled={exportingFull} onClick={exportFullData}>
-                      {exportingFull ? (
-                        <Loader2 className="animate-spin" data-icon="inline-start" />
-                      ) : (
-                        <Download data-icon="inline-start" />
-                      )}
-                      {exportingFull ? 'Exporting…' : 'Export All Data'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
 

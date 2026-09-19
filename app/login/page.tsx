@@ -150,7 +150,7 @@ export default function LoginPage() {
     <div className="flex min-h-svh items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <CardTitle className="font-heading text-xl text-foreground">Estatly</CardTitle>
+          <CardTitle className="font-heading text-xl text-foreground">Vardaan ERP</CardTitle>
           <CardDescription>
             {phase === "waiting" ? "Waiting for approval" : phase === "checking" ? "One moment…" : "Sign in to your account"}
           </CardDescription>

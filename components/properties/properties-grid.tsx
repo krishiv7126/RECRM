@@ -17,6 +17,7 @@ import {
   Upload,
   X,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -180,10 +181,11 @@ export function PropertiesGrid({
     const supabase = createClient()
     const { error } = await supabase.from('properties').delete().eq('id', property.id)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
     setProperties((prev) => prev.filter((p) => p.id !== property.id))
+    toast.success('Property deleted')
   }
 
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {

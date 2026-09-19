@@ -14,6 +14,7 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -133,10 +134,11 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     const supabase = createClient()
     const { error } = await supabase.from('customers').delete().eq('id', customer.id)
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
     setCustomers((prev) => prev.filter((c) => c.id !== customer.id))
+    toast.success('Customer deleted')
   }
 
   async function handleStartDeal(customer: CustomerRow) {
@@ -158,9 +160,10 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
       title,
     })
     if (error) {
-      window.alert(error.message)
+      toast.error(error.message)
       return
     }
+    toast.success('Deal created')
     router.push('/deals')
   }
 

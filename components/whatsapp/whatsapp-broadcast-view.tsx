@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Save, Trash2, Users } from 'lucide-react'
+import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -124,6 +125,7 @@ export function WhatsappBroadcastView({
     setCampaigns((prev) => [inserted as WhatsappCampaign, ...prev])
     setTitle('')
     setMessage('')
+    toast.success('Campaign saved')
   }
 
   async function handleDeleteCampaign(id: string) {
@@ -137,10 +139,11 @@ export function WhatsappBroadcastView({
     const supabase = createClient()
     const { error: deleteErr } = await supabase.from('whatsapp_campaigns').delete().eq('id', id)
     if (deleteErr) {
-      window.alert(deleteErr.message)
+      toast.error(deleteErr.message)
       return
     }
     setCampaigns((prev) => prev.filter((c) => c.id !== id))
+    toast.success('Campaign deleted')
   }
 
   return (

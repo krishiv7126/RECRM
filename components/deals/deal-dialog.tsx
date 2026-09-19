@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -15,6 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
+import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { Database } from '@/lib/supabase/types'
 
 type DealStage = Database['public']['Enums']['deal_stage']
@@ -110,8 +112,10 @@ export function DealDialog({
       setSubmitting(false)
       if (updateErr) {
         setError(updateErr.message)
+        toast.error(updateErr.message)
         return
       }
+      toast.success('Deal updated')
     } else {
       const {
         data: { user },
@@ -146,8 +150,10 @@ export function DealDialog({
       setSubmitting(false)
       if (insertErr) {
         setError(insertErr.message)
+        toast.error(insertErr.message)
         return
       }
+      toast.success('Deal created')
     }
 
     setOpen(false)
@@ -221,7 +227,13 @@ export function DealDialog({
               <label htmlFor="deal_value" className="text-sm font-medium text-foreground">
                 Value (₹)
               </label>
-              <Input id="deal_value" type="number" value={value} onChange={(e) => setValue(e.target.value)} />
+              <Input
+                id="deal_value"
+                type="text"
+                inputMode="numeric"
+                value={value}
+                onChange={(e) => setValue(sanitizeDigits(e.target.value))}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="deal_close_date" className="text-sm font-medium text-foreground">

@@ -107,6 +107,17 @@
   }
   body {
     @apply bg-background text-foreground;
+    /*
+     * Default OS cursor is a single flat color and can vanish against a
+     * light background. This custom pointer has a dark fill with a white
+     * outline (and vice versa isn't needed — the outline alone guarantees
+     * contrast against both light and dark surfaces). Elements with their
+     * own `cursor` (buttons, links, disabled controls) are unaffected —
+     * this only fills in the plain-background default.
+     */
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M5 3 L5 19 L9 15.5 L12 21.5 L15 20 L12 14 L18 14 Z' fill='%23013220' stroke='%23ffffff' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E")
+      5 3,
+      auto;
   }
 }
 /* -------------------------------------------------------------------------- */

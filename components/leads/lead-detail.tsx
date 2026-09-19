@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Check, Loader2, Mail, Phone as PhoneIcon, Repeat, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
 import { deriveTemperature } from '@/lib/leads/temperature'
+import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { LeadWithOwner } from '@/lib/leads/get-leads-data'
 
 const sources = ['Website', 'Referral', 'Meta Ads', 'Google', '99acres', 'Walk-in', 'Other']
@@ -74,9 +76,11 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
     setSaving(false)
     if (updateErr) {
       setError(updateErr.message)
+      toast.error(updateErr.message)
       return
     }
     setSaved(true)
+    toast.success('Lead updated')
     router.refresh()
     setTimeout(() => setSaved(false), 2000)
   }
@@ -94,8 +98,10 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
     setConverting(false)
     if (convertErr) {
       setError(convertErr.message)
+      toast.error(convertErr.message)
       return
     }
+    toast.success(`${lead.full_name} converted to customer`)
     router.push('/customers')
   }
 
@@ -113,8 +119,10 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
     setDeleting(false)
     if (deleteErr) {
       setError(deleteErr.message)
+      toast.error(deleteErr.message)
       return
     }
+    toast.success(`${lead.full_name} deleted`)
     router.push('/leads')
   }
 
@@ -222,11 +230,21 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Budget min (₹)</label>
-              <Input type="number" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} />
+              <Input
+                type="text"
+                inputMode="numeric"
+                value={budgetMin}
+                onChange={(e) => setBudgetMin(sanitizeDigits(e.target.value))}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Budget max (₹)</label>
-              <Input type="number" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
+              <Input
+                type="text"
+                inputMode="numeric"
+                value={budgetMax}
+                onChange={(e) => setBudgetMax(sanitizeDigits(e.target.value))}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Reference</label>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -15,6 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
+import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { Database } from '@/lib/supabase/types'
 
 type PropertyType = Database['public']['Enums']['property_type']
@@ -126,8 +128,10 @@ export function PropertyDialog({
       setSubmitting(false)
       if (updateErr) {
         setError(updateErr.message)
+        toast.error(updateErr.message)
         return
       }
+      toast.success('Property updated')
     } else {
       const {
         data: { user },
@@ -157,8 +161,10 @@ export function PropertyDialog({
       setSubmitting(false)
       if (insertErr) {
         setError(insertErr.message)
+        toast.error(insertErr.message)
         return
       }
+      toast.success('Property created')
     }
 
     setOpen(false)
@@ -239,19 +245,37 @@ export function PropertyDialog({
               <label htmlFor="prop_size" className="text-sm font-medium text-foreground">
                 Size (sqft)
               </label>
-              <Input id="prop_size" type="number" value={sizeSqft} onChange={(e) => setSizeSqft(e.target.value)} />
+              <Input
+                id="prop_size"
+                type="text"
+                inputMode="numeric"
+                value={sizeSqft}
+                onChange={(e) => setSizeSqft(sanitizeDigits(e.target.value))}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="prop_bedrooms" className="text-sm font-medium text-foreground">
                 Bedrooms
               </label>
-              <Input id="prop_bedrooms" type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} />
+              <Input
+                id="prop_bedrooms"
+                type="text"
+                inputMode="numeric"
+                value={bedrooms}
+                onChange={(e) => setBedrooms(sanitizeDigits(e.target.value))}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="prop_bathrooms" className="text-sm font-medium text-foreground">
                 Bathrooms
               </label>
-              <Input id="prop_bathrooms" type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} />
+              <Input
+                id="prop_bathrooms"
+                type="text"
+                inputMode="numeric"
+                value={bathrooms}
+                onChange={(e) => setBathrooms(sanitizeDigits(e.target.value))}
+              />
             </div>
           </div>
 
@@ -260,7 +284,13 @@ export function PropertyDialog({
               <label htmlFor="prop_price" className="text-sm font-medium text-foreground">
                 Price (₹)
               </label>
-              <Input id="prop_price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+              <Input
+                id="prop_price"
+                type="text"
+                inputMode="numeric"
+                value={price}
+                onChange={(e) => setPrice(sanitizeDigits(e.target.value))}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="prop_project" className="text-sm font-medium text-foreground">

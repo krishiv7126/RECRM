@@ -22,6 +22,12 @@ function linkedName(item: { lead: { full_name: string } | null; customer: { full
   return item.lead?.full_name ?? item.customer?.full_name ?? '—'
 }
 
+function linkedHref(item: { lead: { id: string } | null; customer: { id: string } | null }) {
+  if (item.lead) return `/leads/${item.lead.id}`
+  if (item.customer) return `/customers/${item.customer.id}`
+  return '/follow-ups'
+}
+
 function Column({
   title,
   icon: Icon,
@@ -64,14 +70,14 @@ function Column({
   )
 }
 
-function Row({ primary, secondary, tone }: { primary: string; secondary: string; tone?: 'warning' }) {
+function Row({ primary, secondary, tone, href }: { primary: string; secondary: string; tone?: 'warning'; href: string }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-lg px-2 py-1.5 hover:bg-accent/40">
+    <Link href={href} className="flex flex-col gap-0.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-accent/40">
       <span className="truncate text-[13px] font-medium text-foreground">{primary}</span>
       <span className={`truncate text-[11px] ${tone === 'warning' ? 'font-semibold text-destructive' : 'text-muted-foreground'}`}>
         {secondary}
       </span>
-    </div>
+    </Link>
   )
 }
 
@@ -89,7 +95,13 @@ export function PriorityQueue({ data }: { data: PriorityQueue }) {
           emptyLabel="Nothing overdue."
         >
           {data.overdueFollowUps.map((f) => (
-            <Row key={f.id} primary={linkedName(f)} secondary={`${formatDueLabel(f.due_at)} · ${f.owner?.full_name ?? '—'}`} tone="warning" />
+            <Row
+              key={f.id}
+              primary={linkedName(f)}
+              secondary={`${formatDueLabel(f.due_at)} · ${f.owner?.full_name ?? '—'}`}
+              tone="warning"
+              href={linkedHref(f)}
+            />
           ))}
         </Column>
 
@@ -102,7 +114,12 @@ export function PriorityQueue({ data }: { data: PriorityQueue }) {
           emptyLabel="Nothing due today."
         >
           {data.dueTodayFollowUps.map((f) => (
-            <Row key={f.id} primary={linkedName(f)} secondary={`${formatDueLabel(f.due_at)} · ${f.owner?.full_name ?? '—'}`} />
+            <Row
+              key={f.id}
+              primary={linkedName(f)}
+              secondary={`${formatDueLabel(f.due_at)} · ${f.owner?.full_name ?? '—'}`}
+              href={linkedHref(f)}
+            />
           ))}
         </Column>
 
@@ -115,7 +132,12 @@ export function PriorityQueue({ data }: { data: PriorityQueue }) {
           emptyLabel="No hot leads waiting."
         >
           {data.hotLeadsToContact.map((l) => (
-            <Row key={l.id} primary={l.full_name} secondary={`Score ${l.ai_score} · ${l.owner?.full_name ?? '—'}`} />
+            <Row
+              key={l.id}
+              primary={l.full_name}
+              secondary={`Score ${l.ai_score} · ${l.owner?.full_name ?? '—'}`}
+              href={`/leads/${l.id}`}
+            />
           ))}
         </Column>
 
@@ -128,7 +150,7 @@ export function PriorityQueue({ data }: { data: PriorityQueue }) {
           emptyLabel="No new leads waiting."
         >
           {data.freshLeads.map((l) => (
-            <Row key={l.id} primary={l.full_name} secondary={l.owner?.full_name ?? 'Unassigned'} />
+            <Row key={l.id} primary={l.full_name} secondary={l.owner?.full_name ?? 'Unassigned'} href={`/leads/${l.id}`} />
           ))}
         </Column>
       </div>

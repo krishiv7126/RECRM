@@ -20,6 +20,8 @@ import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
 import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
 import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
+import { sanitizeDigits } from '@/lib/sanitize-number-input'
+import { toast } from 'sonner'
 
 const sources = ['Website', 'Referral', 'Meta Ads', 'Google', '99acres', 'Walk-in', 'Other']
 
@@ -115,9 +117,11 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
 
     if (insertErr) {
       setError(insertErr.message)
+      toast.error(insertErr.message)
       return
     }
 
+    toast.success('Lead created')
     setOpen(false)
     resetForm()
     router.refresh()
@@ -192,13 +196,25 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
               <label htmlFor="lead_budget_min" className="text-sm font-medium text-foreground">
                 Budget min (₹)
               </label>
-              <Input id="lead_budget_min" type="number" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} />
+              <Input
+                id="lead_budget_min"
+                type="text"
+                inputMode="numeric"
+                value={budgetMin}
+                onChange={(e) => setBudgetMin(sanitizeDigits(e.target.value))}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="lead_budget_max" className="text-sm font-medium text-foreground">
                 Budget max (₹)
               </label>
-              <Input id="lead_budget_max" type="number" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
+              <Input
+                id="lead_budget_max"
+                type="text"
+                inputMode="numeric"
+                value={budgetMax}
+                onChange={(e) => setBudgetMax(sanitizeDigits(e.target.value))}
+              />
             </div>
           </div>
 

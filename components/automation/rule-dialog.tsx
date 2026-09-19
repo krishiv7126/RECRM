@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -15,6 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
+import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import {
   type Action,
   type Condition,
@@ -130,8 +132,10 @@ export function RuleDialog({
       setSubmitting(false)
       if (updateErr) {
         setError(updateErr.message)
+        toast.error(updateErr.message)
         return
       }
+      toast.success('Rule updated')
     } else {
       const {
         data: { user },
@@ -158,8 +162,10 @@ export function RuleDialog({
       setSubmitting(false)
       if (insertErr) {
         setError(insertErr.message)
+        toast.error(insertErr.message)
         return
       }
+      toast.success('Rule created')
     }
 
     setOpen(false)
@@ -228,9 +234,10 @@ export function RuleDialog({
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-medium text-foreground/80">Due in (days)</label>
             <Input
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={(cfg.due_in_days as string) ?? '1'}
-              onChange={(e) => updateActionConfig(i, { due_in_days: e.target.value })}
+              onChange={(e) => updateActionConfig(i, { due_in_days: sanitizeDigits(e.target.value) })}
             />
           </div>
           {assigneeSelect('assignee_id', 'Assign to')}
@@ -258,9 +265,10 @@ export function RuleDialog({
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-medium text-foreground/80">Due in (hours)</label>
             <Input
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={(cfg.due_in_hours as string) ?? '24'}
-              onChange={(e) => updateActionConfig(i, { due_in_hours: e.target.value })}
+              onChange={(e) => updateActionConfig(i, { due_in_hours: sanitizeDigits(e.target.value) })}
             />
           </div>
           <div className="col-span-2 flex flex-col gap-1.5">

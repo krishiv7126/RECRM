@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
-import { allNavGroupLabels, navByRole, type Role } from '@/lib/nav-config'
+import { allNavAccessGroups, allNavGroupLabels, navByRole, type Role } from '@/lib/nav-config'
 
 interface Member {
   id: string
@@ -32,7 +32,11 @@ export function ManageAccessDialog({ trigger, member }: { trigger: React.ReactEl
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const roleDefaults = new Set((navByRole[member.role as Role] ?? []).flatMap((s) => s.groups.map((g) => g.label)))
+  const roleSections = navByRole[member.role as Role] ?? []
+  const roleDefaults = new Set([
+    ...roleSections.flatMap((s) => s.groups.map((g) => g.label)),
+    ...roleSections.flatMap((s) => s.groups.flatMap((g) => g.items?.map((i) => i.label) ?? [])),
+  ])
 
   function isChecked(label: string) {
     return label in overrides ? overrides[label] : roleDefaults.has(label)
@@ -82,19 +86,45 @@ export function ManageAccessDialog({ trigger, member }: { trigger: React.ReactEl
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Manage Access — {member.full_name}</DialogTitle>
-          <DialogDescription>Turn pages on or off for this person, overriding their role’s defaults.</DialogDescription>
+          <DialogDescription>
+            Turn pages — and individual sub-pages — on or off for this person, overriding their role’s defaults.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex max-h-[60vh] flex-col gap-1 overflow-y-auto pr-1">
           {allNavGroupLabels.map((label) => {
             const overridden = label in overrides
+            const groupOn = isChecked(label)
+            const accessGroup = allNavAccessGroups.find((g) => g.label === label)
             return (
-              <div key={label} className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-accent/40">
-                <div className="flex flex-col">
-                  <span className="text-[13px] font-medium text-foreground">{label}</span>
-                  {overridden && <span className="text-[11px] text-primary">Custom override</span>}
+              <div key={label} className="flex flex-col">
+                <div className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-accent/40">
+                  <div className="flex flex-col">
+                    <span className="text-[13px] font-medium text-foreground">{label}</span>
+                    {overridden && <span className="text-[11px] text-primary">Custom override</span>}
+                  </div>
+                  <Switch size="sm" checked={groupOn} onCheckedChange={() => toggle(label)} />
                 </div>
-                <Switch size="sm" checked={isChecked(label)} onCheckedChange={() => toggle(label)} />
+
+                {accessGroup && groupOn && (
+                  <div className="ml-4 flex flex-col gap-0.5 border-l border-border pl-3">
+                    {accessGroup.items.map((itemLabel) => {
+                      const itemOverridden = itemLabel in overrides
+                      return (
+                        <div
+                          key={itemLabel}
+                          className="flex items-center justify-between gap-3 rounded-lg px-2 py-1 hover:bg-accent/40"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-[12px] text-foreground/80">{itemLabel}</span>
+                            {itemOverridden && <span className="text-[10px] text-primary">Custom override</span>}
+                          </div>
+                          <Switch size="sm" checked={isChecked(itemLabel)} onCheckedChange={() => toggle(itemLabel)} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )
           })}

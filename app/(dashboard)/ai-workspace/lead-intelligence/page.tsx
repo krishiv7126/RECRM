@@ -170,8 +170,15 @@ export default function LeadIntelligencePage() {
     }
 
     const output = data.output as string
-    const scoreMatch = output.match(/\d{1,3}/)
-    const score = scoreMatch ? Math.min(100, Number.parseInt(scoreMatch[0], 10)) : null
+    // The model's reasoning is prose, not structured data — a bare "first
+    // number in the text" match picked up whatever number happened to appear
+    // first (days in pipeline, a budget figure, etc.), not the actual score,
+    // producing a different displayed score each time depending on wording.
+    // Prefer an explicit "Score: NN" or "NN/100" mention; only fall back to
+    // the first number if the model didn't format it that way.
+    const labeledMatch = output.match(/score[^\d]{0,12}(\d{1,3})/i) ?? output.match(/(\d{1,3})\s*\/\s*100/)
+    const rawScore = labeledMatch ? labeledMatch[1] : output.match(/\b\d{1,3}\b/)?.[0]
+    const score = rawScore ? Math.min(100, Number.parseInt(rawScore, 10)) : null
 
     setLeads((prev) => prev.map((lead) => (lead.id === leadId ? { ...lead, ai_score: score ?? lead.ai_score } : lead)))
     setReasoning((prev) => ({ ...prev, [leadId]: output }))

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Check, ClipboardPlus, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +13,7 @@ import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
 import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
+import { sanitizeDigits } from '@/lib/sanitize-number-input'
 
 const INQUIRY_SOURCE = 'Offline Inquiry'
 
@@ -103,9 +105,11 @@ export function InquiryForm() {
 
     if (insertErr) {
       setError(insertErr.message)
+      toast.error(insertErr.message)
       return
     }
 
+    toast.success('Inquiry logged')
     setJustLogged(fullName.trim())
     resetForm()
     if (inserted?.id) autoScoreLead(inserted.id)
@@ -171,13 +175,25 @@ export function InquiryForm() {
                 <label htmlFor="inq_budget_min" className="text-sm font-medium text-foreground">
                   Budget min (₹)
                 </label>
-                <Input id="inq_budget_min" type="number" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} />
+                <Input
+                  id="inq_budget_min"
+                  type="text"
+                  inputMode="numeric"
+                  value={budgetMin}
+                  onChange={(e) => setBudgetMin(sanitizeDigits(e.target.value))}
+                />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="inq_budget_max" className="text-sm font-medium text-foreground">
                   Budget max (₹)
                 </label>
-                <Input id="inq_budget_max" type="number" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
+                <Input
+                  id="inq_budget_max"
+                  type="text"
+                  inputMode="numeric"
+                  value={budgetMax}
+                  onChange={(e) => setBudgetMax(sanitizeDigits(e.target.value))}
+                />
               </div>
             </div>
 

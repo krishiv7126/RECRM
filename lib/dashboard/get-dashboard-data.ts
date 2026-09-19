@@ -31,7 +31,7 @@ export async function getDashboardData() {
       supabase
         .from('follow_ups')
         .select(
-          'id, type, status, due_at, lead:leads(full_name), customer:customers(full_name), owner:platform_users!follow_ups_owner_id_fkey(full_name)',
+          'id, type, status, due_at, lead:leads(id, full_name), customer:customers(id, full_name), owner:platform_users!follow_ups_owner_id_fkey(full_name)',
         )
         .neq('status', 'done')
         .order('due_at', { ascending: true }),

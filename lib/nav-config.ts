@@ -158,13 +158,25 @@ export const navByRole: Record<Role, NavSection[]> = {
 }
 
 /**
- * Every togglable page/group, for the admin "manage access" UI. Staff is
+ * Every togglable group, for the admin "manage access" UI. Staff is
  * excluded — it's hard-gated to admin/super_admin in the page itself, so
  * granting it via override would show a nav link that 404s into a redirect.
  */
 export const allNavGroupLabels: string[] = adminNav
   .flatMap((section) => section.groups.map((g) => g.label))
   .filter((label) => label !== 'Staff')
+
+/** A group and its sub-pages, for rendering per-leaf toggles under a group. */
+export interface AccessGroup {
+  label: string
+  items: string[]
+}
+
+/** Every group that has sub-pages, for the "manage access" detailed view. */
+export const allNavAccessGroups: AccessGroup[] = adminNav
+  .flatMap((section) => section.groups)
+  .filter((g) => g.label !== 'Staff' && (g.items?.length ?? 0) > 0)
+  .map((g) => ({ label: g.label, items: (g.items ?? []).map((i) => i.label) }))
 
 // (href prefix, owning group label) pairs, longest hrefs first so a more
 // specific route (e.g. /ai-workspace/copilot) matches before its parent
@@ -183,6 +195,52 @@ export function groupLabelForPath(pathname: string): string | null {
   return match?.[1] ?? null
 }
 
+interface AccessTarget {
+  groupLabel: string
+  leafLabel: string | null
+}
+
+// Same idea as pathToGroupLabel, but resolves to the specific leaf (sub-page)
+// under a group when the path is one, so leaf-level overrides can be checked
+// without a separate lookup.
+const pathToAccessTarget: [string, AccessTarget][] = adminNav
+  .flatMap((section) => section.groups)
+  .flatMap((group) => {
+    const entries: [string, AccessTarget][] = []
+    if (group.href) entries.push([group.href, { groupLabel: group.label, leafLabel: null }])
+    for (const item of group.items ?? []) {
+      entries.push([item.href, { groupLabel: group.label, leafLabel: item.label }])
+    }
+    return entries
+  })
+  .sort((a, b) => b[0].length - a[0].length)
+
+function accessTargetForPath(pathname: string): AccessTarget | null {
+  const match = pathToAccessTarget.find(([href]) => pathname === href || pathname.startsWith(href + '/'))
+  return match?.[1] ?? null
+}
+
+/**
+ * Whether a pathname is reachable under a role's nav plus per-user overrides,
+ * checking the specific sub-page override (not just the parent group) when
+ * the path is one. Paths outside the togglable nav (e.g. /dashboard) are
+ * always allowed here — callers gate those separately.
+ */
+export function isPathAllowed(
+  pathname: string,
+  role: Role,
+  overrides: Record<string, boolean> | null | undefined,
+): boolean {
+  const target = accessTargetForPath(pathname)
+  if (!target) return true
+
+  const effectiveSections = applyNavOverrides(navByRole[role] ?? navByRole.user, overrides)
+  const group = effectiveSections.flatMap((s) => s.groups).find((g) => g.label === target.groupLabel)
+  if (!group) return false
+  if (!target.leafLabel) return true
+  return (group.items ?? []).some((item) => item.label === target.leafLabel)
+}
+
 function findGroupInAdminNav(label: string): { section: NavSection; group: NavGroup } | null {
   for (const section of adminNav) {
     const group = section.groups.find((g) => g.label === label)
@@ -191,15 +249,30 @@ function findGroupInAdminNav(label: string): { section: NavSection; group: NavGr
   return null
 }
 
+function findLeafInAdminNav(label: string): NavLeaf | null {
+  for (const section of adminNav) {
+    for (const group of section.groups) {
+      const item = group.items?.find((i) => i.label === label)
+      if (item) return item
+    }
+  }
+  return null
+}
+
 /**
  * Per-user overrides on top of the role default, set by an admin in Settings
  * → Team Management. `true` grants a page the role wouldn't normally show;
  * `false` revokes one it would. Absent keys fall through to the role default.
+ * Overrides share one flat namespace of group labels and leaf (sub-page)
+ * labels — the two never collide, so a single lookup by key works for both.
  */
 export function applyNavOverrides(baseSections: NavSection[], overrides: Record<string, boolean> | null | undefined): NavSection[] {
   if (!overrides || Object.keys(overrides).length === 0) return baseSections
 
-  let sections = baseSections.map((s) => ({ ...s, groups: [...s.groups] }))
+  let sections: NavSection[] = baseSections.map((s) => ({
+    ...s,
+    groups: s.groups.map((g) => ({ ...g, items: g.items ? [...g.items] : g.items })),
+  }))
 
   for (const [label, allowed] of Object.entries(overrides)) {
     const alreadyHasGroup = sections.some((s) => s.groups.some((g) => g.label === label))
@@ -221,6 +294,37 @@ export function applyNavOverrides(baseSections: NavSection[], overrides: Record<
       }
     }
   }
+
+  // Second pass: leaf-level overrides within whatever groups survived above.
+  // A leaf can only be added into a group that's already present — granting
+  // a sub-page of a group the role/overrides don't otherwise show would leave
+  // it with nowhere to render.
+  for (const [label, allowed] of Object.entries(overrides)) {
+    sections = sections.map((s) => ({
+      ...s,
+      groups: s.groups.map((g) => {
+        if (!g.items) return g
+        const alreadyHasItem = g.items.some((i) => i.label === label)
+
+        if (allowed === false && alreadyHasItem) {
+          return { ...g, items: g.items.filter((i) => i.label !== label) }
+        }
+        if (allowed === true && !alreadyHasItem) {
+          const leaf = findLeafInAdminNav(label)
+          if (leaf && findGroupInAdminNav(g.label)?.group.items?.some((i) => i.label === label)) {
+            return { ...g, items: [...g.items, leaf] }
+          }
+        }
+        return g
+      }),
+    }))
+  }
+
+  // Drop groups whose sub-pages were all revoked and that have no hub page
+  // of their own to fall back to — nothing left in them to click.
+  sections = sections
+    .map((s) => ({ ...s, groups: s.groups.filter((g) => !(g.items && g.items.length === 0 && !g.href)) }))
+    .filter((s) => s.groups.length > 0)
 
   return sections
 }

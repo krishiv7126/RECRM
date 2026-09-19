@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 import { redirectPathForRole } from "@/lib/role-redirect"
-import { applyNavOverrides, groupLabelForPath, navByRole, type Role } from "@/lib/nav-config"
+import { isPathAllowed, type Role } from "@/lib/nav-config"
 import type { UserRole } from "@/lib/types"
 
 // Always reachable regardless of nav_overrides -- otherwise revoking the
@@ -83,22 +83,16 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Admin-configured per-user page access (Settings → Team Management →
-  // Manage Access), enforced here rather than only via hidden sidebar links
-  // so a revoked page isn't reachable by typing the URL directly.
+  // Manage Access — group- and now leaf/sub-page-level), enforced here rather
+  // than only via hidden sidebar links so a revoked page isn't reachable by
+  // typing the URL directly.
   if (me && !ALWAYS_ALLOWED_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     const role = me.role as Role
     const overrides = me.nav_overrides as Record<string, boolean> | null
-    if (overrides && Object.keys(overrides).length > 0) {
-      const groupLabel = groupLabelForPath(pathname)
-      if (groupLabel) {
-        const effectiveSections = applyNavOverrides(navByRole[role] ?? navByRole.user, overrides)
-        const hasAccess = effectiveSections.some((s) => s.groups.some((g) => g.label === groupLabel))
-        if (!hasAccess) {
-          const url = request.nextUrl.clone()
-          url.pathname = "/dashboard"
-          return NextResponse.redirect(url)
-        }
-      }
+    if (overrides && Object.keys(overrides).length > 0 && !isPathAllowed(pathname, role, overrides)) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/dashboard"
+      return NextResponse.redirect(url)
     }
   }
 

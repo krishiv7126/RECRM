@@ -48,12 +48,12 @@ function formatDateLabel(iso: string) {
   if (isSameDay(d, now)) return 'Today'
   if (isSameDay(d, tomorrow)) return 'Tomorrow'
   const diffDays = Math.round((d.getTime() - now.getTime()) / 86400000)
-  if (diffDays > 1 && diffDays < 7) return d.toLocaleDateString('en-IN', { weekday: 'short' })
-  return d.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: '2-digit' })
+  if (diffDays > 1 && diffDays < 7) return d.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' })
+  return d.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: '2-digit', timeZone: 'Asia/Kolkata' })
 }
 
 function formatTimeLabel(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })
+  return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })
 }
 
 function visitorName(visit: SiteVisitWithRelations) {

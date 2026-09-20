@@ -36,7 +36,7 @@ function isThisWeek(dateStr: string) {
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(dateStr).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })
 }
 
 export function InquiriesView({ initialInquiries }: { initialInquiries: InquiryRow[] }) {

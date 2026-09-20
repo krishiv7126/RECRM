@@ -43,7 +43,7 @@ function formatCr(amount: number) {
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString('en-IN', { month: 'short', day: '2-digit' })
+  return new Date(dateStr).toLocaleDateString('en-IN', { month: 'short', day: '2-digit', timeZone: 'Asia/Kolkata' })
 }
 
 function getInitials(name: string) {

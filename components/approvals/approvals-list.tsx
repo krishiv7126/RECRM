@@ -23,7 +23,7 @@ function timeAgo(iso: string) {
   if (mins < 60) return `${mins} min ago`
   const hrs = Math.floor(mins / 60)
   if (hrs < 24) return `${hrs} hr ago`
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', timeZone: 'Asia/Kolkata' })
 }
 
 const statusStyles: Record<string, string> = {

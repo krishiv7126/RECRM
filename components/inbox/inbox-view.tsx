@@ -27,7 +27,7 @@ function getInitials(name: string) {
 }
 
 function formatTimestamp(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })
 }
 
 function formatListTimestamp(iso: string | null) {
@@ -35,8 +35,8 @@ function formatListTimestamp(iso: string | null) {
   const date = new Date(iso)
   const now = new Date()
   return date.toDateString() === now.toDateString()
-    ? date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })
-    : date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+    ? date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })
+    : date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })
 }
 
 function dayLabel(iso: string) {
@@ -46,7 +46,7 @@ function dayLabel(iso: string) {
   const yest = new Date(now)
   yest.setDate(now.getDate() - 1)
   if (d.toDateString() === yest.toDateString()) return 'Yesterday'
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })
 }
 
 function ConversationRow({

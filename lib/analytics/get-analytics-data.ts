@@ -119,7 +119,7 @@ export async function getAnalyticsData(range: RangeKey = '30d') {
         return t >= d.getTime() && t < next.getTime()
       })
       .reduce((s, deal) => s + (deal.value ?? 0), 0)
-    return { month: d.toLocaleDateString('en-IN', { month: 'short' }), revenue: total / 10000000 }
+    return { month: d.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' }), revenue: total / 10000000 }
   })
 
   const funnelTop = inRange.leads.length || 1

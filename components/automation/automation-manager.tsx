@@ -74,7 +74,7 @@ function timeAgo(iso: string) {
   if (hrs < 24) return `${hrs} hr ago`
   const days = Math.floor(hrs / 24)
   if (days < 7) return `${days}d ago`
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', timeZone: 'Asia/Kolkata' })
 }
 
 function logResult(details: unknown) {

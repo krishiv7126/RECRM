@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/button'
 import { CreateLeadDialog } from '@/components/leads/create-lead-dialog'
 
 function getGreeting() {
-  const hour = new Date().getHours()
+  // getHours() reads the viewing device's own local hour -- forced to IST
+  // here since the business operates in one timezone regardless of where a
+  // teammate happens to be viewing from.
+  const hour = Number(
+    new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', hourCycle: 'h23' }).format(new Date()),
+  )
   if (hour < 12) return 'Good morning'
   if (hour < 17) return 'Good afternoon'
   return 'Good evening'

@@ -170,18 +170,23 @@ export default function LeadIntelligencePage() {
     }
 
     const output = data.output as string
-    // The model's reasoning is prose, not structured data — a bare "first
-    // number in the text" match picked up whatever number happened to appear
-    // first (days in pipeline, a budget figure, etc.), not the actual score,
-    // producing a different displayed score each time depending on wording.
-    // Prefer an explicit "Score: NN" or "NN/100" mention; only fall back to
-    // the first number if the model didn't format it that way.
-    const labeledMatch = output.match(/score[^\d]{0,12}(\d{1,3})/i) ?? output.match(/(\d{1,3})\s*\/\s*100/)
-    const rawScore = labeledMatch ? labeledMatch[1] : output.match(/\b\d{1,3}\b/)?.[0]
+    // The model's actual format is "<new score>\n\n<reasoning>", and the
+    // reasoning paragraph routinely cites the lead's OLD score by name
+    // ("...an AI score of 65...") while justifying the NEW one — so matching
+    // on the word "score" anywhere in the text (the previous fix) grabbed
+    // that old value instead of the model's real verdict. The leading
+    // number is the actual score; only fall back to keyword/first-number
+    // matching if the model didn't lead with a bare number this time.
+    const leadingMatch = output.trim().match(/^(\d{1,3})\b/)
+    const labeledMatch = output.match(/(\d{1,3})\s*\/\s*100/) ?? output.match(/score[^\d]{0,12}(\d{1,3})/i)
+    const rawScore = leadingMatch ? leadingMatch[1] : labeledMatch ? labeledMatch[1] : output.match(/\b\d{1,3}\b/)?.[0]
     const score = rawScore ? Math.min(100, Number.parseInt(rawScore, 10)) : null
+    // Strip the leading score line so it isn't shown twice — once in the dial,
+    // once floating above the reasoning paragraph.
+    const displayText = leadingMatch ? output.trim().slice(leadingMatch[0].length).trim() : output
 
     setLeads((prev) => prev.map((lead) => (lead.id === leadId ? { ...lead, ai_score: score ?? lead.ai_score } : lead)))
-    setReasoning((prev) => ({ ...prev, [leadId]: output }))
+    setReasoning((prev) => ({ ...prev, [leadId]: displayText }))
     setStreamingId(leadId)
   }
 

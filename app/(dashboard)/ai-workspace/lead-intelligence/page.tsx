@@ -182,8 +182,14 @@ export default function LeadIntelligencePage() {
     const rawScore = leadingMatch ? leadingMatch[1] : labeledMatch ? labeledMatch[1] : output.match(/\b\d{1,3}\b/)?.[0]
     const score = rawScore ? Math.min(100, Number.parseInt(rawScore, 10)) : null
     // Strip the leading score line so it isn't shown twice — once in the dial,
-    // once floating above the reasoning paragraph.
-    const displayText = leadingMatch ? output.trim().slice(leadingMatch[0].length).trim() : output
+    // once floating above the reasoning paragraph. The reasoning body itself
+    // also states a number after "score of" (the OLD score it was reasoning
+    // from) — swap that to the new score too, so the number in the dial and
+    // the number in the sentence always agree.
+    let displayText = leadingMatch ? output.trim().slice(leadingMatch[0].length).trim() : output
+    if (score !== null) {
+      displayText = displayText.replace(/(score of\s*)\d{1,3}/gi, `$1${score}`)
+    }
 
     setLeads((prev) => prev.map((lead) => (lead.id === leadId ? { ...lead, ai_score: score ?? lead.ai_score } : lead)))
     setReasoning((prev) => ({ ...prev, [leadId]: displayText }))

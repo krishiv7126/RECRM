@@ -4,6 +4,102 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { sendWhatsAppTemplate, sendWhatsAppText } from '@/lib/whatsapp/client'
 
+export async function connectWhatsAppIntegration(): Promise<{ ok: boolean; message: string }> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Not signed in.' }
+
+  const { data: me } = await supabase.from('platform_users').select('id, org_id, role').eq('auth_user_id', user.id).single()
+  if (!me?.org_id) return { ok: false, message: 'Could not resolve your organization.' }
+  if (me.role !== 'admin' && me.role !== 'super_admin') {
+    return { ok: false, message: 'Only an admin can connect integrations.' }
+  }
+
+  const { data: provider } = await supabase.from('integration_providers').select('id').eq('key', 'whatsapp').single()
+  if (!provider) return { ok: false, message: 'WhatsApp provider not found in the catalog.' }
+
+  const missing = ['WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET'].filter(
+    (key) => !process.env[key],
+  )
+  if (missing.length > 0) {
+    const message = `Missing ${missing.join(', ')} — ask your platform admin to add these in Vercel.`
+    await supabase
+      .from('org_integrations')
+      .upsert(
+        { org_id: me.org_id, provider_id: provider.id, status: 'error', last_error: message },
+        { onConflict: 'org_id,provider_id' },
+      )
+    revalidatePath('/settings')
+    return { ok: false, message }
+  }
+
+  // Actually call Meta rather than just checking the env vars exist -- this
+  // is the real test of whether the token/phone number ID are valid.
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}?fields=display_phone_number,verified_name`,
+      { headers: { Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}` } },
+    )
+    const data = await res.json().catch(() => null)
+    if (!res.ok) throw new Error(data?.error?.message ?? `Meta rejected the credentials (${res.status}).`)
+
+    await supabase.from('org_integrations').upsert(
+      {
+        org_id: me.org_id,
+        provider_id: provider.id,
+        status: 'connected',
+        connected_by: me.id,
+        connected_at: new Date().toISOString(),
+        last_error: null,
+      },
+      { onConflict: 'org_id,provider_id' },
+    )
+    revalidatePath('/settings')
+    return { ok: true, message: `Connected — ${data?.verified_name ?? data?.display_phone_number ?? 'number verified'}.` }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not verify WhatsApp credentials.'
+    await supabase
+      .from('org_integrations')
+      .upsert(
+        { org_id: me.org_id, provider_id: provider.id, status: 'error', last_error: message },
+        { onConflict: 'org_id,provider_id' },
+      )
+    revalidatePath('/settings')
+    return { ok: false, message }
+  }
+}
+
+export async function disconnectWhatsAppIntegration(): Promise<{ ok: boolean; message: string }> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Not signed in.' }
+
+  const { data: me } = await supabase.from('platform_users').select('org_id, role').eq('auth_user_id', user.id).single()
+  if (!me?.org_id) return { ok: false, message: 'Could not resolve your organization.' }
+  if (me.role !== 'admin' && me.role !== 'super_admin') {
+    return { ok: false, message: 'Only an admin can manage integrations.' }
+  }
+
+  const { data: provider } = await supabase.from('integration_providers').select('id').eq('key', 'whatsapp').single()
+  if (!provider) return { ok: false, message: 'WhatsApp provider not found in the catalog.' }
+
+  const { error } = await supabase
+    .from('org_integrations')
+    .update({ status: 'disconnected', last_error: null })
+    .eq('org_id', me.org_id)
+    .eq('provider_id', provider.id)
+  if (error) return { ok: false, message: error.message }
+
+  revalidatePath('/settings')
+  return { ok: true, message: 'WhatsApp disconnected.' }
+}
+
 interface CampaignRecipient {
   id: string
   name: string

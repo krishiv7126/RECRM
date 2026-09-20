@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ManageAccessDialog } from '@/components/settings/manage-access-dialog'
 import { ReassignDialog } from '@/components/settings/reassign-dialog'
 import { createClient } from '@/lib/supabase/client'
+import { connectWhatsAppIntegration, disconnectWhatsAppIntegration } from '@/lib/whatsapp/actions'
 import { cn } from '@/lib/utils'
 import type { SettingsData } from '@/lib/settings/get-settings-data'
 
@@ -88,12 +89,28 @@ export function SettingsView({ data }: { data: SettingsData }) {
     Object.fromEntries(notificationPrefs.map((p) => [p.key, initialPrefs[p.key] ?? true])),
   )
   const [savingPrefs, setSavingPrefs] = useState(false)
+  const [connectingProviderId, setConnectingProviderId] = useState<string | null>(null)
 
   const integrationStatusByProvider = useMemo(() => {
     const map = new Map<string, string>()
     for (const oi of orgIntegrations) map.set(oi.provider_id, oi.status)
     return map
   }, [orgIntegrations])
+
+  async function handleToggleIntegration(provider: { id: string; key: string }) {
+    // Only WhatsApp actually connects to anything right now -- Facebook/Instagram
+    // stay disabled (is_active: false) until those integrations are built.
+    if (provider.key !== 'whatsapp') return
+
+    setConnectingProviderId(provider.id)
+    const alreadyConnected = integrationStatusByProvider.get(provider.id) === 'connected'
+    const result = alreadyConnected ? await disconnectWhatsAppIntegration() : await connectWhatsAppIntegration()
+    setConnectingProviderId(null)
+
+    if (result.ok) toast.success(result.message)
+    else toast.error(result.message)
+    router.refresh()
+  }
 
   async function handleSaveProfile() {
     setSavingProfile(true)
@@ -451,9 +468,17 @@ export function SettingsView({ data }: { data: SettingsData }) {
                     const meta = integrationMeta[provider.key] ?? { icon: MessageCircle, color: 'bg-muted-foreground' }
                     const Icon = meta.icon
                     const status = integrationStatusByProvider.get(provider.id) ?? 'disconnected'
+                    const isConnecting = connectingProviderId === provider.id
                     const connectButton = (
-                      <Button variant="outline" size="sm" className="w-full" disabled={!provider.is_active}>
-                        Connect
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        disabled={!provider.is_active || isConnecting}
+                        onClick={() => handleToggleIntegration(provider)}
+                      >
+                        {isConnecting && <Loader2 className="animate-spin" data-icon="inline-start" />}
+                        {status === 'connected' ? 'Disconnect' : 'Connect'}
                       </Button>
                     )
                     return (

@@ -2033,39 +2033,54 @@ export type Database = {
           audience_type: string
           created_at: string
           created_by: string
+          failed_count: number
           filters: Json
           id: string
+          last_error: string | null
           message: string
           org_id: string
           recipient_count: number
           recipients: Json
+          sent_at: string | null
+          sent_count: number
           status: string
+          template_name: string | null
           title: string
         }
         Insert: {
           audience_type: string
           created_at?: string
           created_by: string
+          failed_count?: number
           filters?: Json
           id?: string
+          last_error?: string | null
           message: string
           org_id: string
           recipient_count?: number
           recipients?: Json
+          sent_at?: string | null
+          sent_count?: number
           status?: string
+          template_name?: string | null
           title: string
         }
         Update: {
           audience_type?: string
           created_at?: string
           created_by?: string
+          failed_count?: number
           filters?: Json
           id?: string
+          last_error?: string | null
           message?: string
           org_id?: string
           recipient_count?: number
           recipients?: Json
+          sent_at?: string | null
+          sent_count?: number
           status?: string
+          template_name?: string | null
           title?: string
         }
         Relationships: [

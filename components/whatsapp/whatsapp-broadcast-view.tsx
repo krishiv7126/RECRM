@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Save, Trash2, Users } from 'lucide-react'
+import { Loader2, Save, Send, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
+import { sendCampaign } from '@/lib/whatsapp/actions'
 import { cn } from '@/lib/utils'
 import type { WhatsappCampaign } from '@/lib/whatsapp/get-whatsapp-data'
 
@@ -43,9 +44,11 @@ export function WhatsappBroadcastView({
   const [tagFilter, setTagFilter] = useState('')
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
+  const [templateName, setTemplateName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [campaigns, setCampaigns] = useState(initialCampaigns)
+  const [sendingId, setSendingId] = useState<string | null>(null)
   const { confirm, ConfirmDialog } = useConfirm()
 
   const pool = audienceType === 'leads' ? leads : customers
@@ -111,6 +114,7 @@ export function WhatsappBroadcastView({
         filters: { city: cityFilter || null, tag: tagFilter || null },
         recipients: recipients.map((r) => ({ id: r.id, name: r.full_name, phone: r.phone })),
         recipient_count: recipients.length,
+        template_name: templateName.trim() || null,
         status: 'draft',
       })
       .select('*, created_by_user:platform_users!whatsapp_campaigns_created_by_fkey(full_name)')
@@ -125,7 +129,30 @@ export function WhatsappBroadcastView({
     setCampaigns((prev) => [inserted as WhatsappCampaign, ...prev])
     setTitle('')
     setMessage('')
+    setTemplateName('')
     toast.success('Campaign saved')
+  }
+
+  async function handleSend(campaign: WhatsappCampaign) {
+    setSendingId(campaign.id)
+    const result = await sendCampaign(campaign.id)
+    setSendingId(null)
+
+    if (result.ok) {
+      toast.success(result.message)
+    } else {
+      toast.error(result.message)
+    }
+
+    const supabase = createClient()
+    const { data: refreshed } = await supabase
+      .from('whatsapp_campaigns')
+      .select('*, created_by_user:platform_users!whatsapp_campaigns_created_by_fkey(full_name)')
+      .eq('id', campaign.id)
+      .single()
+    if (refreshed) {
+      setCampaigns((prev) => prev.map((c) => (c.id === campaign.id ? (refreshed as WhatsappCampaign) : c)))
+    }
   }
 
   async function handleDeleteCampaign(id: string) {
@@ -155,8 +182,9 @@ export function WhatsappBroadcastView({
       />
 
       <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground">
-        No auto-send yet — this saves the campaign and audience, and gives you a WhatsApp button per contact to send manually.
-        Real bulk sending can plug in here once a WhatsApp Business API provider is connected.
+        Save a campaign, then hit Send from Past Campaigns to actually dispatch it via the WhatsApp Business API. Plain
+        messages only reach people who&apos;ve messaged your business number in the last 24 hours — for anyone else
+        (most cold leads), set an approved template name below, or use the per-contact WhatsApp button to send manually.
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -237,6 +265,22 @@ export function WhatsappBroadcastView({
               <p className="text-[11px] text-muted-foreground">Use {'{{name}}'} to personalize each message.</p>
             </div>
 
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="wa_template" className="text-sm font-medium text-foreground">
+                Template name <span className="font-normal text-muted-foreground">(optional)</span>
+              </label>
+              <Input
+                id="wa_template"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g. diwali_offer_2026"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Must already be approved in Meta Business Manager. Required for anyone who hasn&apos;t messaged you in
+                the last 24 hours — leave blank only if every recipient has an active conversation.
+              </p>
+            </div>
+
             {error && <p className="text-[13px] text-destructive">{error}</p>}
 
             <div>
@@ -311,15 +355,47 @@ export function WhatsappBroadcastView({
                     <td className="whitespace-nowrap px-4 py-3 capitalize text-foreground/80">{c.audience_type}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{c.recipient_count}</td>
                     <td className="whitespace-nowrap px-4 py-3">
-                      <Badge variant="outline" className="rounded-full bg-muted text-muted-foreground capitalize">
-                        {c.status}
-                      </Badge>
+                      <div className="flex flex-col gap-0.5">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'w-fit rounded-full bg-muted text-muted-foreground capitalize',
+                            c.status === 'sent' && 'bg-success/15 text-success',
+                            c.status === 'partial' && 'bg-primary/15 text-primary',
+                            c.status === 'failed' && 'bg-destructive/10 text-destructive',
+                          )}
+                        >
+                          {c.status}
+                        </Badge>
+                        {(c.sent_count > 0 || c.failed_count > 0) && (
+                          <span className="text-[11px] text-muted-foreground">
+                            {c.sent_count} sent{c.failed_count > 0 ? `, ${c.failed_count} failed` : ''}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{c.created_by_user?.full_name ?? '—'}</td>
                     <td className="px-4 py-3 text-right">
-                      <Button variant="ghost" size="icon-sm" aria-label={`Delete ${c.title}`} onClick={() => handleDeleteCampaign(c.id)}>
-                        <Trash2 className="size-3.5" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {c.status === 'draft' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={sendingId === c.id}
+                            onClick={() => handleSend(c)}
+                          >
+                            {sendingId === c.id ? (
+                              <Loader2 className="animate-spin" data-icon="inline-start" />
+                            ) : (
+                              <Send data-icon="inline-start" />
+                            )}
+                            Send
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon-sm" aria-label={`Delete ${c.title}`} onClick={() => handleDeleteCampaign(c.id)}>
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

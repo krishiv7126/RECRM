@@ -10,7 +10,7 @@ export async function getSettingsData() {
 
   const { data: me } = await supabase
     .from('platform_users')
-    .select('id, full_name, phone, username, role, org_id, notification_preferences')
+    .select('id, full_name, phone, username, role, org_id, notification_preferences, avatar_url')
     .eq('auth_user_id', user.id)
     .single()
   if (!me) return null

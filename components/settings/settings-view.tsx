@@ -72,10 +72,7 @@ export function SettingsView({ data }: { data: SettingsData }) {
   const [fullName, setFullName] = useState(me.full_name)
   const [phone, setPhone] = useState(me.phone ?? '')
   const [savingProfile, setSavingProfile] = useState(false)
-  // avatar_url isn't selected in get-settings-data.ts's query yet -- the
-  // `avatars` migration (see project notes) hasn't been applied to the
-  // database. Once it has, thread `me.avatar_url` through here the same way.
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState(me.avatar_url ?? null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 

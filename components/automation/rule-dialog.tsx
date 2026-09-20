@@ -291,12 +291,20 @@ export function RuleDialog({
             <Input
               value={(cfg.title as string) ?? ''}
               onChange={(e) => updateActionConfig(i, { title: e.target.value })}
-              placeholder="e.g. New hot lead assigned"
+              placeholder="e.g. New hot lead: {{full_name}}"
             />
+            <p className="text-[11px] text-muted-foreground">
+              Use {'{{field_name}}'} to pull a value from the record that triggered this rule (e.g. {'{{full_name}}'},{' '}
+              {'{{title}}'}, {'{{value}}'}).
+            </p>
           </div>
           <div className="col-span-2 flex flex-col gap-1.5">
             <label className="text-[12px] font-medium text-foreground/80">Body</label>
-            <Input value={(cfg.body as string) ?? ''} onChange={(e) => updateActionConfig(i, { body: e.target.value })} />
+            <Input
+              value={(cfg.body as string) ?? ''}
+              onChange={(e) => updateActionConfig(i, { body: e.target.value })}
+              placeholder="Optional — also supports {{field_name}}"
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-medium text-foreground/80">Notification type</label>

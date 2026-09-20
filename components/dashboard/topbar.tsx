@@ -34,6 +34,9 @@ interface NotificationRow {
   title: string
   body: string | null
   is_read: boolean
+  related_type: string | null
+  related_id: string | null
+  created_at: string
 }
 
 const resultTypeRoutes: Record<string, string> = {
@@ -41,6 +44,27 @@ const resultTypeRoutes: Record<string, string> = {
   customer: '/customers',
   property: '/properties',
   deal: '/deals',
+}
+
+// Tables with their own /[id] detail page get a deep link; the rest (deals is
+// a kanban board, follow_ups/site_visits are list-only) go to their list page.
+const relatedTypeRoutes: Record<string, (id: string | null) => string> = {
+  leads: (id) => (id ? `/leads/${id}` : '/leads'),
+  customers: (id) => (id ? `/customers/${id}` : '/customers'),
+  properties: (id) => (id ? `/properties/${id}` : '/properties'),
+  deals: () => '/deals',
+  follow_ups: () => '/follow-ups',
+  site_visits: () => '/site-visits',
+  login_approval_queue: () => '/approvals',
+}
+
+function formatNotificationTime(iso: string) {
+  const d = new Date(iso)
+  const now = new Date()
+  const sameDay = d.toDateString() === now.toDateString()
+  const time = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })
+  if (sameDay) return time
+  return `${d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}, ${time}`
 }
 
 export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
@@ -73,7 +97,7 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
 
       const { data } = await supabase
         .from('notifications')
-        .select('id, type, title, body, is_read')
+        .select('id, type, title, body, is_read, related_type, related_id, created_at')
         .eq('recipient_id', me.id)
         .order('created_at', { ascending: false })
         .limit(20)
@@ -130,7 +154,13 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
 
   function handleNotificationClick(notification: NotificationRow) {
     if (!notification.is_read) markAsRead(notification.id)
-    if (notification.type === 'approval_pending') router.push('/approvals')
+
+    if (notification.type === 'approval_pending') {
+      router.push('/approvals')
+      return
+    }
+    const buildPath = notification.related_type ? relatedTypeRoutes[notification.related_type] : null
+    if (buildPath) router.push(buildPath(notification.related_id))
   }
 
   async function markAllAsRead() {
@@ -265,19 +295,23 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
               {notifications.length === 0 ? (
                 <p className="px-2 py-3 text-[13px] text-muted-foreground">No notifications yet.</p>
               ) : (
-                notifications.map((n) => (
-                  <DropdownMenuItem
-                    key={n.id}
-                    className="flex flex-col items-start gap-0.5 py-2"
-                    onClick={() => handleNotificationClick(n)}
-                  >
-                    <span className="flex w-full items-center gap-2">
-                      <span className={cn('size-1.5 shrink-0 rounded-full', n.is_read ? 'bg-transparent' : 'bg-primary')} />
-                      <span className="truncate text-[13px] font-medium text-foreground">{n.title}</span>
-                    </span>
-                    <span className="pl-3.5 text-[12px] text-muted-foreground">{n.body}</span>
-                  </DropdownMenuItem>
-                ))
+                notifications.map((n) => {
+                  const clickable = n.type === 'approval_pending' || (n.related_type && relatedTypeRoutes[n.related_type])
+                  return (
+                    <DropdownMenuItem
+                      key={n.id}
+                      className={cn('flex flex-col items-start gap-0.5 py-2', !clickable && 'cursor-default')}
+                      onClick={() => handleNotificationClick(n)}
+                    >
+                      <span className="flex w-full items-center gap-2">
+                        <span className={cn('size-1.5 shrink-0 rounded-full', n.is_read ? 'bg-transparent' : 'bg-primary')} />
+                        <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">{n.title}</span>
+                        <span className="shrink-0 text-[11px] text-muted-foreground">{formatNotificationTime(n.created_at)}</span>
+                      </span>
+                      {n.body && <span className="pl-3.5 text-[12px] text-muted-foreground">{n.body}</span>}
+                    </DropdownMenuItem>
+                  )
+                })
               )}
             </DropdownMenuGroup>
           </DropdownMenuContent>

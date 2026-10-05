@@ -220,7 +220,7 @@ export function FollowUpDialog({
               >
                 <option value="none">None</option>
                 <option value="lead">Lead</option>
-                <option value="customer">Customer</option>
+                <option value="customer">Member</option>
                 <option value="deal">Deal</option>
               </select>
             </div>

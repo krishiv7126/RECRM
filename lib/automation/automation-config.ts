@@ -21,18 +21,18 @@ export const triggers: { value: string; label: string; entity: Entity; group: st
   { value: 'deal_updated', label: 'Deal updated', entity: 'deals', group: 'Deals' },
   { value: 'deal_won', label: 'Deal won (booked)', entity: 'deals', group: 'Deals' },
   { value: 'deal_lost', label: 'Deal lost', entity: 'deals', group: 'Deals' },
-  { value: 'customer_created', label: 'Customer created', entity: 'customers', group: 'Customers' },
-  { value: 'customer_updated', label: 'Customer updated', entity: 'customers', group: 'Customers' },
+  { value: 'customer_created', label: 'Member created', entity: 'customers', group: 'Members' },
+  { value: 'customer_updated', label: 'Member updated', entity: 'customers', group: 'Members' },
   { value: 'site_visit_scheduled', label: 'Site visit scheduled', entity: 'site_visits', group: 'Site Visits' },
   { value: 'site_visit_completed', label: 'Site visit completed', entity: 'site_visits', group: 'Site Visits' },
   { value: 'follow_up_completed', label: 'Follow-up completed', entity: 'follow_ups', group: 'Follow-ups' },
 ]
 
-const leadStages = ['new', 'contacted', 'qualified', 'proposal', 'site_visit', 'won', 'lost', 'archive']
+const leadStages = ['new', 'contacted', 'qualified', 'proposal', 'site_visit', 're_visit', 'won', 'lost']
 const dealStages = ['new', 'qualified', 'proposal', 'negotiation', 'contract', 'booked', 'lost']
 
 function enumOpts(values: string[]) {
-  return values.map((v) => ({ value: v, label: v === 'won' ? 'Booked' : v.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) }))
+  return values.map((v) => ({ value: v, label: v === 'won' ? 'Booked' : v === 'lost' ? 'Closed' : v === 're_visit' ? 'Re-visit' : v.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) }))
 }
 
 export const fieldsByEntity: Record<Entity, FieldDef[]> = {

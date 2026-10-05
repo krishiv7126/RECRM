@@ -98,8 +98,8 @@ export function CreateCustomerDialog({ trigger }: { trigger: React.ReactElement 
       <DialogTrigger render={trigger} />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New Customer</DialogTitle>
-          <DialogDescription>Add a new customer to your portfolio.</DialogDescription>
+          <DialogTitle>New Member</DialogTitle>
+          <DialogDescription>Add a new member to your portfolio.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">

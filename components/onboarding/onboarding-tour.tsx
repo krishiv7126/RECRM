@@ -38,7 +38,7 @@ const STEPS: TourStep[] = [
   {
     icon: Users,
     title: 'Leads & customers',
-    body: 'Capture every enquiry, track it from New to Qualified, and convert won leads into customers without re-typing anything.',
+    body: 'Capture every enquiry, track it from New to Qualified, and convert won leads into members without re-typing anything.',
   },
   {
     icon: Handshake,

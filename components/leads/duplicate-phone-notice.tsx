@@ -20,7 +20,7 @@ export function DuplicatePhoneNotice({ checking, match }: { checking: boolean; m
       className="flex items-center gap-1.5 text-[12px] font-medium text-danger hover:underline"
     >
       <AlertTriangle className="size-3 shrink-0" />
-      Already a {match.type}: {match.full_name}
+      Already a {match.type === 'customer' ? 'member' : 'lead'}: {match.full_name}
       {match.stage ? ` · ${match.stage}` : ''}
     </Link>
   )

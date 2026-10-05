@@ -58,7 +58,7 @@ const capabilities: Capability[] = [
     icon: UserSearch,
   },
   {
-    label: 'AI Customer Summary',
+    label: 'AI Member Summary',
     description: 'Generate 360° summaries from calls, emails & visits',
     href: '/ai-workspace/customer-summary',
     icon: FileText,

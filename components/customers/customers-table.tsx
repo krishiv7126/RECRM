@@ -125,7 +125,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
 
   async function handleDelete(customer: CustomerRow) {
     const ok = await confirm({
-      title: 'Delete customer?',
+      title: 'Delete member?',
       description: `Are you sure you want to delete ${customer.full_name}? This action cannot be undone.`,
       confirmLabel: 'Delete',
       destructive: true,
@@ -138,7 +138,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
       return
     }
     setCustomers((prev) => prev.filter((c) => c.id !== customer.id))
-    toast.success('Customer deleted')
+    toast.success('Member deleted')
   }
 
   async function handleStartDeal(customer: CustomerRow) {
@@ -171,9 +171,9 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader
-          crumbs={[{ label: 'Sales' }, { label: 'Customers' }]}
-          title="Customers"
-          description={`${customers.length} total customers · ${convertedThisMonth} added this month`}
+          crumbs={[{ label: 'Sales' }, { label: 'Members' }]}
+          title="Members"
+          description={`${customers.length} total members · ${convertedThisMonth} added this month`}
         />
         <div className="flex shrink-0 items-center gap-2">
           <CreateCustomerDialog
@@ -192,7 +192,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
           <InputGroupAddon>
             <Search className="size-4" />
           </InputGroupAddon>
-          <InputGroupInput placeholder="Search customers…" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <InputGroupInput placeholder="Search members…" value={query} onChange={(e) => setQuery(e.target.value)} />
         </InputGroup>
 
         <div className="relative flex items-center gap-2">
@@ -285,7 +285,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
           <table className="w-full min-w-[1180px] text-left text-[13px]">
             <thead>
               <tr className="border-b border-border text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3">Customer</th>
+                <th className="px-4 py-3">Member</th>
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Area</th>
                 <th className="px-4 py-3">Tags</th>
@@ -384,7 +384,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                         />
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem render={<Link href={`/customers/${customer.id}`} />}>View profile</DropdownMenuItem>
-                          <DropdownMenuItem render={<Link href={`/customers/${customer.id}`} />}>Edit customer</DropdownMenuItem>
+                          <DropdownMenuItem render={<Link href={`/customers/${customer.id}`} />}>Edit member</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleStartDeal(customer)}>Start new deal</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem variant="destructive" onClick={() => handleDelete(customer)}>

@@ -34,13 +34,14 @@ function pctDelta(current: number, previous: number) {
   }
 }
 
-const leadStageOrder = ['new', 'contacted', 'qualified', 'proposal', 'site_visit', 'won'] as const
+const leadStageOrder = ['new', 'contacted', 'qualified', 'proposal', 'site_visit', 're_visit', 'won'] as const
 const leadStageLabels: Record<string, string> = {
   new: 'New',
   contacted: 'Contacted',
   qualified: 'Qualified',
   proposal: 'Proposal',
   site_visit: 'Site Visit',
+  re_visit: 'Re-visit',
   won: 'Booked',
 }
 

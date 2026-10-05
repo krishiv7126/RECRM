@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { AIOrb, AuroraField, StreamingText, type Phase } from '@/components/ai/ai-motion'
 import { createClient } from '@/lib/supabase/client'
 import { deriveTemperature } from '@/lib/leads/temperature'
+import { LEAD_STAGE_LABELS } from '@/lib/leads/lead-fields'
 import type { Database } from '@/lib/supabase/types'
 
 type LeadStage = Database['public']['Enums']['lead_stage']
@@ -23,16 +24,7 @@ interface LeadRow {
   ai_score: number | null
 }
 
-const stageLabels: Record<LeadStage, string> = {
-  new: 'New',
-  contacted: 'Contacted',
-  qualified: 'Qualified',
-  proposal: 'Proposal',
-  site_visit: 'Site Visit',
-  won: 'Booked',
-  lost: 'Lost',
-  archive: 'Archived',
-}
+const stageLabels = LEAD_STAGE_LABELS
 
 const stageStyles: Record<LeadStage, string> = {
   new: 'bg-muted text-muted-foreground',
@@ -40,6 +32,7 @@ const stageStyles: Record<LeadStage, string> = {
   qualified: 'bg-secondary text-secondary-foreground',
   proposal: 'bg-primary/15 text-primary',
   site_visit: 'border border-primary/40 bg-transparent text-primary',
+  re_visit: 'border border-primary/60 bg-primary/5 text-primary',
   won: 'bg-success/15 text-success',
   lost: 'bg-destructive/10 text-destructive',
   archive: 'bg-muted text-muted-foreground',

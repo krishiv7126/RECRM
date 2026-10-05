@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { CustomerDetail } from '@/components/customers/customer-detail'
 import { getCustomerById, getCustomerDeals } from '@/lib/customers/get-customers-data'
 
-export const metadata: Metadata = { title: 'Customer Details' }
+export const metadata: Metadata = { title: 'Member Details' }
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

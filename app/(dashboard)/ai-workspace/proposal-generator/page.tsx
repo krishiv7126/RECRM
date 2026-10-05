@@ -32,7 +32,7 @@ export default function ProposalGeneratorPage() {
           { label: 'AI Proposal Generator' },
         ]}
         title="AI Proposal Generator"
-        description="Create a tailored property proposal message for a customer and deal."
+        description="Create a tailored property proposal message for a member and deal."
       />
 
       <AiToolCard
@@ -40,17 +40,17 @@ export default function ProposalGeneratorPage() {
         title={loading ? 'Drafting the proposal…' : 'Build a proposal'}
         subtitle={
           loading
-            ? 'Matching the property to what this customer is looking for.'
-            : 'Pick a customer, optionally a deal, and add any direction.'
+            ? 'Matching the property to what this member is looking for.'
+            : 'Pick a member, optionally a deal, and add any direction.'
         }
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <SelectField
-            label="Customer"
+            label="Member"
             value={customerId}
             onChange={handleCustomerChange}
             disabled={loadingCustomers}
-            placeholder={loadingCustomers ? 'Loading customers…' : 'Select a customer'}
+            placeholder={loadingCustomers ? 'Loading members…' : 'Select a member'}
             options={customers.map((c) => ({
               value: c.id,
               label: c.phone ? `${c.full_name} (${c.phone})` : c.full_name,
@@ -62,7 +62,7 @@ export default function ProposalGeneratorPage() {
             onChange={setDealId}
             disabled={!customerId || loadingDeals}
             placeholder={
-              !customerId ? 'Select a customer first' : loadingDeals ? 'Loading deals…' : 'Optional — select a deal'
+              !customerId ? 'Select a member first' : loadingDeals ? 'Loading deals…' : 'Optional — select a deal'
             }
             options={deals.map((d) => ({ value: d.id, label: `${d.code} — ${d.title}` }))}
           />

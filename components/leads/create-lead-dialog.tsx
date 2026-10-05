@@ -41,7 +41,6 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
   const [requirement, setRequirement] = useState('')
   const [category, setCategory] = useState('')
   const [city, setCity] = useState('')
-  const [tags, setTags] = useState('')
   const [notes, setNotes] = useState('')
 
   const { checking: checkingPhone, match: duplicateMatch } = useDuplicatePhoneCheck(phone)
@@ -56,7 +55,6 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     setRequirement('')
     setCategory('')
     setCity('')
-    setTags('')
     setNotes('')
     setError(null)
   }
@@ -77,7 +75,7 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     }
     if (duplicateMatch) {
       setError(
-        `This number already belongs to an existing ${duplicateMatch.type} (${duplicateMatch.full_name}). Open the existing record instead of creating a duplicate.`,
+        `This number already belongs to an existing ${duplicateMatch.type === 'customer' ? 'member' : 'lead'} (${duplicateMatch.full_name}). Open the existing record instead of creating a duplicate.`,
       )
       return
     }
@@ -118,7 +116,6 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
         requirement: requirement.trim() || null,
         category: category || null,
         city: city.trim() || null,
-        tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
         notes: notes.trim() || null,
       })
       .select('id')
@@ -252,12 +249,6 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="lead_tags" className="text-sm font-medium text-foreground">
-              Tags (comma separated)
-            </label>
-            <Input id="lead_tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="NRI, Urgent, Referral" />
-          </div>
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="lead_notes" className="text-sm font-medium text-foreground">
@@ -276,7 +267,7 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
                     href={duplicateMatch.type === 'lead' ? `/leads/${duplicateMatch.id}` : `/customers/${duplicateMatch.id}`}
                     className="font-medium underline"
                   >
-                    Open existing {duplicateMatch.type}
+                    Open existing {duplicateMatch.type === 'customer' ? 'member' : 'lead'}
                   </Link>
                 </>
               )}

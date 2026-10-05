@@ -372,7 +372,7 @@ export function DealsBoard({
               <thead>
                 <tr className="border-b border-border text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3">Deal</th>
-                  <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">Member</th>
                   <th className="px-4 py-3">Value</th>
                   <th className="px-4 py-3">Stage</th>
                   <th className="px-4 py-3">Close date</th>

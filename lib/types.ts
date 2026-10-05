@@ -28,6 +28,7 @@ export type LeadStage =
   | 'qualified'
   | 'proposal'
   | 'site_visit'
+  | 're_visit'
   | 'won'
   | 'lost'
   | 'archive'

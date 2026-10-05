@@ -20,29 +20,29 @@ export default function CustomerSummaryPage() {
         crumbs={[
           { label: 'Intelligence' },
           { label: 'AI Workspace', href: '/ai-workspace' },
-          { label: 'AI Customer Summary' },
+          { label: 'AI Member Summary' },
         ]}
-        title="AI Customer Summary"
+        title="AI Member Summary"
         description="Generate a 360° summary from a customer's profile, deals, and site visits."
       />
 
       <AiToolCard
         phase={loading ? 'thinking' : customerId ? 'listening' : 'idle'}
-        title={loading ? 'Reading customer history…' : 'Summarize a customer'}
+        title={loading ? 'Reading member history…' : 'Summarize a member'}
         subtitle={
           loading
             ? 'Going through their profile, deals, and site visits.'
-            : 'Pick a customer to get their full 360° picture.'
+            : 'Pick a member to get their full 360° picture.'
         }
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-3">
           <div className="flex-1">
             <SelectField
-              label="Customer"
+              label="Member"
               value={customerId}
               onChange={setCustomerId}
               disabled={loadingCustomers}
-              placeholder={loadingCustomers ? 'Loading customers…' : 'Select a customer'}
+              placeholder={loadingCustomers ? 'Loading members…' : 'Select a member'}
               options={customers.map((c) => ({
                 value: c.id,
                 label: c.phone ? `${c.full_name} (${c.phone})` : c.full_name,
@@ -60,7 +60,7 @@ export default function CustomerSummaryPage() {
         </div>
       </AiToolCard>
 
-      <AiResult output={output} loading={loading} error={error} loadingLabel="Reading customer history…" />
+      <AiResult output={output} loading={loading} error={error} loadingLabel="Reading member history…" />
     </div>
   )
 }

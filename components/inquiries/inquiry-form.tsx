@@ -57,7 +57,7 @@ export function InquiryForm() {
     }
     if (duplicateMatch) {
       setError(
-        `This number already belongs to an existing ${duplicateMatch.type} (${duplicateMatch.full_name}). Open the existing record instead of creating a duplicate.`,
+        `This number already belongs to an existing ${duplicateMatch.type === 'customer' ? 'member' : 'lead'} (${duplicateMatch.full_name}). Open the existing record instead of creating a duplicate.`,
       )
       return
     }
@@ -223,7 +223,7 @@ export function InquiryForm() {
                       href={duplicateMatch.type === 'lead' ? `/leads/${duplicateMatch.id}` : `/customers/${duplicateMatch.id}`}
                       className="font-medium underline"
                     >
-                      Open existing {duplicateMatch.type}
+                      Open existing {duplicateMatch.type === 'customer' ? 'member' : 'lead'}
                     </Link>
                   </>
                 )}

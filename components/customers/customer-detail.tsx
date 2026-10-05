@@ -76,7 +76,7 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
 
   async function handleDelete() {
     const ok = await confirm({
-      title: 'Delete customer?',
+      title: 'Delete member?',
       description: `Are you sure you want to delete ${customer.full_name}? This action cannot be undone.`,
       confirmLabel: 'Delete',
       destructive: true,
@@ -102,7 +102,7 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <PageHeader
-            crumbs={[{ label: 'Sales' }, { label: 'Customers', href: '/customers' }, { label: customer.full_name }]}
+            crumbs={[{ label: 'Sales' }, { label: 'Members', href: '/customers' }, { label: customer.full_name }]}
             title={customer.full_name}
           />
           {customer.owner?.full_name && <Badge variant="outline">Owner: {customer.owner.full_name}</Badge>}
@@ -136,7 +136,7 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
             </Link>
           </div>
           {deals.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground">No deals linked to this customer yet.</p>
+            <p className="text-[13px] text-muted-foreground">No deals linked to this member yet.</p>
           ) : (
             <div className="flex flex-col gap-2">
               {deals.map((deal) => (

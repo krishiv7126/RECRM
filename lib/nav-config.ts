@@ -58,7 +58,7 @@ export const adminNav: NavSection[] = [
         icon: Handshake,
         items: [
           { label: 'Leads', href: '/leads', icon: Users },
-          { label: 'Customers', href: '/customers', icon: UserRound },
+          { label: 'Members', href: '/customers', icon: UserRound },
           { label: 'Deals', href: '/deals', icon: Handshake },
           { label: 'Follow-ups', href: '/follow-ups', icon: PhoneCall },
         ],
@@ -85,7 +85,7 @@ export const adminNav: NavSection[] = [
         items: [
           { label: 'AI Copilot', href: '/ai-workspace/copilot', icon: Sparkles },
           { label: 'Lead Intelligence', href: '/ai-workspace/lead-intelligence', icon: UserSearch },
-          { label: 'Customer Summary', href: '/ai-workspace/customer-summary', icon: FileText },
+          { label: 'Member Summary', href: '/ai-workspace/customer-summary', icon: FileText },
           { label: 'Call Summary', href: '/ai-workspace/call-summary', icon: PhoneCall },
           { label: 'Email Generator', href: '/ai-workspace/email-generator', icon: Mail },
           { label: 'Proposal Generator', href: '/ai-workspace/proposal-generator', icon: FileSignature },

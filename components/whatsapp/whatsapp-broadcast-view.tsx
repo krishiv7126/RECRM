@@ -205,7 +205,7 @@ export function WhatsappBroadcastView({
                         : 'bg-card text-muted-foreground ring-1 ring-border hover:text-foreground',
                     )}
                   >
-                    {t}
+                    {t === 'customers' ? 'members' : t}
                   </button>
                 ))}
               </div>

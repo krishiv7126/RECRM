@@ -206,7 +206,7 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
       <div ref={searchBoxRef} className="relative w-full max-w-sm">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search leads, customers, properties…"
+          placeholder="Search leads, members, properties…"
           className="h-9 rounded-full border-border bg-card pl-8 pr-14 text-[13px]"
           value={query}
           onChange={(e) => {

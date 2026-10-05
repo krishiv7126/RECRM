@@ -18,6 +18,7 @@ const stageStyles: Record<string, string> = {
   qualified: 'bg-secondary text-secondary-foreground',
   proposal: 'bg-primary/15 text-primary',
   site_visit: 'border border-primary/40 bg-transparent text-primary',
+  re_visit: 'border border-primary/60 bg-primary/5 text-primary',
   won: 'bg-success/15 text-success',
   lost: 'bg-destructive/10 text-destructive',
   archive: 'bg-muted text-muted-foreground',

@@ -2269,6 +2269,7 @@ export type Database = {
         | "qualified"
         | "proposal"
         | "site_visit"
+        | "re_visit"
         | "won"
         | "lost"
         | "archive"
@@ -2514,6 +2515,7 @@ export const Constants = {
         "qualified",
         "proposal",
         "site_visit",
+        "re_visit",
         "won",
         "lost",
         "archive",

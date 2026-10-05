@@ -84,6 +84,7 @@ const stageStyles: Record<LeadStage, string> = {
   qualified: 'bg-secondary text-secondary-foreground',
   proposal: 'bg-primary/15 text-primary',
   site_visit: 'border border-primary/40 bg-transparent text-primary',
+  re_visit: 'border border-primary/60 bg-primary/5 text-primary',
   won: 'bg-success/15 text-success',
   lost: 'bg-destructive/10 text-destructive',
   archive: 'bg-muted text-muted-foreground',
@@ -114,7 +115,6 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   const [budgetMinFilter, setBudgetMinFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
-  const [tagFilter, setTagFilter] = useState('')
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -155,7 +155,6 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
 
   const sources = useMemo(() => Array.from(new Set(leads.map((l) => l.source).filter(Boolean))) as string[], [leads])
   const cities = useMemo(() => Array.from(new Set(leads.map((l) => l.city).filter(Boolean))) as string[], [leads])
-  const allTags = useMemo(() => Array.from(new Set(leads.flatMap((l) => l.tags ?? []))).sort(), [leads])
 
   // Leads should show an AI score without anyone clicking "Score" — pick up
   // any unscored leads in the background, a few at a time, and patch the
@@ -211,12 +210,11 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
       const matchesStage = !stageFilter || lead.stage === stageFilter
       const matchesBudget = !budgetMinFilter || (lead.budget_max ?? lead.budget_min ?? 0) >= Number(budgetMinFilter)
       const matchesCity = !cityFilter || lead.city === cityFilter
-      const matchesTag = !tagFilter || (lead.tags ?? []).includes(tagFilter)
       const matchesCategory = !categoryFilter || lead.category === categoryFilter
 
-      return matchesTab && matchesQuery && matchesSource && matchesStage && matchesBudget && matchesCity && matchesTag && matchesCategory
+      return matchesTab && matchesQuery && matchesSource && matchesStage && matchesBudget && matchesCity && matchesCategory
     })
-  }, [leads, activeTab, query, sourceFilter, stageFilter, budgetMinFilter, cityFilter, tagFilter, categoryFilter])
+  }, [leads, activeTab, query, sourceFilter, stageFilter, budgetMinFilter, cityFilter, categoryFilter])
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: counts.all },
@@ -225,14 +223,13 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     { key: 'won', label: 'Booked', count: counts.won },
   ]
 
-  const activeFilterCount = [sourceFilter, stageFilter, budgetMinFilter, cityFilter, tagFilter, categoryFilter].filter(Boolean).length
+  const activeFilterCount = [sourceFilter, stageFilter, budgetMinFilter, cityFilter, categoryFilter].filter(Boolean).length
 
   function clearFilters() {
     setSourceFilter('')
     setStageFilter('')
     setBudgetMinFilter('')
     setCityFilter('')
-    setTagFilter('')
     setCategoryFilter('')
   }
 
@@ -256,8 +253,8 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
 
   async function handleConvert(lead: LeadRow) {
     const ok = await confirm({
-      title: 'Convert to customer?',
-      description: `Convert ${lead.full_name} to a customer? They'll move out of the leads pipeline.`,
+      title: 'Convert to member?',
+      description: `Convert ${lead.full_name} to a member? They'll move out of the leads pipeline.`,
       confirmLabel: 'Convert',
     })
     if (!ok) return
@@ -267,7 +264,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
       toast.error(error.message)
       return
     }
-    toast.success(`${lead.full_name} converted to customer`)
+    toast.success(`${lead.full_name} converted to member`)
     router.refresh()
   }
 
@@ -398,7 +395,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
                   >
                     <option value="">All</option>
-                    {Object.entries(stageLabels).map(([key, label]) => (
+                    {Object.entries(stageLabels).filter(([key]) => key !== 'archive').map(([key, label]) => (
                       <option key={key} value={key}>
                         {label}
                       </option>
@@ -441,21 +438,6 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     {LEAD_CATEGORIES.map((c) => (
                       <option key={c.value} value={c.value}>
                         {c.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] font-medium text-foreground/80">Tag</label>
-                  <select
-                    value={tagFilter}
-                    onChange={(e) => setTagFilter(e.target.value)}
-                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
-                  >
-                    <option value="">All</option>
-                    {allTags.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
                       </option>
                     ))}
                   </select>
@@ -505,15 +487,6 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                           {lead.email ?? '—'}
                           {lead.city ? ` · ${lead.city}` : ''}
                         </span>
-                        {lead.tags && lead.tags.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {lead.tags.slice(0, 3).map((tag) => (
-                              <Badge key={tag} variant="outline" className="rounded-full px-1.5 py-0 text-[10px] font-normal text-muted-foreground">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </Link>
                   </td>
@@ -592,7 +565,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem render={<Link href={`/leads/${lead.id}`} />}>View profile</DropdownMenuItem>
                           <DropdownMenuItem render={<Link href={`/leads/${lead.id}`} />}>Edit lead</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleConvert(lead)}>Convert to customer</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleConvert(lead)}>Convert to member</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem variant="destructive" onClick={() => handleDelete(lead)}>
                             Delete lead

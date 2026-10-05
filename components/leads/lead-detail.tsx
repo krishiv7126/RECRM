@@ -20,9 +20,9 @@ import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { LeadWithOwner } from '@/lib/leads/get-leads-data'
 import { CP_SOURCE, LEAD_SOURCES } from '@/lib/leads/cp-source'
 import { ChannelPartnerField } from '@/components/leads/channel-partner-field'
-import { LEAD_CATEGORIES, LEAD_STAGE_LABELS } from '@/lib/leads/lead-fields'
+import { LEAD_CATEGORIES, LEAD_STAGE_LABELS, SELECTABLE_LEAD_STAGES } from '@/lib/leads/lead-fields'
 
-const stages = ['new', 'contacted', 'qualified', 'proposal', 'site_visit', 'won', 'lost', 'archive'] as const
+const stages = SELECTABLE_LEAD_STAGES
 
 export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const router = useRouter()
@@ -37,7 +37,6 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [city, setCity] = useState(lead.city ?? '')
   const [reference, setReference] = useState(lead.reference ?? '')
   const [channelPartner, setChannelPartner] = useState(lead.channel_partner ?? '')
-  const [tags, setTags] = useState((lead.tags ?? []).join(', '))
   const [notes, setNotes] = useState(lead.notes ?? '')
 
   const [saving, setSaving] = useState(false)
@@ -81,7 +80,6 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
         city: city.trim() || null,
         reference: reference.trim() || null,
         channel_partner: source === CP_SOURCE ? channelPartner.trim() : null,
-        tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
         notes: notes.trim() || null,
       })
       .eq('id', lead.id)
@@ -99,8 +97,8 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
 
   async function handleConvert() {
     const ok = await confirm({
-      title: 'Convert to customer?',
-      description: `Convert ${lead.full_name} to a customer? They'll move out of the leads pipeline.`,
+      title: 'Convert to member?',
+      description: `Convert ${lead.full_name} to a member? They'll move out of the leads pipeline.`,
       confirmLabel: 'Convert',
     })
     if (!ok) return
@@ -113,7 +111,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
       toast.error(convertErr.message)
       return
     }
-    toast.success(`${lead.full_name} converted to customer`)
+    toast.success(`${lead.full_name} converted to member`)
     router.push('/customers')
   }
 
@@ -279,10 +277,6 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-foreground">Tags (comma separated)</label>
-            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="NRI, Urgent, Referral" />
-          </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-foreground">Remarks</label>
@@ -299,7 +293,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
             <div className="flex items-center gap-2">
               <Button variant="outline" disabled={converting} onClick={handleConvert}>
                 {converting ? <Loader2 className="animate-spin" /> : <Repeat data-icon="inline-start" />}
-                Convert to Customer
+                Convert to Member
               </Button>
               <Button variant="destructive" disabled={deleting} onClick={handleDelete}>
                 {deleting ? <Loader2 className="animate-spin" /> : <Trash2 data-icon="inline-start" />}

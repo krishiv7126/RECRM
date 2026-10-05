@@ -25,7 +25,7 @@ export default function EmailGeneratorPage() {
           { label: 'AI Email Generator' },
         ]}
         title="AI Email Generator"
-        description="Draft a personalized follow-up email for a customer in seconds."
+        description="Draft a personalized follow-up email for a member in seconds."
       />
 
       <AiToolCard
@@ -33,16 +33,16 @@ export default function EmailGeneratorPage() {
         title={loading ? 'Drafting the email…' : 'Compose with AI'}
         subtitle={
           loading
-            ? 'Pulling this customer’s history and tailoring the tone.'
-            : 'Pick a customer, add any extra direction, and generate.'
+            ? 'Pulling this member’s history and tailoring the tone.'
+            : 'Pick a member, add any extra direction, and generate.'
         }
       >
         <SelectField
-          label="Customer"
+          label="Member"
           value={customerId}
           onChange={setCustomerId}
           disabled={loadingCustomers}
-          placeholder={loadingCustomers ? 'Loading customers…' : 'Select a customer'}
+          placeholder={loadingCustomers ? 'Loading members…' : 'Select a member'}
           options={customers.map((c) => ({
             value: c.id,
             label: c.phone ? `${c.full_name} (${c.phone})` : c.full_name,

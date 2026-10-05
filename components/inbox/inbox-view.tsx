@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Info, Loader2, Mail, Plus, Search, Send, Users } from 'lucide-react'
+import { Info, Loader2, Mail, Paperclip, Plus, Search, Send, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -13,11 +13,13 @@ import { NewConversationDialog } from '@/components/inbox/new-conversation-dialo
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { InboxConversation } from '@/lib/inbox/get-inbox-data'
+import { ATTACHMENT_BUCKET, MAX_ATTACHMENT_BYTES, MessageAttachment, attachmentName } from '@/components/inbox/message-attachment'
 
 interface ChatMessage {
   id: string
   conversation_id: string
   content: string | null
+  media_url: string | null
   created_at: string
   sender_platform_user_id: string | null
 }
@@ -129,6 +131,8 @@ export function InboxView({
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [attachment, setAttachment] = useState<File | null>(null)
 
   useEffect(() => {
     setConversations(initialConversations)
@@ -167,7 +171,7 @@ export function InboxView({
       const supabase = createClient()
       const { data } = await supabase
         .from('messages')
-        .select('id, conversation_id, content, created_at, sender_platform_user_id')
+        .select('id, conversation_id, content, media_url, created_at, sender_platform_user_id')
         .eq('conversation_id', selectedId)
         .order('created_at', { ascending: true })
       if (cancelled) return
@@ -205,7 +209,7 @@ export function InboxView({
               ? {
                   ...c,
                   last_message_at: msg.created_at,
-                  lastMessagePreview: msg.content ?? '',
+                  lastMessagePreview: msg.content || (msg.media_url ? `📎 ${attachmentName(msg.media_url)}` : ''),
                   unreadCount:
                     msg.conversation_id === selectedId || msg.sender_platform_user_id === me.id
                       ? c.unreadCount
@@ -232,13 +236,40 @@ export function InboxView({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
   }, [messages])
 
+  function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      toast.error('Attachments can be up to 10 MB.')
+      return
+    }
+    setAttachment(file)
+  }
+
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     const content = draft.trim()
-    if (!content || !selectedId || !me.org_id || sending) return
+    if ((!content && !attachment) || !selectedId || !me.org_id || sending) return
 
     setSending(true)
     const supabase = createClient()
+
+    // Files go to the org's private documents folder; the message stores the path.
+    let mediaPath: string | null = null
+    if (attachment) {
+      const safeName = attachment.name.replace(/[^\w.\-]+/g, '_')
+      mediaPath = `${me.org_id}/inbox/${selectedId}/${crypto.randomUUID()}-${safeName}`
+      const { error: uploadErr } = await supabase.storage
+        .from(ATTACHMENT_BUCKET)
+        .upload(mediaPath, attachment, { contentType: attachment.type || undefined })
+      if (uploadErr) {
+        setSending(false)
+        toast.error(`Upload failed: ${uploadErr.message}`)
+        return
+      }
+    }
+
     const { data, error } = await supabase
       .from('messages')
       .insert({
@@ -247,9 +278,10 @@ export function InboxView({
         direction: 'outbound',
         channel: 'internal_chat',
         sender_platform_user_id: me.id,
-        content,
+        content: content || null,
+        media_url: mediaPath,
       })
-      .select('id, conversation_id, content, created_at, sender_platform_user_id')
+      .select('id, conversation_id, content, media_url, created_at, sender_platform_user_id')
       .single()
 
     if (error) {
@@ -264,11 +296,14 @@ export function InboxView({
       .eq('id', selectedId)
 
     setDraft('')
+    setAttachment(null)
     setSending(false)
     setMessages((prev) => (prev.some((m) => m.id === data.id) ? prev : [...prev, data]))
     setConversations((prev) =>
       prev.map((c) =>
-        c.id === selectedId ? { ...c, last_message_at: data.created_at, lastMessagePreview: content } : c,
+        c.id === selectedId
+          ? { ...c, last_message_at: data.created_at, lastMessagePreview: content || `📎 ${attachment?.name ?? 'Attachment'}` }
+          : c,
       ),
     )
   }
@@ -454,6 +489,11 @@ export function InboxView({
                                     : 'rounded-bl-md bg-secondary text-secondary-foreground',
                                 )}
                               >
+                                {message.media_url && (
+                                  <div className={cn(message.content && 'mb-1.5')}>
+                                    <MessageAttachment path={message.media_url} isOwn={isOwn} />
+                                  </div>
+                                )}
                                 {message.content}
                               </div>
                               <span className="px-1 text-[10px] text-muted-foreground">
@@ -468,8 +508,30 @@ export function InboxView({
                 )}
               </div>
 
-              <form onSubmit={handleSend} className="border-t border-border p-3">
+              <form onSubmit={handleSend} className="flex flex-col gap-2 border-t border-border p-3">
+                {attachment && (
+                  <div className="flex items-center gap-2 self-start rounded-lg bg-muted px-2.5 py-1.5 text-[12px]">
+                    <Paperclip className="size-3.5 shrink-0" />
+                    <span className="max-w-[240px] truncate">{attachment.name}</span>
+                    <button type="button" aria-label="Remove attachment" onClick={() => setAttachment(null)}>
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" className="hidden" onChange={pickFile} />
                 <InputGroup className="h-auto min-h-9">
+                  <InputGroupAddon align="inline-start">
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label="Attach a file"
+                      className="rounded-lg"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Paperclip className="size-4" />
+                    </Button>
+                  </InputGroupAddon>
                   <InputGroupInput
                     placeholder="Type a message..."
                     value={draft}
@@ -481,7 +543,7 @@ export function InboxView({
                       size="icon-sm"
                       aria-label="Send message"
                       className="rounded-lg"
-                      disabled={!draft.trim() || sending}
+                      disabled={(!draft.trim() && !attachment) || sending}
                     >
                       {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
                     </Button>

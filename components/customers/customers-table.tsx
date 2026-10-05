@@ -1,17 +1,20 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   ArrowDownAZ,
   Clock,
   Filter,
+  Loader2,
   Mail,
   MoreHorizontal,
   Phone,
   Search,
   Sparkles,
+  Upload,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
@@ -30,6 +33,7 @@ import {
 import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { parseCsvRows, pick } from '@/lib/csv'
 
 interface CustomerRow {
   id: string
@@ -60,6 +64,75 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   const [showFilters, setShowFilters] = useState(false)
   const [cityFilter, setCityFilter] = useState('')
   const { confirm, ConfirmDialog } = useConfirm()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<string | null>(null)
+
+  // CSV columns (any order, case-insensitive): name, phone, email, area/city,
+  // address, reference, remarks/notes. Rows whose number already belongs to a
+  // member are skipped.
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setImporting(true)
+    setImportResult(null)
+
+    const rows = parseCsvRows(await file.text())
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    const { data: me } = user
+      ? await supabase.from('platform_users').select('id, org_id').eq('auth_user_id', user.id).single()
+      : { data: null }
+    if (!me?.org_id) {
+      setImporting(false)
+      setImportResult('Could not resolve your organization.')
+      return
+    }
+
+    const key = (p: string | null | undefined) => (p ?? '').replace(/\D/g, '').slice(-10)
+    const { data: existing } = await supabase.from('customers').select('phone')
+    const seen = new Set((existing ?? []).map((c) => key(c.phone)).filter(Boolean))
+
+    let skipped = 0
+    const inserts = []
+    for (const r of rows) {
+      const fullName = pick(r, 'name', 'full name', 'full_name', 'member', 'customer')
+      if (!fullName) {
+        skipped++
+        continue
+      }
+      const phone = pick(r, 'phone', 'mobile', 'phone number')
+      const k = key(phone)
+      if (k && seen.has(k)) {
+        skipped++
+        continue
+      }
+      if (k) seen.add(k)
+      inserts.push({
+        org_id: me.org_id,
+        owner_id: me.id,
+        full_name: fullName,
+        phone: phone || null,
+        email: pick(r, 'email', 'e-mail') || null,
+        city: pick(r, 'area', 'city', 'location') || null,
+        address: pick(r, 'address') || null,
+        reference: pick(r, 'reference', 'referred by') || null,
+        notes: pick(r, 'remarks', 'notes') || null,
+      })
+    }
+
+    const { error } = inserts.length ? await supabase.from('customers').insert(inserts) : { error: null }
+    setImporting(false)
+    if (error) {
+      setImportResult(`Import failed: ${error.message}`)
+      return
+    }
+    setImportResult(`Imported ${inserts.length} member${inserts.length === 1 ? '' : 's'}${skipped ? ` · skipped ${skipped} (missing name or duplicate number)` : ''}.`)
+    router.refresh()
+  }
 
   useEffect(() => {
     setCustomers(initialCustomers)
@@ -173,7 +246,23 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
           title="Members"
           description={`${customers.length} total members · ${convertedThisMonth} added this month`}
         />
+        <div className="flex shrink-0 items-center gap-2">
+          <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleImportFile} />
+          <Button variant="outline" size="sm" disabled={importing} onClick={() => fileInputRef.current?.click()}>
+            {importing ? <Loader2 className="animate-spin" /> : <Upload data-icon="inline-start" />}
+            Import
+          </Button>
+        </div>
       </div>
+
+      {importResult && (
+        <div className="flex items-center justify-between rounded-lg bg-muted/60 px-3 py-2 text-[13px] text-foreground">
+          {importResult}
+          <button type="button" onClick={() => setImportResult(null)} aria-label="Dismiss">
+            <X className="size-3.5 text-muted-foreground" />
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <InputGroup className="w-full sm:w-64">

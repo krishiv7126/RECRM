@@ -10,7 +10,6 @@ import {
   FileText,
   LineChart,
   Mail,
-  PhoneCall,
   PhoneOutgoing,
   Sparkles,
   UserSearch,
@@ -62,12 +61,6 @@ const capabilities: Capability[] = [
     description: 'Generate 360° summaries from calls, emails & visits',
     href: '/ai-workspace/customer-summary',
     icon: FileText,
-  },
-  {
-    label: 'AI Call Summary',
-    description: 'Transcript, sentiment, objections and action items',
-    href: '/ai-workspace/call-summary',
-    icon: PhoneCall,
   },
   {
     label: 'AI Email Generator',

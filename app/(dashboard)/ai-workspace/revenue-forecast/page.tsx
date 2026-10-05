@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/dashboard/page-header'
 import { AiResult } from '@/components/ai-workspace/ai-result'
 import { AiGenerateButton, AiToolCard } from '@/components/ai-workspace/ai-tool-card'
 import { useAiGenerate } from '@/lib/ai-workspace/use-ai-generate'
+import { RevenueForecastView } from '@/components/ai-workspace/revenue-forecast-view'
 
 export default function RevenueForecastPage() {
   const { output, loading, error, generate } = useAiGenerate()
@@ -18,8 +19,10 @@ export default function RevenueForecastPage() {
           { label: 'AI Revenue Forecast' },
         ]}
         title="AI Revenue Forecast"
-        description="Full pipeline-based forecasting is coming soon. For now, generate today's AI daily brief — hot leads, top active deals, and today's visits."
+        description="Booked revenue and a weighted pipeline forecast — monthly, quarterly, yearly or in total."
       />
+
+      <RevenueForecastView />
 
       <AiToolCard
         phase={loading ? 'thinking' : 'idle'}

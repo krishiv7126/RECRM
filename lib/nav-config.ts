@@ -86,7 +86,6 @@ export const adminNav: NavSection[] = [
           { label: 'AI Copilot', href: '/ai-workspace/copilot', icon: Sparkles },
           { label: 'Lead Intelligence', href: '/ai-workspace/lead-intelligence', icon: UserSearch },
           { label: 'Member Summary', href: '/ai-workspace/customer-summary', icon: FileText },
-          { label: 'Call Summary', href: '/ai-workspace/call-summary', icon: PhoneCall },
           { label: 'Email Generator', href: '/ai-workspace/email-generator', icon: Mail },
           { label: 'Proposal Generator', href: '/ai-workspace/proposal-generator', icon: FileSignature },
           { label: 'Revenue Forecast', href: '/ai-workspace/revenue-forecast', icon: LineChart },

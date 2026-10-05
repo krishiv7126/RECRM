@@ -43,7 +43,7 @@ export async function getInboxData() {
     conversationIds.length > 0
       ? supabase
           .from('messages')
-          .select('id, conversation_id, content, created_at, sender_platform_user_id')
+          .select('id, conversation_id, content, media_url, created_at, sender_platform_user_id')
           .in('conversation_id', conversationIds)
           .order('created_at', { ascending: true })
       : Promise.resolve({ data: [] as never[] }),
@@ -71,7 +71,7 @@ export async function getInboxData() {
         last_message_at: c.last_message_at,
         created_at: c.created_at,
         participants: others,
-        lastMessagePreview: last?.content ?? 'No messages yet',
+        lastMessagePreview: last ? last.content || (last.media_url ? '📎 Attachment' : '') : 'No messages yet',
         unreadCount: convMessages.filter(
           (m) => m.sender_platform_user_id !== me.id && new Date(m.created_at).getTime() > lastReadAt,
         ).length,

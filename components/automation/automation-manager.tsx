@@ -65,6 +65,19 @@ function triggerIcon(trigger: string) {
   return Zap
 }
 
+/** Exact date and time in IST, e.g. "05 Oct 2026, 3:42 pm". */
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Kolkata',
+  })
+}
+
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
@@ -336,7 +349,7 @@ export function AutomationManager({
                   <th className="px-4 py-3 font-medium">Target</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Result</th>
-                  <th className="px-4 py-3 text-right font-medium">Time</th>
+                  <th className="px-4 py-3 text-right font-medium">Date &amp; Time</th>
                 </tr>
               </thead>
               <tbody>
@@ -367,9 +380,12 @@ export function AutomationManager({
                       <span className="line-clamp-2">{logResult(log.details)}</span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-muted-foreground">
-                      <span className="inline-flex items-center gap-1.5">
-                        <CalendarClock className="size-3.5" />
-                        {timeAgo(log.triggered_at)}
+                      <span className="inline-flex flex-col items-end">
+                        <span className="inline-flex items-center gap-1.5 text-foreground/80">
+                          <CalendarClock className="size-3.5" />
+                          {formatDateTime(log.triggered_at)}
+                        </span>
+                        <span className="text-[11px]">{timeAgo(log.triggered_at)}</span>
                       </span>
                     </td>
                   </motion.tr>

@@ -137,7 +137,7 @@ export function CustomerDetail({
                   <div className="flex shrink-0 items-center gap-2">
                     <span className="text-[13px] font-semibold text-foreground">{formatDealValue(deal.value)}</span>
                     <Badge variant="outline" className={cn('rounded-full', dealStageStyles[deal.stage] ?? 'bg-muted text-muted-foreground')}>
-                      {deal.stage.replace('_', ' ')}
+                      {deal.stage === 'lost' ? 'closed' : deal.stage.replace('_', ' ')}
                     </Badge>
                   </div>
                 </div>

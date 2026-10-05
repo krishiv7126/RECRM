@@ -53,7 +53,7 @@ export const fieldsByEntity: Record<Entity, FieldDef[]> = {
     { value: 'value', label: 'Deal value', type: 'number' },
     { value: 'title', label: 'Title', type: 'text' },
     { value: 'code', label: 'Deal code', type: 'text' },
-    { value: 'lost_reason', label: 'Lost reason', type: 'text' },
+    { value: 'lost_reason', label: 'Closed reason', type: 'text' },
   ],
   customers: [
     { value: 'city', label: 'Area', type: 'text' },

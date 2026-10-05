@@ -34,7 +34,7 @@ const stageMeta: Record<DealStage, { label: string; dot: string }> = {
   negotiation: { label: 'Negotiation', dot: 'bg-chart-4' },
   contract: { label: 'Contract', dot: 'bg-chart-5' },
   booked: { label: 'Booked', dot: 'bg-success' },
-  lost: { label: 'Lost', dot: 'bg-destructive' },
+  lost: { label: 'Closed', dot: 'bg-destructive' },
 }
 
 function formatCr(amount: number) {
@@ -222,7 +222,7 @@ export function DealsBoard({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setEditingDeal(deal)}>Edit deal</DropdownMenuItem>
           {deal.stage !== 'lost' && (
-            <DropdownMenuItem onClick={() => updateStage(deal, 'lost')}>Mark as lost</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => updateStage(deal, 'lost')}>Mark as closed</DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={() => handleDelete(deal)}>

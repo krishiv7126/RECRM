@@ -28,7 +28,7 @@ const stageLabels: Record<DealStage, string> = {
   negotiation: 'Negotiation',
   contract: 'Contract',
   booked: 'Booked',
-  lost: 'Lost',
+  lost: 'Closed',
 }
 
 interface EditableDeal {

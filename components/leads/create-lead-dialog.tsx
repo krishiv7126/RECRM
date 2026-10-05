@@ -23,6 +23,7 @@ import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
 import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import { CP_SOURCE, LEAD_SOURCES } from '@/lib/leads/cp-source'
 import { ChannelPartnerField } from '@/components/leads/channel-partner-field'
+import { LEAD_CATEGORIES } from '@/lib/leads/lead-fields'
 import { toast } from 'sonner'
 
 export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
@@ -38,6 +39,7 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
   const [budget, setBudget] = useState('')
   const [channelPartner, setChannelPartner] = useState('')
   const [requirement, setRequirement] = useState('')
+  const [category, setCategory] = useState('')
   const [city, setCity] = useState('')
   const [tags, setTags] = useState('')
   const [notes, setNotes] = useState('')
@@ -52,6 +54,7 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     setBudget('')
     setChannelPartner('')
     setRequirement('')
+    setCategory('')
     setCity('')
     setTags('')
     setNotes('')
@@ -113,6 +116,7 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
         budget_max: budget ? Number(budget) : null,
         channel_partner: source === CP_SOURCE ? channelPartner.trim() : null,
         requirement: requirement.trim() || null,
+        category: category || null,
         city: city.trim() || null,
         tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
         notes: notes.trim() || null,
@@ -221,11 +225,31 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="lead_requirement" className="text-sm font-medium text-foreground">
-              Requirement
-            </label>
-            <Textarea id="lead_requirement" value={requirement} onChange={(e) => setRequirement(e.target.value)} placeholder="e.g. 3BHK in Powai, ready to move" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="lead_requirement" className="text-sm font-medium text-foreground">
+                Segment
+              </label>
+              <Input id="lead_requirement" value={requirement} onChange={(e) => setRequirement(e.target.value)} placeholder="e.g. 2 BHK, 3 BHK, Villa, Office" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="lead_category" className="text-sm font-medium text-foreground">
+                Category
+              </label>
+              <select
+                id="lead_category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              >
+                <option value="">Select…</option>
+                {LEAD_CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -237,7 +261,7 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="lead_notes" className="text-sm font-medium text-foreground">
-              Notes
+              Remarks
             </label>
             <Textarea id="lead_notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>

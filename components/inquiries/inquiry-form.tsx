@@ -196,7 +196,7 @@ export function InquiryForm() {
 
             <div className="flex flex-col gap-1.5">
               <label htmlFor="inq_requirement" className="text-sm font-medium text-foreground">
-                What are they asking about?
+                Segment / what they're asking about
               </label>
               <Textarea
                 id="inq_requirement"
@@ -208,7 +208,7 @@ export function InquiryForm() {
 
             <div className="flex flex-col gap-1.5">
               <label htmlFor="inq_notes" className="text-sm font-medium text-foreground">
-                Notes
+                Remarks
               </label>
               <Textarea id="inq_notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything else worth flagging for sales" />
             </div>

@@ -219,7 +219,7 @@ export function WhatsappBroadcastView({
                   onChange={(e) => setCityFilter(e.target.value)}
                   className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none dark:bg-input/30"
                 >
-                  <option value="">Any</option>
+                  <option value="">All</option>
                   {cities.map((c) => (
                     <option key={c} value={c}>
                       {c}
@@ -234,7 +234,7 @@ export function WhatsappBroadcastView({
                   onChange={(e) => setTagFilter(e.target.value)}
                   className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none dark:bg-input/30"
                 >
-                  <option value="">Any</option>
+                  <option value="">All</option>
                   {tags.map((t) => (
                     <option key={t} value={t}>
                       {t}

@@ -236,7 +236,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                     onChange={(e) => setTagFilter(e.target.value)}
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
                   >
-                    <option value="">Any</option>
+                    <option value="">All</option>
                     {allTags.map((t) => (
                       <option key={t} value={t}>
                         {t}
@@ -251,7 +251,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                     onChange={(e) => setCityFilter(e.target.value)}
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
                   >
-                    <option value="">Any</option>
+                    <option value="">All</option>
                     {allCities.map((c) => (
                       <option key={c} value={c}>
                         {c}

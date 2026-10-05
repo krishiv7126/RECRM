@@ -41,7 +41,7 @@ const leadStageLabels: Record<string, string> = {
   qualified: 'Qualified',
   proposal: 'Proposal',
   site_visit: 'Site Visit',
-  won: 'Won',
+  won: 'Booked',
 }
 
 const dealStageOrder = ['new', 'qualified', 'proposal', 'negotiation', 'contract', 'booked'] as const

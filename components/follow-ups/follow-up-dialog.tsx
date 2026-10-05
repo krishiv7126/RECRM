@@ -319,7 +319,7 @@ export function FollowUpDialog({
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="fu_notes" className="text-sm font-medium text-foreground">
-              Notes
+              Remarks
             </label>
             <Textarea id="fu_notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What needs to happen…" />
           </div>

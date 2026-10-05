@@ -966,6 +966,7 @@ export type Database = {
           ai_score: number | null
           budget_max: number | null
           budget_min: number | null
+          category: string | null
           channel_partner: string | null
           city: string | null
           converted_customer_id: string | null
@@ -991,6 +992,7 @@ export type Database = {
           ai_score?: number | null
           budget_max?: number | null
           budget_min?: number | null
+          category?: string | null
           channel_partner?: string | null
           city?: string | null
           converted_customer_id?: string | null
@@ -1016,6 +1018,7 @@ export type Database = {
           ai_score?: number | null
           budget_max?: number | null
           budget_min?: number | null
+          category?: string | null
           channel_partner?: string | null
           city?: string | null
           converted_customer_id?: string | null

@@ -32,7 +32,7 @@ const leadStages = ['new', 'contacted', 'qualified', 'proposal', 'site_visit', '
 const dealStages = ['new', 'qualified', 'proposal', 'negotiation', 'contract', 'booked', 'lost']
 
 function enumOpts(values: string[]) {
-  return values.map((v) => ({ value: v, label: v.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) }))
+  return values.map((v) => ({ value: v, label: v === 'won' ? 'Booked' : v.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) }))
 }
 
 export const fieldsByEntity: Record<Entity, FieldDef[]> = {
@@ -42,7 +42,8 @@ export const fieldsByEntity: Record<Entity, FieldDef[]> = {
     { value: 'ai_score', label: 'AI score', type: 'number' },
     { value: 'budget_max', label: 'Budget', type: 'number' },
     { value: 'city', label: 'Area', type: 'text' },
-    { value: 'requirement', label: 'Requirement', type: 'text' },
+    { value: 'requirement', label: 'Segment', type: 'text' },
+    { value: 'category', label: 'Category', type: 'enum', options: [{ value: 'ready_to_move', label: 'Ready to move' }, { value: 'under_construction', label: 'Under construction' }] },
     { value: 'full_name', label: 'Full name', type: 'text' },
     { value: 'email', label: 'Email', type: 'text' },
     { value: 'phone', label: 'Phone', type: 'text' },
@@ -67,7 +68,7 @@ export const fieldsByEntity: Record<Entity, FieldDef[]> = {
   follow_ups: [
     { value: 'type', label: 'Type', type: 'enum', options: enumOpts(['call', 'email', 'whatsapp', 'meeting', 'other']) },
     { value: 'status', label: 'Status', type: 'enum', options: enumOpts(['pending', 'done', 'missed']) },
-    { value: 'notes', label: 'Notes', type: 'text' },
+    { value: 'notes', label: 'Remarks', type: 'text' },
   ],
 }
 

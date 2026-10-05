@@ -20,6 +20,7 @@ import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { LeadWithOwner } from '@/lib/leads/get-leads-data'
 import { CP_SOURCE, LEAD_SOURCES } from '@/lib/leads/cp-source'
 import { ChannelPartnerField } from '@/components/leads/channel-partner-field'
+import { LEAD_CATEGORIES, LEAD_STAGE_LABELS } from '@/lib/leads/lead-fields'
 
 const stages = ['new', 'contacted', 'qualified', 'proposal', 'site_visit', 'won', 'lost', 'archive'] as const
 
@@ -32,6 +33,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [stage, setStage] = useState(lead.stage)
   const [budget, setBudget] = useState((lead.budget_max ?? lead.budget_min)?.toString() ?? '')
   const [requirement, setRequirement] = useState(lead.requirement ?? '')
+  const [category, setCategory] = useState(lead.category ?? '')
   const [city, setCity] = useState(lead.city ?? '')
   const [reference, setReference] = useState(lead.reference ?? '')
   const [channelPartner, setChannelPartner] = useState(lead.channel_partner ?? '')
@@ -75,6 +77,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
         budget_min: budget ? Number(budget) : null,
         budget_max: budget ? Number(budget) : null,
         requirement: requirement.trim() || null,
+        category: category || null,
         city: city.trim() || null,
         reference: reference.trim() || null,
         channel_partner: source === CP_SOURCE ? channelPartner.trim() : null,
@@ -231,8 +234,8 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
                 className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm capitalize outline-none dark:bg-input/30"
               >
                 {stages.map((s) => (
-                  <option key={s} value={s} className="capitalize">
-                    {s.replace('_', ' ')}
+                  <option key={s} value={s}>
+                    {LEAD_STAGE_LABELS[s]}
                   </option>
                 ))}
               </select>
@@ -253,9 +256,27 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-foreground">Requirement</label>
-            <Textarea value={requirement} onChange={(e) => setRequirement(e.target.value)} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">Segment</label>
+              <Input value={requirement} onChange={(e) => setRequirement(e.target.value)} placeholder="e.g. 2 BHK, 3 BHK, Villa, Office" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="lead_category" className="text-sm font-medium text-foreground">Category</label>
+              <select
+                id="lead_category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              >
+                <option value="">Select…</option>
+                {LEAD_CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -264,7 +285,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-foreground">Notes</label>
+            <label className="text-sm font-medium text-foreground">Remarks</label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 

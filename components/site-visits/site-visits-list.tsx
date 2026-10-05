@@ -289,7 +289,7 @@ export function SiteVisitsList({
                     onChange={(e) => setCityFilter(e.target.value)}
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
                   >
-                    <option value="">Any</option>
+                    <option value="">All</option>
                     {cities.map((c) => (
                       <option key={c} value={c}>
                         {c}

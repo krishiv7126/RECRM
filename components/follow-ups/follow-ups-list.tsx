@@ -335,7 +335,7 @@ export function FollowUpsList({
                     onChange={(e) => setTypeFilter(e.target.value)}
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
                   >
-                    <option value="">Any</option>
+                    <option value="">All</option>
                     {types.map((t) => (
                       <option key={t} value={t}>
                         {typeConfig[t].label}

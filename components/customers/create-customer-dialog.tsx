@@ -136,7 +136,7 @@ export function CreateCustomerDialog({ trigger }: { trigger: React.ReactElement 
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="cust_notes" className="text-sm font-medium text-foreground">
-              Notes
+              Remarks
             </label>
             <Textarea id="cust_notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>

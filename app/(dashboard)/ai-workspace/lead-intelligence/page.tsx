@@ -29,7 +29,7 @@ const stageLabels: Record<LeadStage, string> = {
   qualified: 'Qualified',
   proposal: 'Proposal',
   site_visit: 'Site Visit',
-  won: 'Won',
+  won: 'Booked',
   lost: 'Lost',
   archive: 'Archived',
 }

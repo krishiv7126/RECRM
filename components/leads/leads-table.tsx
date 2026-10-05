@@ -38,6 +38,7 @@ import { autoScoreLead } from '@/lib/leads/auto-score'
 import { cn } from '@/lib/utils'
 import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { Database } from '@/lib/supabase/types'
+import { LEAD_CATEGORIES, LEAD_STAGE_LABELS, leadCategoryLabel } from '@/lib/leads/lead-fields'
 
 type LeadStage = Database['public']['Enums']['lead_stage']
 const REFRESH_POLL_MS = 15000
@@ -48,6 +49,7 @@ interface LeadRow {
   email: string | null
   phone: string | null
   requirement: string | null
+  category: string | null
   budget_min: number | null
   budget_max: number | null
   source: string | null
@@ -74,16 +76,7 @@ function getInitials(name: string) {
   return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 }
 
-const stageLabels: Record<LeadStage, string> = {
-  new: 'New',
-  contacted: 'Contacted',
-  qualified: 'Qualified',
-  proposal: 'Proposal',
-  site_visit: 'Site Visit',
-  won: 'Won',
-  lost: 'Lost',
-  archive: 'Archived',
-}
+const stageLabels = LEAD_STAGE_LABELS
 
 const stageStyles: Record<LeadStage, string> = {
   new: 'bg-muted text-muted-foreground',
@@ -120,6 +113,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   const [stageFilter, setStageFilter] = useState('')
   const [budgetMinFilter, setBudgetMinFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [tagFilter, setTagFilter] = useState('')
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<string | null>(null)
@@ -218,19 +212,20 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
       const matchesBudget = !budgetMinFilter || (lead.budget_max ?? lead.budget_min ?? 0) >= Number(budgetMinFilter)
       const matchesCity = !cityFilter || lead.city === cityFilter
       const matchesTag = !tagFilter || (lead.tags ?? []).includes(tagFilter)
+      const matchesCategory = !categoryFilter || lead.category === categoryFilter
 
-      return matchesTab && matchesQuery && matchesSource && matchesStage && matchesBudget && matchesCity && matchesTag
+      return matchesTab && matchesQuery && matchesSource && matchesStage && matchesBudget && matchesCity && matchesTag && matchesCategory
     })
-  }, [leads, activeTab, query, sourceFilter, stageFilter, budgetMinFilter, cityFilter, tagFilter])
+  }, [leads, activeTab, query, sourceFilter, stageFilter, budgetMinFilter, cityFilter, tagFilter, categoryFilter])
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: counts.all },
     { key: 'hot', label: 'Hot 🔥', count: counts.hot },
     { key: 'new', label: 'New', count: counts.new },
-    { key: 'won', label: 'Won', count: counts.won },
+    { key: 'won', label: 'Booked', count: counts.won },
   ]
 
-  const activeFilterCount = [sourceFilter, stageFilter, budgetMinFilter, cityFilter, tagFilter].filter(Boolean).length
+  const activeFilterCount = [sourceFilter, stageFilter, budgetMinFilter, cityFilter, tagFilter, categoryFilter].filter(Boolean).length
 
   function clearFilters() {
     setSourceFilter('')
@@ -238,6 +233,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     setBudgetMinFilter('')
     setCityFilter('')
     setTagFilter('')
+    setCategoryFilter('')
   }
 
   async function handleDelete(lead: LeadRow) {
@@ -386,7 +382,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     onChange={(e) => setSourceFilter(e.target.value)}
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
                   >
-                    <option value="">Any</option>
+                    <option value="">All</option>
                     {sources.map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -401,7 +397,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     onChange={(e) => setStageFilter(e.target.value)}
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
                   >
-                    <option value="">Any</option>
+                    <option value="">All</option>
                     {Object.entries(stageLabels).map(([key, label]) => (
                       <option key={key} value={key}>
                         {label}
@@ -426,10 +422,25 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     onChange={(e) => setCityFilter(e.target.value)}
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
                   >
-                    <option value="">Any</option>
+                    <option value="">All</option>
                     {cities.map((c) => (
                       <option key={c} value={c}>
                         {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-medium text-foreground/80">Category</label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
+                  >
+                    <option value="">All</option>
+                    {LEAD_CATEGORIES.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
                       </option>
                     ))}
                   </select>
@@ -441,7 +452,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     onChange={(e) => setTagFilter(e.target.value)}
                     className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
                   >
-                    <option value="">Any</option>
+                    <option value="">All</option>
                     {allTags.map((t) => (
                       <option key={t} value={t}>
                         {t}
@@ -469,7 +480,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
             <thead>
               <tr className="border-b border-border text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3">Lead</th>
-                <th className="px-4 py-3">Interest</th>
+                <th className="px-4 py-3">Segment</th>
                 <th className="px-4 py-3">Budget</th>
                 <th className="px-4 py-3">Source</th>
                 <th className="px-4 py-3">Status</th>
@@ -508,6 +519,9 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                   </td>
                   <td className="max-w-[220px] px-4 py-3 text-foreground/80">
                     <span className="line-clamp-2">{lead.requirement ?? '—'}</span>
+                    {leadCategoryLabel(lead.category) && (
+                      <span className="block text-[11px] text-muted-foreground">{leadCategoryLabel(lead.category)}</span>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 font-medium text-foreground">
                     {formatBudget(lead.budget_min, lead.budget_max)}

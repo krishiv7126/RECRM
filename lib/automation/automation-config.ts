@@ -66,7 +66,7 @@ export const fieldsByEntity: Record<Entity, FieldDef[]> = {
     { value: 'feedback', label: 'Feedback', type: 'text' },
   ],
   follow_ups: [
-    { value: 'type', label: 'Type', type: 'enum', options: enumOpts(['call', 'email', 'whatsapp', 'meeting', 'other']) },
+    { value: 'type', label: 'Type', type: 'enum', options: enumOpts(['call', 'email', 'whatsapp', 'meeting', 'site_visit', 're_visit', 'other']) },
     { value: 'status', label: 'Status', type: 'enum', options: enumOpts(['pending', 'done', 'missed']) },
     { value: 'notes', label: 'Remarks', type: 'text' },
   ],
@@ -98,7 +98,7 @@ export const taskCategories = enumOpts([
 ])
 
 export const taskPriorities = enumOpts(['critical', 'high', 'medium', 'low'])
-export const followUpTypes = enumOpts(['call', 'email', 'whatsapp', 'meeting', 'other'])
+export const followUpTypes = enumOpts(['call', 'email', 'whatsapp', 'meeting', 'site_visit', 're_visit', 'other'])
 export const notificationTypes = enumOpts([
   'task_due', 'follow_up_due', 'approval_pending', 'lead_assigned', 'deal_update', 'site_visit_reminder', 'system', 'other',
 ])

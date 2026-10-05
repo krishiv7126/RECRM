@@ -31,14 +31,22 @@ function formatDealValue(value: number | null) {
   return value >= 10000000 ? `₹${(value / 10000000).toFixed(1)}Cr` : `₹${Math.round(value / 100000)}L`
 }
 
-export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwner; deals: CustomerDeal[] }) {
+export function CustomerDetail({
+  customer,
+  deals,
+  bookedBy,
+}: {
+  customer: CustomerWithOwner
+  deals: CustomerDeal[]
+  bookedBy: string | null
+}) {
   const router = useRouter()
   const [fullName, setFullName] = useState(customer.full_name)
   const [phone, setPhone] = useState(customer.phone ?? '')
   const [email, setEmail] = useState(customer.email ?? '')
   const [city, setCity] = useState(customer.city ?? '')
   const [address, setAddress] = useState(customer.address ?? '')
-  const [tags, setTags] = useState((customer.tags ?? []).join(', '))
+  const [reference, setReference] = useState(customer.reference ?? '')
   const [notes, setNotes] = useState(customer.notes ?? '')
 
   const [saving, setSaving] = useState(false)
@@ -60,7 +68,7 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
         email: email.trim() || null,
         city: city.trim() || null,
         address: address.trim() || null,
-        tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
+        reference: reference.trim() || null,
         notes: notes.trim() || null,
       })
       .eq('id', customer.id)
@@ -98,14 +106,17 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
       <div>
         <Link href="/customers" className="mb-3 flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-3.5" />
-          All customers
+          All members
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <PageHeader
             crumbs={[{ label: 'Sales' }, { label: 'Members', href: '/customers' }, { label: customer.full_name }]}
             title={customer.full_name}
           />
-          {customer.owner?.full_name && <Badge variant="outline">Owner: {customer.owner.full_name}</Badge>}
+          <div className="flex items-center gap-2">
+            {bookedBy && <Badge className="bg-success/15 text-success">Booked by {bookedBy}</Badge>}
+            {customer.owner?.full_name && <Badge variant="outline">Owner: {customer.owner.full_name}</Badge>}
+          </div>
         </div>
       </div>
 
@@ -216,8 +227,8 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
               <Input value={address} onChange={(e) => setAddress(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <label className="text-sm font-medium text-foreground">Tags (comma separated)</label>
-              <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Investor, Repeat Buyer" />
+              <label className="text-sm font-medium text-foreground">Reference</label>
+              <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. Referred by Rohan Kapoor" />
             </div>
           </div>
 

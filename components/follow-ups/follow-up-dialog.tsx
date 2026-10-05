@@ -26,6 +26,8 @@ const typeLabels: Record<FollowUpType, string> = {
   whatsapp: 'WhatsApp',
   email: 'Email',
   meeting: 'Meeting',
+  site_visit: 'Site Visit',
+  re_visit: 'Re-visit',
   other: 'Other',
 }
 

@@ -10,7 +10,6 @@ import {
   Mail,
   MoreHorizontal,
   Phone,
-  Plus,
   Search,
   Sparkles,
 } from 'lucide-react'
@@ -28,7 +27,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { CreateCustomerDialog } from '@/components/customers/create-customer-dialog'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -40,6 +38,8 @@ interface CustomerRow {
   phone: string | null
   city: string | null
   tags: string[] | null
+  reference: string | null
+  booked_by: string | null
   ai_summary: string | null
   owner: { full_name: string } | null
   open_deals: number
@@ -58,7 +58,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   const [query, setQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('recent')
   const [showFilters, setShowFilters] = useState(false)
-  const [tagFilter, setTagFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
   const { confirm, ConfirmDialog } = useConfirm()
 
@@ -91,7 +90,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     }
   }, [router])
 
-  const allTags = useMemo(() => Array.from(new Set(customers.flatMap((c) => c.tags ?? []))), [customers])
   const allCities = useMemo(() => Array.from(new Set(customers.map((c) => c.city).filter(Boolean))) as string[], [customers])
 
   const convertedThisMonth = useMemo(() => {
@@ -102,7 +100,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     }).length
   }, [customers])
 
-  const activeFilterCount = [tagFilter, cityFilter].filter(Boolean).length
+  const activeFilterCount = [cityFilter].filter(Boolean).length
 
   const filteredCustomers = useMemo(() => {
     const filtered = customers.filter((c) => {
@@ -112,16 +110,16 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
         c.full_name.toLowerCase().includes(q) ||
         (c.email ?? '').toLowerCase().includes(q) ||
         (c.city ?? '').toLowerCase().includes(q) ||
-        (c.tags ?? []).some((t) => t.toLowerCase().includes(q))
-      const matchesTag = !tagFilter || (c.tags ?? []).includes(tagFilter)
+        (c.reference ?? '').toLowerCase().includes(q) ||
+        (c.booked_by ?? '').toLowerCase().includes(q)
       const matchesCity = !cityFilter || c.city === cityFilter
-      return matchesQuery && matchesTag && matchesCity
+      return matchesQuery && matchesCity
     })
     const sorted = [...filtered]
     if (sortMode === 'az') sorted.sort((a, b) => a.full_name.localeCompare(b.full_name))
     else sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     return sorted
-  }, [customers, query, sortMode, tagFilter, cityFilter])
+  }, [customers, query, sortMode, cityFilter])
 
   async function handleDelete(customer: CustomerRow) {
     const ok = await confirm({
@@ -175,16 +173,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
           title="Members"
           description={`${customers.length} total members · ${convertedThisMonth} added this month`}
         />
-        <div className="flex shrink-0 items-center gap-2">
-          <CreateCustomerDialog
-            trigger={
-              <Button size="sm" className="bg-foreground text-background hover:bg-foreground/85">
-                <Plus data-icon="inline-start" />
-                New Customer
-              </Button>
-            }
-          />
-        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -230,21 +218,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
             <div className="absolute top-full right-0 z-30 mt-1.5 w-64 rounded-xl border border-border bg-card p-4 shadow-lg">
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] font-medium text-foreground/80">Tag</label>
-                  <select
-                    value={tagFilter}
-                    onChange={(e) => setTagFilter(e.target.value)}
-                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-[13px] outline-none dark:bg-input/30"
-                  >
-                    <option value="">All</option>
-                    {allTags.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
                   <label className="text-[12px] font-medium text-foreground/80">Area</label>
                   <select
                     value={cityFilter}
@@ -264,7 +237,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setTagFilter('')
                       setCityFilter('')
                     }}
                   >
@@ -288,7 +260,8 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                 <th className="px-4 py-3">Member</th>
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Area</th>
-                <th className="px-4 py-3">Tags</th>
+                <th className="px-4 py-3">Reference</th>
+                <th className="px-4 py-3">Booked by</th>
                 <th className="px-4 py-3">AI Summary</th>
                 <th className="px-4 py-3">Open Deals</th>
                 <th className="px-4 py-3">Owner</th>
@@ -311,16 +284,10 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{customer.phone ?? '—'}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{customer.city ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1.5">
-                      {(customer.tags ?? []).map((tag) => (
-                        <Badge key={tag} variant="outline" className="rounded-full bg-secondary text-secondary-foreground">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {(customer.tags ?? []).length === 0 && <span className="text-muted-foreground">—</span>}
-                    </div>
+                  <td className="max-w-[200px] px-4 py-3 text-foreground/80">
+                    <span className="line-clamp-2">{customer.reference ?? '—'}</span>
                   </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{customer.booked_by ?? '—'}</td>
                   <td className="max-w-[280px] px-4 py-3 text-foreground/80">
                     {customer.ai_summary ? (
                       <div className="flex items-center gap-1.5">
@@ -398,7 +365,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
               ))}
               {filteredCustomers.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                     No customers match your search.
                   </td>
                 </tr>

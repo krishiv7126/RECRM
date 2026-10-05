@@ -490,6 +490,7 @@ export type Database = {
           org_id: string
           owner_id: string
           phone: string | null
+          reference: string | null
           tags: string[] | null
           updated_at: string
         }
@@ -505,6 +506,7 @@ export type Database = {
           org_id: string
           owner_id: string
           phone?: string | null
+          reference?: string | null
           tags?: string[] | null
           updated_at?: string
         }
@@ -520,6 +522,7 @@ export type Database = {
           org_id?: string
           owner_id?: string
           phone?: string | null
+          reference?: string | null
           tags?: string[] | null
           updated_at?: string
         }
@@ -2260,7 +2263,14 @@ export type Database = {
         | "property"
         | "project"
       follow_up_status: "pending" | "done" | "missed"
-      follow_up_type: "call" | "email" | "whatsapp" | "meeting" | "other"
+      follow_up_type:
+        | "call"
+        | "email"
+        | "whatsapp"
+        | "meeting"
+        | "site_visit"
+        | "re_visit"
+        | "other"
       integration_auth_type: "api_key" | "oauth2" | "webhook"
       integration_status: "disconnected" | "connected" | "error"
       lead_stage:
@@ -2506,7 +2516,7 @@ export const Constants = {
         "project",
       ],
       follow_up_status: ["pending", "done", "missed"],
-      follow_up_type: ["call", "email", "whatsapp", "meeting", "other"],
+      follow_up_type: ["call", "email", "whatsapp", "meeting", "site_visit", "re_visit", "other"],
       integration_auth_type: ["api_key", "oauth2", "webhook"],
       integration_status: ["disconnected", "connected", "error"],
       lead_stage: [

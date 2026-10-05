@@ -7,6 +7,7 @@ import {
   Clock,
   Filter,
   Mail,
+  MapPin,
   MoreHorizontal,
   Phone,
   Plus,
@@ -49,6 +50,8 @@ const typeConfig: Record<
   whatsapp: { icon: WhatsAppIcon, className: 'bg-success/15 text-success', label: 'WhatsApp' },
   email: { icon: Mail, className: 'bg-secondary text-secondary-foreground', label: 'Email' },
   meeting: { icon: Calendar, className: 'border border-primary/40 bg-transparent text-primary', label: 'Meeting' },
+  site_visit: { icon: MapPin, className: 'bg-success/15 text-success', label: 'Site Visit' },
+  re_visit: { icon: MapPin, className: 'border border-success/40 bg-transparent text-success', label: 'Re-visit' },
   other: { icon: Clock, className: 'bg-muted text-muted-foreground', label: 'Other' },
 }
 

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import type { DuplicatePhoneMatch } from '@/lib/leads/use-duplicate-phone-check'
+import { LEAD_STAGE_LABELS } from '@/lib/leads/lead-fields'
 
 export function DuplicatePhoneNotice({ checking, match }: { checking: boolean; match: DuplicatePhoneMatch | null }) {
   if (checking) {
@@ -21,7 +22,7 @@ export function DuplicatePhoneNotice({ checking, match }: { checking: boolean; m
     >
       <AlertTriangle className="size-3 shrink-0" />
       Already a {match.type === 'customer' ? 'member' : 'lead'}: {match.full_name}
-      {match.stage ? ` · ${match.stage}` : ''}
+      {match.stage ? ` · ${LEAD_STAGE_LABELS[match.stage as keyof typeof LEAD_STAGE_LABELS] ?? match.stage}` : ''}
     </Link>
   )
 }

@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { InquiryRow } from '@/lib/inquiries/get-inquiries-data'
+import { LEAD_STAGE_LABELS } from '@/lib/leads/lead-fields'
 
 const stageStyles: Record<string, string> = {
   new: 'bg-muted text-muted-foreground',
@@ -81,7 +82,7 @@ export function InquiriesView({ initialInquiries }: { initialInquiries: InquiryR
   const thisWeek = inquiries.filter((i) => isThisWeek(i.created_at)).length
 
   const stats = [
-    { label: 'Total inquiries', value: total },
+    { label: 'Total logged', value: total },
     { label: 'Today', value: today },
     { label: 'Last 7 days', value: thisWeek },
   ]
@@ -89,9 +90,9 @@ export function InquiriesView({ initialInquiries }: { initialInquiries: InquiryR
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        crumbs={[{ label: 'Sales' }, { label: 'Front Desk' }, { label: 'Inquiries' }]}
-        title="Inquiries"
-        description="Every offline inquiry logged at the front desk, live."
+        crumbs={[{ label: 'Front Desk' }, { label: 'Logged Leads' }]}
+        title="Logged Leads"
+        description="Every lead added at the front desk, live."
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -134,7 +135,7 @@ export function InquiriesView({ initialInquiries }: { initialInquiries: InquiryR
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
                     <Badge variant="outline" className={cn('rounded-full', stageStyles[inquiry.stage] ?? 'bg-muted text-muted-foreground')}>
-                      {inquiry.stage.replace('_', ' ')}
+                      {LEAD_STAGE_LABELS[inquiry.stage as keyof typeof LEAD_STAGE_LABELS] ?? inquiry.stage}
                     </Badge>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDate(inquiry.created_at)}</td>
@@ -180,7 +181,7 @@ export function InquiriesView({ initialInquiries }: { initialInquiries: InquiryR
                   <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
                       <ClipboardList className="size-6 text-muted-foreground/60" />
-                      No inquiries logged yet.
+                      No leads logged yet.
                     </div>
                   </td>
                 </tr>

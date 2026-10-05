@@ -107,7 +107,7 @@ export function InquiryForm() {
       return
     }
 
-    toast.success('Inquiry logged')
+    toast.success('Lead added')
     setJustLogged(fullName.trim())
     resetForm()
     if (inserted?.id) autoScoreLead(inserted.id)
@@ -119,19 +119,19 @@ export function InquiryForm() {
       <div>
         <Link href="/inquiries" className="mb-3 flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-3.5" />
-          All inquiries
+          Logged leads
         </Link>
         <PageHeader
-          crumbs={[{ label: 'Sales' }, { label: 'Front Desk' }, { label: 'New Inquiry' }]}
-          title="New Inquiry"
-          description="Log a walk-in, call, or offline inquiry — it's added to the pipeline as a lead."
+          crumbs={[{ label: 'Front Desk' }, { label: 'New Lead' }]}
+          title="New Lead"
+          description="Add a walk-in or phone enquiry — it goes straight into the sales pipeline."
         />
       </div>
 
       {justLogged && (
         <div className="flex items-center gap-2 rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-[13px] text-success">
           <Check className="size-4 shrink-0" />
-          Logged inquiry for {justLogged}.
+          Added {justLogged} as a lead.
         </div>
       )}
 
@@ -232,7 +232,7 @@ export function InquiryForm() {
 
             <Button type="submit" disabled={submitting || checkingPhone || !!duplicateMatch} className="w-fit">
               {submitting ? <Loader2 className="animate-spin" /> : <ClipboardPlus data-icon="inline-start" />}
-              Log Inquiry
+              Add Lead
             </Button>
           </form>
         </CardContent>

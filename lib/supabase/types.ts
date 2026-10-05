@@ -2171,6 +2171,10 @@ export type Database = {
         Args: { p_lead_id: string }
         Returns: string
       }
+      find_phone_duplicate: {
+        Args: { p_phone: string; p_exclude_lead?: string }
+        Returns: { type: string; id: string; full_name: string; stage: string | null }[]
+      }
       fn_current_org_id: { Args: never; Returns: string }
       fn_current_org_id_text: { Args: never; Returns: string }
       fn_current_platform_user_id: { Args: never; Returns: string }

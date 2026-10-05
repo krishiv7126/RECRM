@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { AIOrb, AuroraField, StreamingText, type Phase } from '@/components/ai/ai-motion'
 import { createClient } from '@/lib/supabase/client'
-import { deriveTemperature } from '@/lib/leads/temperature'
+import { deriveTemperature, TEMPERATURE_STYLES, TEMPERATURE_COLORS } from '@/lib/leads/temperature'
 import { LEAD_STAGE_LABELS } from '@/lib/leads/lead-fields'
 import type { Database } from '@/lib/supabase/types'
 
@@ -38,11 +38,7 @@ const stageStyles: Record<LeadStage, string> = {
   archive: 'bg-muted text-muted-foreground',
 }
 
-const temperatureStyles: Record<'hot' | 'warm' | 'cold', string> = {
-  hot: 'border-destructive/30 bg-destructive/10 text-destructive',
-  warm: 'border-primary/30 bg-primary/10 text-primary',
-  cold: 'border-border bg-muted text-muted-foreground',
-}
+const temperatureStyles = TEMPERATURE_STYLES
 
 function formatCr(amount: number) {
   return amount >= 10000000 ? `₹${(amount / 10000000).toFixed(1)}Cr` : `₹${Math.round(amount / 100000)}L`
@@ -95,7 +91,7 @@ function ScoreDial({ score, scoring }: { score: number | null; scoring: boolean 
           cy="28"
           r={r}
           fill="none"
-          stroke="var(--primary)"
+          stroke={score !== null ? TEMPERATURE_COLORS[deriveTemperature(score)!] : 'var(--primary)'}
           strokeWidth="4"
           strokeLinecap="round"
           strokeDasharray={circumference}

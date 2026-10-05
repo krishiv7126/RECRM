@@ -15,11 +15,13 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
-import { deriveTemperature } from '@/lib/leads/temperature'
+import { deriveTemperature, TEMPERATURE_STYLES } from '@/lib/leads/temperature'
 import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { LeadWithOwner } from '@/lib/leads/get-leads-data'
 import { CP_SOURCE, LEAD_SOURCES } from '@/lib/leads/cp-source'
 import { ChannelPartnerField } from '@/components/leads/channel-partner-field'
+import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
+import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
 import { LEAD_CATEGORIES, LEAD_STAGE_LABELS, SELECTABLE_LEAD_STAGES } from '@/lib/leads/lead-fields'
 
 const stages = SELECTABLE_LEAD_STAGES
@@ -46,6 +48,9 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [deleting, setDeleting] = useState(false)
   const [liveScore, setLiveScore] = useState(lead.ai_score)
   const { confirm, ConfirmDialog } = useConfirm()
+  // Only re-check when the number is actually being changed.
+  const phoneChanged = phone.trim() !== (lead.phone ?? '')
+  const { checking: checkingPhone, match: duplicateMatch } = useDuplicatePhoneCheck(phoneChanged ? phone : '', lead.id)
 
   useEffect(() => {
     if (lead.ai_score !== null) return
@@ -59,6 +64,10 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   async function handleSave() {
     if (source === CP_SOURCE && !channelPartner.trim()) {
       setError('Pick which channel partner (CP) this lead came from.')
+      return
+    }
+    if (duplicateMatch) {
+      setError(`This number already belongs to ${duplicateMatch.full_name}. Use a different number or open the existing record.`)
       return
     }
     setSaving(true)
@@ -151,7 +160,12 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
           <div className="flex items-center gap-2">
             {lead.owner?.full_name && <Badge variant="outline">Owner: {lead.owner.full_name}</Badge>}
             {liveScore !== null && <Badge className="bg-primary/15 text-primary">AI Score {liveScore}</Badge>}
-            {deriveTemperature(liveScore) === 'hot' && <Badge className="bg-destructive/10 text-destructive">🔥 Hot</Badge>}
+            {deriveTemperature(liveScore) && (
+              <Badge variant="outline" className={`capitalize ${TEMPERATURE_STYLES[deriveTemperature(liveScore)!]}`}>
+                {deriveTemperature(liveScore) === 'hot' ? '🔥 ' : ''}
+                {deriveTemperature(liveScore)}
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -188,6 +202,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
                   <WhatsAppIcon className="size-3.5" />
                 </Button>
               </div>
+              <DuplicatePhoneNotice checking={checkingPhone} match={duplicateMatch} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Email</label>
@@ -286,7 +301,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
           {error && <p className="text-[13px] text-destructive">{error}</p>}
 
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <Button disabled={saving} onClick={handleSave}>
+            <Button disabled={saving || checkingPhone || !!duplicateMatch} onClick={handleSave}>
               {saving ? <Loader2 className="animate-spin" /> : saved ? <Check data-icon="inline-start" /> : null}
               {saved ? 'Saved' : 'Save changes'}
             </Button>

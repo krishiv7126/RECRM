@@ -21,6 +21,7 @@ import {
   Settings,
   ShieldCheck,
   ClipboardList,
+  ClipboardPlus,
   MessageCircle,
   UserCog,
 } from 'lucide-react'
@@ -72,7 +73,6 @@ export const adminNav: NavSection[] = [
           { label: 'Site Visits', href: '/site-visits', icon: CalendarCheck },
         ],
       },
-      { label: 'Inquiries', icon: ClipboardList, href: '/inquiries' },
     ],
   },
   {
@@ -118,26 +118,25 @@ function withoutGroups(sections: NavSection[], labelsToRemove: string[]): NavSec
 }
 
 // Manager: no Automation (workflow rules are an org-level admin concern), no
-// Approvals (only admins decide manager/user login approvals), no Inquiries
-// dashboard (that's an admin/receptionist front-desk view), no Staff (org-wide
+// Approvals (only admins decide manager/user login approvals), no Staff (org-wide
 // performance + access control is an admin-only concern).
-export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Approvals', 'Inquiries', 'Staff'])
+export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Approvals', 'Staff'])
 
 // User: no Automation, no Analytics (individual contributors don't see org-wide
-// reporting), no Approvals, no Inquiries dashboard, no WhatsApp Broadcast
-// (mass messaging is a manager/admin action), no Staff. New Inquiry itself
-// isn't a nav item — it's the floating action button, shown to every role.
+// reporting), no Approvals, no WhatsApp Broadcast (mass messaging is a
+// manager/admin action), no Staff.
 export const userNav: NavSection[] = withoutGroups(adminNav, [
   'Automation',
   'Analytics',
   'Approvals',
-  'Inquiries',
   'WhatsApp Broadcast',
   'Staff',
 ])
 
 // Receptionist: a narrow, front-desk-only role — not derived from adminNav
-// since it needs to exclude nearly everything rather than a few groups.
+// since it needs to exclude nearly everything rather than a few groups. The
+// separate "Inquiries" module was removed for everyone else; the front desk
+// keeps a simple New Lead form plus the list of leads it has logged.
 export const receptionistNav: NavSection[] = [
   {
     label: 'Overview',
@@ -145,7 +144,10 @@ export const receptionistNav: NavSection[] = [
   },
   {
     label: 'Front Desk',
-    groups: [{ label: 'Inquiries', icon: ClipboardList, href: '/inquiries' }],
+    groups: [
+      { label: 'New Lead', icon: ClipboardPlus, href: '/inquiries/new' },
+      { label: 'Logged Leads', icon: ClipboardList, href: '/inquiries' },
+    ],
   },
 ]
 

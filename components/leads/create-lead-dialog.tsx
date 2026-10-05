@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2, Plus } from 'lucide-react'
@@ -42,6 +42,20 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
   const [category, setCategory] = useState('')
   const [city, setCity] = useState('')
   const [notes, setNotes] = useState('')
+  const [scheduleVisit, setScheduleVisit] = useState(false)
+  const [visitPropertyId, setVisitPropertyId] = useState('')
+  const [visitAt, setVisitAt] = useState('')
+  const [properties, setProperties] = useState<{ id: string; title: string }[]>([])
+
+  // Properties are only needed once the user opts into booking a site visit.
+  useEffect(() => {
+    if (!scheduleVisit || properties.length > 0) return
+    createClient()
+      .from('properties')
+      .select('id, title')
+      .order('title')
+      .then(({ data }) => setProperties(data ?? []))
+  }, [scheduleVisit, properties.length])
 
   const { checking: checkingPhone, match: duplicateMatch } = useDuplicatePhoneCheck(phone)
 
@@ -56,6 +70,9 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     setCategory('')
     setCity('')
     setNotes('')
+    setScheduleVisit(false)
+    setVisitPropertyId('')
+    setVisitAt('')
     setError(null)
   }
 
@@ -67,6 +84,10 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     }
     if (source === CP_SOURCE && !channelPartner.trim()) {
       setError('Pick which channel partner (CP) this lead came from.')
+      return
+    }
+    if (scheduleVisit && !visitAt) {
+      setError('Pick a date and time for the site visit.')
       return
     }
     if (checkingPhone) {
@@ -93,7 +114,7 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
       return
     }
 
-    const { data: me } = await supabase.from('platform_users').select('org_id').eq('auth_user_id', user.id).single()
+    const { data: me } = await supabase.from('platform_users').select('id, org_id').eq('auth_user_id', user.id).single()
     if (!me?.org_id) {
       setError('Could not resolve your organization.')
       setSubmitting(false)
@@ -117,19 +138,31 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
         category: category || null,
         city: city.trim() || null,
         notes: notes.trim() || null,
+        ...(scheduleVisit ? { stage: 'site_visit' as const } : {}),
       })
       .select('id')
       .single()
 
-    setSubmitting(false)
-
     if (insertErr) {
+      setSubmitting(false)
       setError(insertErr.message)
       toast.error(insertErr.message)
       return
     }
 
-    toast.success('Lead created')
+    if (scheduleVisit && inserted?.id) {
+      const { error: visitErr } = await supabase.from('site_visits').insert({
+        org_id: me.org_id,
+        owner_id: me.id,
+        lead_id: inserted.id,
+        property_id: visitPropertyId || null,
+        scheduled_at: new Date(visitAt).toISOString(),
+      })
+      if (visitErr) toast.error(`Lead created, but the site visit couldn't be scheduled: ${visitErr.message}`)
+    }
+
+    setSubmitting(false)
+    toast.success(scheduleVisit ? 'Lead created and site visit scheduled' : 'Lead created')
     setOpen(false)
     resetForm()
     router.refresh()
@@ -249,6 +282,46 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
             </div>
           </div>
 
+
+          <div className="flex flex-col gap-3 rounded-xl border border-border p-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <input
+                type="checkbox"
+                checked={scheduleVisit}
+                onChange={(e) => setScheduleVisit(e.target.checked)}
+                className="size-4 accent-[var(--primary)]"
+              />
+              Schedule a site visit
+            </label>
+            {scheduleVisit && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="lead_visit_property" className="text-sm font-medium text-foreground">
+                    Property
+                  </label>
+                  <select
+                    id="lead_visit_property"
+                    value={visitPropertyId}
+                    onChange={(e) => setVisitPropertyId(e.target.value)}
+                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                  >
+                    <option value="">Not decided yet</option>
+                    {properties.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="lead_visit_at" className="text-sm font-medium text-foreground">
+                    Date &amp; time <span className="text-destructive">*</span>
+                  </label>
+                  <Input id="lead_visit_at" type="datetime-local" value={visitAt} onChange={(e) => setVisitAt(e.target.value)} />
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="lead_notes" className="text-sm font-medium text-foreground">

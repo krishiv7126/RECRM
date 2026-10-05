@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
-import { deriveTemperature, type DerivedTemperature } from '@/lib/leads/temperature'
+import { deriveTemperature, TEMPERATURE_STYLES, TEMPERATURE_COLORS } from '@/lib/leads/temperature'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -59,6 +59,7 @@ interface LeadRow {
   city: string | null
   tags: string[] | null
   owner: { full_name: string } | null
+  has_pending?: boolean
 }
 
 function formatCr(amount: number) {
@@ -90,13 +91,9 @@ const stageStyles: Record<LeadStage, string> = {
   archive: 'bg-muted text-muted-foreground',
 }
 
-const temperatureStyles: Record<DerivedTemperature, string> = {
-  hot: 'border-destructive/30 bg-destructive/10 text-destructive',
-  warm: 'border-primary/30 bg-primary/10 text-primary',
-  cold: 'border-border bg-muted text-muted-foreground',
-}
+const temperatureStyles = TEMPERATURE_STYLES
 
-type FilterTab = 'all' | 'hot' | 'new' | 'won'
+type FilterTab = 'all' | 'hot' | 'new' | 'pending' | 'won'
 
 function isToday(dateStr: string) {
   const d = new Date(dateStr)
@@ -184,6 +181,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
       all: leads.length,
       hot: leads.filter((l) => deriveTemperature(l.ai_score) === 'hot').length,
       new: leads.filter((l) => l.stage === 'new').length,
+      pending: leads.filter((l) => l.has_pending).length,
       won: leads.filter((l) => l.stage === 'won').length,
     }),
     [leads],
@@ -197,6 +195,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
         activeTab === 'all' ||
         (activeTab === 'hot' && deriveTemperature(lead.ai_score) === 'hot') ||
         (activeTab === 'new' && lead.stage === 'new') ||
+        (activeTab === 'pending' && lead.has_pending) ||
         (activeTab === 'won' && lead.stage === 'won')
 
       const q = query.trim().toLowerCase()
@@ -220,6 +219,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
     { key: 'all', label: 'All', count: counts.all },
     { key: 'hot', label: 'Hot 🔥', count: counts.hot },
     { key: 'new', label: 'New', count: counts.new },
+    { key: 'pending', label: 'Pending', count: counts.pending },
     { key: 'won', label: 'Booked', count: counts.won },
   ]
 
@@ -509,7 +509,10 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     <div className="flex items-center gap-2">
                       <div className="flex w-16 flex-col gap-1">
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                          <div className="h-full rounded-full bg-primary" style={{ width: `${lead.ai_score ?? 0}%` }} />
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${lead.ai_score ?? 0}%`, ...(temp ? { backgroundColor: TEMPERATURE_COLORS[temp] } : {}) }}
+                          />
                         </div>
                         <span className="text-[11px] font-semibold text-foreground">{lead.ai_score ?? '—'}</span>
                       </div>

@@ -17,17 +17,14 @@ function pctDelta(current: number, prev: number, asCount = false): { value: numb
   }
 }
 
-const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
 export async function getDashboardData() {
   const supabase = await createClient()
 
-  const [{ data: leads }, { data: deals }, { data: siteVisits }, { data: revenueTargets }, { data: followUps }] =
+  const [{ data: leads }, { data: deals }, { data: siteVisits }, { data: followUps }, { data: allFollowUpRows }] =
     await Promise.all([
       supabase.from('leads').select('id, source, stage, ai_score, full_name, created_at, owner:platform_users!leads_owner_id_fkey(full_name)'),
       supabase.from('deals').select('id, title, stage, value, closed_at, created_at'),
       supabase.from('site_visits').select('id, scheduled_at'),
-      supabase.from('revenue_targets').select('period_start, target_value').order('period_start').limit(8),
       supabase
         .from('follow_ups')
         .select(
@@ -35,6 +32,7 @@ export async function getDashboardData() {
         )
         .neq('status', 'done')
         .order('due_at', { ascending: true }),
+      supabase.from('follow_ups').select('status, due_at, owner:platform_users!follow_ups_owner_id_fkey(full_name)'),
     ])
 
   const allLeads = leads ?? []
@@ -116,15 +114,20 @@ export async function getDashboardData() {
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 8)
 
-  const monthlyRevenueSeries = (revenueTargets ?? []).map((t) => {
-    const start = new Date(t.period_start)
-    const revenue = bookedInMonth(start.getFullYear(), start.getMonth())
-    return {
-      month: monthLabels[start.getMonth()],
-      revenue: Number((revenue / 10000000).toFixed(2)),
-      target: Number(((t.target_value ?? 0) / 10000000).toFixed(2)),
-    }
-  })
+  // Follow-ups per owner, split by where each one stands -- feeds the
+  // dashboard's stacked bar chart.
+  const ownerFollowUps = new Map<string, { owner: string; overdue: number; pending: number; done: number }>()
+  for (const f of allFollowUpRows ?? []) {
+    const owner = f.owner?.full_name ?? 'Unassigned'
+    const row = ownerFollowUps.get(owner) ?? { owner, overdue: 0, pending: 0, done: 0 }
+    if (f.status === 'done') row.done++
+    else if (f.status === 'missed' || new Date(f.due_at).getTime() < now.getTime()) row.overdue++
+    else row.pending++
+    ownerFollowUps.set(owner, row)
+  }
+  const followUpsByOwner = Array.from(ownerFollowUps.values()).sort(
+    (a, b) => b.overdue + b.pending + b.done - (a.overdue + a.pending + a.done),
+  )
 
   return {
     totalLeads,
@@ -142,7 +145,7 @@ export async function getDashboardData() {
     biggestActiveDeal,
     activePipelineValue,
     leadSourceBreakdown,
-    monthlyRevenueSeries,
+    followUpsByOwner,
     priorityQueue: {
       overdueFollowUps,
       dueTodayFollowUps,

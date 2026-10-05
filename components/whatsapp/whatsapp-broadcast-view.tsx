@@ -213,7 +213,7 @@ export function WhatsappBroadcastView({
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-foreground">City</label>
+                <label className="text-sm font-medium text-foreground">Area</label>
                 <select
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}

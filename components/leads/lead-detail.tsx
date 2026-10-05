@@ -18,8 +18,9 @@ import { autoScoreLead } from '@/lib/leads/auto-score'
 import { deriveTemperature } from '@/lib/leads/temperature'
 import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { LeadWithOwner } from '@/lib/leads/get-leads-data'
+import { CP_SOURCE, LEAD_SOURCES } from '@/lib/leads/cp-source'
+import { ChannelPartnerField } from '@/components/leads/channel-partner-field'
 
-const sources = ['Website', 'Referral', 'Meta Ads', 'Google', '99acres', 'Walk-in', 'Other']
 const stages = ['new', 'contacted', 'qualified', 'proposal', 'site_visit', 'won', 'lost', 'archive'] as const
 
 export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
@@ -29,11 +30,11 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [email, setEmail] = useState(lead.email ?? '')
   const [source, setSource] = useState(lead.source ?? '')
   const [stage, setStage] = useState(lead.stage)
-  const [budgetMin, setBudgetMin] = useState(lead.budget_min?.toString() ?? '')
-  const [budgetMax, setBudgetMax] = useState(lead.budget_max?.toString() ?? '')
+  const [budget, setBudget] = useState((lead.budget_max ?? lead.budget_min)?.toString() ?? '')
   const [requirement, setRequirement] = useState(lead.requirement ?? '')
   const [city, setCity] = useState(lead.city ?? '')
   const [reference, setReference] = useState(lead.reference ?? '')
+  const [channelPartner, setChannelPartner] = useState(lead.channel_partner ?? '')
   const [tags, setTags] = useState((lead.tags ?? []).join(', '))
   const [notes, setNotes] = useState(lead.notes ?? '')
 
@@ -51,7 +52,14 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lead.id])
 
+  // Keep a legacy source (e.g. "Broker") selectable even though it's no longer in the list.
+  const sourceOptions = source && !LEAD_SOURCES.includes(source) ? [...LEAD_SOURCES, source] : LEAD_SOURCES
+
   async function handleSave() {
+    if (source === CP_SOURCE && !channelPartner.trim()) {
+      setError('Pick which channel partner (CP) this lead came from.')
+      return
+    }
     setSaving(true)
     setSaved(false)
     setError(null)
@@ -64,11 +72,12 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
         email: email.trim() || null,
         source: source || null,
         stage,
-        budget_min: budgetMin ? Number(budgetMin) : null,
-        budget_max: budgetMax ? Number(budgetMax) : null,
+        budget_min: budget ? Number(budget) : null,
+        budget_max: budget ? Number(budget) : null,
         requirement: requirement.trim() || null,
         city: city.trim() || null,
         reference: reference.trim() || null,
+        channel_partner: source === CP_SOURCE ? channelPartner.trim() : null,
         tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
         notes: notes.trim() || null,
       })
@@ -196,7 +205,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground">City</label>
+              <label className="text-sm font-medium text-foreground">Area</label>
               <Input value={city} onChange={(e) => setCity(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -207,7 +216,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
                 className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none dark:bg-input/30"
               >
                 <option value="">Select…</option>
-                {sources.map((s) => (
+                {sourceOptions.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -229,23 +238,15 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground">Budget min (₹)</label>
+              <label className="text-sm font-medium text-foreground">Budget (₹)</label>
               <Input
                 type="text"
                 inputMode="numeric"
-                value={budgetMin}
-                onChange={(e) => setBudgetMin(sanitizeDigits(e.target.value))}
+                value={budget}
+                onChange={(e) => setBudget(sanitizeDigits(e.target.value))}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground">Budget max (₹)</label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                value={budgetMax}
-                onChange={(e) => setBudgetMax(sanitizeDigits(e.target.value))}
-              />
-            </div>
+            {source === CP_SOURCE && <ChannelPartnerField value={channelPartner} onChange={setChannelPartner} />}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Reference</label>
               <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. Referred by Rohan Kapoor" />

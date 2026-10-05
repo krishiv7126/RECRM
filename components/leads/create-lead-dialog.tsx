@@ -21,9 +21,9 @@ import { autoScoreLead } from '@/lib/leads/auto-score'
 import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
 import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
 import { sanitizeDigits } from '@/lib/sanitize-number-input'
+import { CP_SOURCE, LEAD_SOURCES } from '@/lib/leads/cp-source'
+import { ChannelPartnerField } from '@/components/leads/channel-partner-field'
 import { toast } from 'sonner'
-
-const sources = ['Website', 'Referral', 'Meta Ads', 'Google', '99acres', 'Walk-in', 'Other']
 
 export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
   const router = useRouter()
@@ -35,8 +35,8 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [source, setSource] = useState('')
-  const [budgetMin, setBudgetMin] = useState('')
-  const [budgetMax, setBudgetMax] = useState('')
+  const [budget, setBudget] = useState('')
+  const [channelPartner, setChannelPartner] = useState('')
   const [requirement, setRequirement] = useState('')
   const [city, setCity] = useState('')
   const [tags, setTags] = useState('')
@@ -49,8 +49,8 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     setPhone('')
     setEmail('')
     setSource('')
-    setBudgetMin('')
-    setBudgetMax('')
+    setBudget('')
+    setChannelPartner('')
     setRequirement('')
     setCity('')
     setTags('')
@@ -62,6 +62,10 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     e.preventDefault()
     if (!fullName.trim()) {
       setError('Full name is required.')
+      return
+    }
+    if (source === CP_SOURCE && !channelPartner.trim()) {
+      setError('Pick which channel partner (CP) this lead came from.')
       return
     }
     if (checkingPhone) {
@@ -103,8 +107,11 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
         phone: phone.trim() || null,
         email: email.trim() || null,
         source: source || null,
-        budget_min: budgetMin ? Number(budgetMin) : null,
-        budget_max: budgetMax ? Number(budgetMax) : null,
+        // One budget figure; stored on both ends so range-based scoring and
+        // automation conditions keep working.
+        budget_min: budget ? Number(budget) : null,
+        budget_max: budget ? Number(budget) : null,
+        channel_partner: source === CP_SOURCE ? channelPartner.trim() : null,
         requirement: requirement.trim() || null,
         city: city.trim() || null,
         tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
@@ -183,7 +190,7 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
               className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
             >
               <option value="">Select…</option>
-              {sources.map((s) => (
+              {LEAD_SOURCES.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
@@ -191,38 +198,27 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
             </select>
           </div>
 
+          {source === CP_SOURCE && <ChannelPartnerField value={channelPartner} onChange={setChannelPartner} />}
+
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="lead_budget_min" className="text-sm font-medium text-foreground">
-                Budget min (₹)
+              <label htmlFor="lead_budget" className="text-sm font-medium text-foreground">
+                Budget (₹)
               </label>
               <Input
-                id="lead_budget_min"
+                id="lead_budget"
                 type="text"
                 inputMode="numeric"
-                value={budgetMin}
-                onChange={(e) => setBudgetMin(sanitizeDigits(e.target.value))}
+                value={budget}
+                onChange={(e) => setBudget(sanitizeDigits(e.target.value))}
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="lead_budget_max" className="text-sm font-medium text-foreground">
-                Budget max (₹)
+              <label htmlFor="lead_city" className="text-sm font-medium text-foreground">
+                Area
               </label>
-              <Input
-                id="lead_budget_max"
-                type="text"
-                inputMode="numeric"
-                value={budgetMax}
-                onChange={(e) => setBudgetMax(sanitizeDigits(e.target.value))}
-              />
+              <Input id="lead_city" value={city} onChange={(e) => setCity(e.target.value)} />
             </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="lead_city" className="text-sm font-medium text-foreground">
-              City
-            </label>
-            <Input id="lead_city" value={city} onChange={(e) => setCity(e.target.value)} />
           </div>
 
           <div className="flex flex-col gap-1.5">

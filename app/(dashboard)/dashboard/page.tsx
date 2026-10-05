@@ -4,7 +4,7 @@ import { GreetingHeader } from '@/components/dashboard/greeting-header'
 import { KpiCards } from '@/components/dashboard/kpi-cards'
 import { LeadSourcesChart } from '@/components/dashboard/lead-sources-chart'
 import { PriorityQueue } from '@/components/dashboard/priority-queue'
-import { RevenueChart } from '@/components/dashboard/revenue-chart'
+import { FollowUpsByOwnerChart } from '@/components/dashboard/follow-ups-by-owner-chart'
 import { TeamPerformanceCard } from '@/components/dashboard/team-performance-card'
 import { getDashboardData } from '@/lib/dashboard/get-dashboard-data'
 import { getStaffData } from '@/lib/staff/get-staff-data'
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
       {staffData && <TeamPerformanceCard staff={staffData.staff} />}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="lg:col-span-3">
-          <RevenueChart data={data.monthlyRevenueSeries} />
+          <FollowUpsByOwnerChart data={data.followUpsByOwner} />
         </div>
         <div className="lg:col-span-2">
           <LeadSourcesChart data={data.leadSourceBreakdown} totalLeads={data.totalLeads} />

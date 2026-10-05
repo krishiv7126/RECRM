@@ -83,7 +83,7 @@ function downloadCsv(rows: (string | number)[][], filename: string) {
 export function AnalyticsView({ data, range }: { data: AnalyticsData; range: RangeKey }) {
   const router = useRouter()
   const role = useRole()
-  const { kpis, revenueTrend, leadFunnel, dealsByStage, topPerformers, leadSources, staffPerformance } = data
+  const { kpis, revenueTrend, leadFunnel, dealsByStage, topPerformers, leadSources, cpPerformance, staffPerformance } = data
 
   const dealsByStageConfig: ChartConfig = dealsByStage.reduce((acc, item, i) => {
     acc[item.slug] = { label: item.stage, color: stagePalette[i % stagePalette.length] }
@@ -382,6 +382,50 @@ export function AnalyticsView({ data, range }: { data: AnalyticsData; range: Ran
                   <tr>
                     <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground">
                       No leads in this period.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl border-border shadow-sm">
+        <CardHeader>
+          <CardTitle className="font-heading text-base font-bold">CP Performance</CardTitle>
+          <p className="text-[13px] text-muted-foreground">Leads, conversions and revenue from each channel partner</p>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-border/70 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <th className="px-5 py-2 font-medium">Channel Partner</th>
+                  <th className="px-3 py-2 font-medium">Leads</th>
+                  <th className="px-3 py-2 font-medium">Hot</th>
+                  <th className="px-3 py-2 font-medium">Site Visit</th>
+                  <th className="px-3 py-2 font-medium">Converted</th>
+                  <th className="px-3 py-2 font-medium">Conversion %</th>
+                  <th className="px-5 py-2 text-right font-medium">Revenue Generated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cpPerformance.map((row) => (
+                  <tr key={row.name} className="border-b border-border/50 transition-colors last:border-0 hover:bg-muted/40">
+                    <td className="px-5 py-3 font-medium text-foreground">{row.name}</td>
+                    <td className="px-3 py-3 text-foreground/80">{row.total}</td>
+                    <td className="px-3 py-3 text-foreground/80">{row.hot}</td>
+                    <td className="px-3 py-3 text-foreground/80">{row.siteVisits}</td>
+                    <td className="px-3 py-3 text-foreground/80">{row.converted}</td>
+                    <td className="px-3 py-3 text-foreground/80">{row.conversion}%</td>
+                    <td className="px-5 py-3 text-right font-semibold text-foreground">{formatCr(row.revenue)}</td>
+                  </tr>
+                ))}
+                {cpPerformance.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-5 py-12 text-center text-muted-foreground">
+                      No CP leads in this period.
                     </td>
                   </tr>
                 )}

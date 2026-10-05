@@ -124,7 +124,7 @@ export function CreateCustomerDialog({ trigger }: { trigger: React.ReactElement 
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="cust_city" className="text-sm font-medium text-foreground">
-              City
+              Area
             </label>
             <Input id="cust_city" value={city} onChange={(e) => setCity(e.target.value)} />
           </div>

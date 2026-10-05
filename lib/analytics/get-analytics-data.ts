@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { deriveTemperature } from '@/lib/leads/temperature'
 import type { RangeKey } from '@/lib/analytics/analytics-range'
+import { CP_SOURCE } from '@/lib/leads/cp-source'
 
 export type { RangeKey }
 
@@ -65,7 +66,7 @@ export async function getAnalyticsData(range: RangeKey = '30d') {
   const [{ data: users }, { data: leads }, { data: deals }, { data: siteVisits }, { data: followUps }] =
     await Promise.all([
       supabase.from('platform_users').select('id, full_name, role, parent_id, is_active'),
-      supabase.from('leads').select('id, owner_id, stage, ai_score, source, created_at'),
+      supabase.from('leads').select('id, owner_id, stage, ai_score, source, channel_partner, created_at'),
       supabase.from('deals').select('id, owner_id, stage, value, closed_at, created_at, updated_at, lead_id'),
       supabase.from('site_visits').select('id, owner_id, status, scheduled_at'),
       supabase.from('follow_ups').select('id, owner_id, status, due_at'),
@@ -194,7 +195,32 @@ export async function getAnalyticsData(range: RangeKey = '30d') {
     })
     .sort((a, b) => b.total - a.total)
 
-  return { kpis, revenueTrend, leadFunnel, dealsByStage, topPerformers, leadSources, staffPerformance }
+  // Channel partner performance, grouped case-insensitively by partner name.
+  const cpGroups = new Map<string, { name: string; rows: typeof inRange.leads }>()
+  for (const l of inRange.leads) {
+    if (l.source !== CP_SOURCE) continue
+    const name = l.channel_partner?.trim() || 'Unspecified CP'
+    const key = name.toLowerCase()
+    const group = cpGroups.get(key) ?? { name, rows: [] }
+    group.rows.push(l)
+    cpGroups.set(key, group)
+  }
+  const cpPerformance = Array.from(cpGroups.values())
+    .map(({ name, rows }) => {
+      const converted = rows.filter((l) => l.stage === 'won').length
+      return {
+        name,
+        total: rows.length,
+        hot: rows.filter((l) => deriveTemperature(l.ai_score) === 'hot').length,
+        siteVisits: rows.filter((l) => l.stage === 'site_visit').length,
+        converted,
+        conversion: rows.length > 0 ? Math.round((converted / rows.length) * 1000) / 10 : 0,
+        revenue: rows.reduce((s, l) => s + (bookedByLead.get(l.id) ?? 0), 0),
+      }
+    })
+    .sort((a, b) => b.revenue - a.revenue || b.total - a.total)
+
+  return { kpis, revenueTrend, leadFunnel, dealsByStage, topPerformers, leadSources, cpPerformance, staffPerformance }
 }
 
 export type AnalyticsData = Awaited<ReturnType<typeof getAnalyticsData>>

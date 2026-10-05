@@ -22,8 +22,7 @@ export function InquiryForm() {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [city, setCity] = useState('')
-  const [budgetMin, setBudgetMin] = useState('')
-  const [budgetMax, setBudgetMax] = useState('')
+  const [budget, setBudget] = useState('')
   const [reference, setReference] = useState('')
   const [requirement, setRequirement] = useState('')
   const [notes, setNotes] = useState('')
@@ -39,8 +38,7 @@ export function InquiryForm() {
     setPhone('')
     setEmail('')
     setCity('')
-    setBudgetMin('')
-    setBudgetMax('')
+    setBudget('')
     setReference('')
     setRequirement('')
     setNotes('')
@@ -91,8 +89,8 @@ export function InquiryForm() {
         phone: phone.trim() || null,
         email: email.trim() || null,
         city: city.trim() || null,
-        budget_min: budgetMin ? Number(budgetMin) : null,
-        budget_max: budgetMax ? Number(budgetMax) : null,
+        budget_min: budget ? Number(budget) : null,
+        budget_max: budget ? Number(budget) : null,
         reference: reference.trim() || null,
         requirement: requirement.trim() || null,
         notes: notes.trim() || null,
@@ -163,36 +161,23 @@ export function InquiryForm() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="inq_city" className="text-sm font-medium text-foreground">
-                City
-              </label>
-              <Input id="inq_city" value={city} onChange={(e) => setCity(e.target.value)} />
-            </div>
-
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="inq_budget_min" className="text-sm font-medium text-foreground">
-                  Budget min (₹)
+                <label htmlFor="inq_city" className="text-sm font-medium text-foreground">
+                  Area
                 </label>
-                <Input
-                  id="inq_budget_min"
-                  type="text"
-                  inputMode="numeric"
-                  value={budgetMin}
-                  onChange={(e) => setBudgetMin(sanitizeDigits(e.target.value))}
-                />
+                <Input id="inq_city" value={city} onChange={(e) => setCity(e.target.value)} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="inq_budget_max" className="text-sm font-medium text-foreground">
-                  Budget max (₹)
+                <label htmlFor="inq_budget" className="text-sm font-medium text-foreground">
+                  Budget (₹)
                 </label>
                 <Input
-                  id="inq_budget_max"
+                  id="inq_budget"
                   type="text"
                   inputMode="numeric"
-                  value={budgetMax}
-                  onChange={(e) => setBudgetMax(sanitizeDigits(e.target.value))}
+                  value={budget}
+                  onChange={(e) => setBudget(sanitizeDigits(e.target.value))}
                 />
               </div>
             </div>

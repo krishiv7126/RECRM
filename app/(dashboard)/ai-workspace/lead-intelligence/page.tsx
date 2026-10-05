@@ -55,10 +55,11 @@ function formatCr(amount: number) {
   return amount >= 10000000 ? `₹${(amount / 10000000).toFixed(1)}Cr` : `₹${Math.round(amount / 100000)}L`
 }
 
-function formatBudgetRange(min: number | null, max: number | null) {
-  if (!min && !max) return '—'
-  if (min && max) return `${formatCr(min)} – ${formatCr(max)}`
-  return formatCr(min ?? max ?? 0)
+// Leads carry a single budget now. Older leads may still have a min/max
+// range saved, so fall back to whichever end exists (max first).
+function formatBudget(min: number | null, max: number | null) {
+  const budget = max ?? min
+  return budget ? formatCr(budget) : '—'
 }
 
 /** Score dial: a ring that fills to the score, with the number counting up. */
@@ -292,7 +293,7 @@ export default function LeadIntelligencePage() {
                         </div>
                         <p className="text-[13px] text-muted-foreground">
                           {lead.requirement ?? 'No requirement noted'} ·{' '}
-                          {formatBudgetRange(lead.budget_min, lead.budget_max)}
+                          {formatBudget(lead.budget_min, lead.budget_max)}
                         </p>
                       </div>
 

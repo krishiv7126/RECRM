@@ -208,7 +208,7 @@ export function CustomerDetail({ customer, deals }: { customer: CustomerWithOwne
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground">City</label>
+              <label className="text-sm font-medium text-foreground">Area</label>
               <Input value={city} onChange={(e) => setCity(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5 sm:col-span-2">

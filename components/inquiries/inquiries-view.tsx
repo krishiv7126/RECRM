@@ -110,7 +110,7 @@ export function InquiriesView({ initialInquiries }: { initialInquiries: InquiryR
             <thead>
               <tr className="border-b border-border text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">City</th>
+                <th className="px-4 py-3">Area</th>
                 <th className="px-4 py-3">Asking about</th>
                 <th className="px-4 py-3">Stage</th>
                 <th className="px-4 py-3">Logged</th>

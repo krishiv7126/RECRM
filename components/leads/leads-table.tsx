@@ -63,10 +63,11 @@ function formatCr(amount: number) {
   return amount >= 10000000 ? `₹${(amount / 10000000).toFixed(1)}Cr` : `₹${Math.round(amount / 100000)}L`
 }
 
-function formatBudgetRange(min: number | null, max: number | null) {
-  if (!min && !max) return '—'
-  if (min && max) return `${formatCr(min)} – ${formatCr(max)}`
-  return formatCr(min ?? max ?? 0)
+// Leads carry a single budget now. Older leads may still have a min/max
+// range saved, so fall back to whichever end exists (max first).
+function formatBudget(min: number | null, max: number | null) {
+  const budget = max ?? min
+  return budget ? formatCr(budget) : '—'
 }
 
 function getInitials(name: string) {
@@ -214,7 +215,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
 
       const matchesSource = !sourceFilter || lead.source === sourceFilter
       const matchesStage = !stageFilter || lead.stage === stageFilter
-      const matchesBudget = !budgetMinFilter || (lead.budget_max ?? 0) >= Number(budgetMinFilter)
+      const matchesBudget = !budgetMinFilter || (lead.budget_max ?? lead.budget_min ?? 0) >= Number(budgetMinFilter)
       const matchesCity = !cityFilter || lead.city === cityFilter
       const matchesTag = !tagFilter || (lead.tags ?? []).includes(tagFilter)
 
@@ -409,7 +410,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] font-medium text-foreground/80">Min budget (₹)</label>
+                  <label className="text-[12px] font-medium text-foreground/80">Budget at least (₹)</label>
                   <Input
                     type="text"
                     inputMode="numeric"
@@ -419,7 +420,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] font-medium text-foreground/80">City</label>
+                  <label className="text-[12px] font-medium text-foreground/80">Area</label>
                   <select
                     value={cityFilter}
                     onChange={(e) => setCityFilter(e.target.value)}
@@ -509,7 +510,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                     <span className="line-clamp-2">{lead.requirement ?? '—'}</span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 font-medium text-foreground">
-                    {formatBudgetRange(lead.budget_min, lead.budget_max)}
+                    {formatBudget(lead.budget_min, lead.budget_max)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{lead.source ?? '—'}</td>
                   <td className="whitespace-nowrap px-4 py-3">

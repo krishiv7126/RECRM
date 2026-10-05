@@ -245,7 +245,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] font-medium text-foreground/80">City</label>
+                  <label className="text-[12px] font-medium text-foreground/80">Area</label>
                   <select
                     value={cityFilter}
                     onChange={(e) => setCityFilter(e.target.value)}
@@ -287,7 +287,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
               <tr className="border-b border-border text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3">Customer</th>
                 <th className="px-4 py-3">Phone</th>
-                <th className="px-4 py-3">City</th>
+                <th className="px-4 py-3">Area</th>
                 <th className="px-4 py-3">Tags</th>
                 <th className="px-4 py-3">AI Summary</th>
                 <th className="px-4 py-3">Open Deals</th>

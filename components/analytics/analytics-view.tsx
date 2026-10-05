@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts'
 import {
@@ -83,7 +83,9 @@ function downloadCsv(rows: (string | number)[][], filename: string) {
 export function AnalyticsView({ data, range }: { data: AnalyticsData; range: RangeKey }) {
   const router = useRouter()
   const role = useRole()
-  const { kpis, revenueTrend, leadFunnel, dealsByStage, topPerformers, leadSources, cpPerformance, staffPerformance } = data
+  const { kpis, revenueTrend, leadFunnel, dealsByStage, topPerformersByPeriod, leadSources, cpPerformance, staffPerformance } = data
+  const [topPeriod, setTopPeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly')
+  const topPerformers = topPerformersByPeriod[topPeriod]
 
   const dealsByStageConfig: ChartConfig = dealsByStage.reduce((acc, item, i) => {
     acc[item.slug] = { label: item.stage, color: stagePalette[i % stagePalette.length] }
@@ -305,8 +307,31 @@ export function AnalyticsView({ data, range }: { data: AnalyticsData; range: Ran
 
         <Card className="rounded-2xl border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="font-heading text-base font-bold">Top Performers</CardTitle>
-            <p className="text-[13px] text-muted-foreground">Leaderboard for the selected period</p>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <CardTitle className="font-heading text-base font-bold">Top Performers</CardTitle>
+                <p className="text-[13px] text-muted-foreground">
+                  Leaderboard for this {topPeriod === 'monthly' ? 'month' : topPeriod === 'quarterly' ? 'quarter' : 'year'}
+                </p>
+              </div>
+              <div className="flex gap-1">
+                {(['monthly', 'quarterly', 'yearly'] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setTopPeriod(p)}
+                    className={cn(
+                      'rounded-full px-2.5 py-1 text-[12px] font-medium capitalize transition-colors',
+                      topPeriod === p
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card text-muted-foreground ring-1 ring-border hover:text-foreground',
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">

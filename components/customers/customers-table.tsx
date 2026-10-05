@@ -27,10 +27,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { parseCsvRows, pick } from '@/lib/csv'
@@ -63,7 +61,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
   const [sortMode, setSortMode] = useState<SortMode>('recent')
   const [showFilters, setShowFilters] = useState(false)
   const [cityFilter, setCityFilter] = useState('')
-  const { confirm, ConfirmDialog } = useConfirm()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<string | null>(null)
@@ -193,24 +190,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
     else sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     return sorted
   }, [customers, query, sortMode, cityFilter])
-
-  async function handleDelete(customer: CustomerRow) {
-    const ok = await confirm({
-      title: 'Delete member?',
-      description: `Are you sure you want to delete ${customer.full_name}? This action cannot be undone.`,
-      confirmLabel: 'Delete',
-      destructive: true,
-    })
-    if (!ok) return
-    const supabase = createClient()
-    const { error } = await supabase.from('customers').delete().eq('id', customer.id)
-    if (error) {
-      toast.error(error.message)
-      return
-    }
-    setCustomers((prev) => prev.filter((c) => c.id !== customer.id))
-    toast.success('Member deleted')
-  }
 
   async function handleStartDeal(customer: CustomerRow) {
     const title = window.prompt(`Deal title for ${customer.full_name}:`, `${customer.full_name} — New Deal`)
@@ -442,10 +421,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                           <DropdownMenuItem render={<Link href={`/customers/${customer.id}`} />}>View profile</DropdownMenuItem>
                           <DropdownMenuItem render={<Link href={`/customers/${customer.id}`} />}>Edit member</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleStartDeal(customer)}>Start new deal</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem variant="destructive" onClick={() => handleDelete(customer)}>
-                            Delete customer
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -463,7 +438,6 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
           </table>
         </div>
       </div>
-      <ConfirmDialog />
     </div>
   )
 }

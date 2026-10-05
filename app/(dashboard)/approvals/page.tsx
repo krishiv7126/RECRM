@@ -15,10 +15,10 @@ export default async function ApprovalsPage() {
     )
   }
 
-  if (data.role !== 'admin' && data.role !== 'super_admin') {
+  if (data.role !== 'admin' && data.role !== 'super_admin' && data.role !== 'manager') {
     return (
       <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center text-muted-foreground">
-        Only admins can view login approvals.
+        Only admins and managers can view login approvals.
       </div>
     )
   }

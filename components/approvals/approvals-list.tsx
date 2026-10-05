@@ -129,10 +129,18 @@ export function ApprovalsList({
                 <Badge variant="outline" className="rounded-full border-0 bg-primary/10 px-2 py-0 text-[10px] font-semibold capitalize text-primary">
                   {row.platform_user?.role}
                 </Badge>
+                {row.is_second_device && (
+                  <Badge variant="outline" className="rounded-full border-red-200 bg-red-50 px-2 py-0 text-[10px] font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+                    ⚠️ Second device
+                  </Badge>
+                )}
               </div>
               <span className="flex items-center gap-1.5 truncate text-[12px] text-muted-foreground">
                 <MonitorSmartphone className="size-3.5 shrink-0" />
-                New device · requested {timeAgo(row.requested_at)}
+                {row.is_second_device
+                  ? 'Already signed in on another device — approving signs that one out'
+                  : 'New device'}{' '}
+                · requested {timeAgo(row.requested_at)}
               </span>
             </div>
 

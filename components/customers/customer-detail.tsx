@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, Handshake, Loader2, Mail, Phone as PhoneIcon, Sparkles, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Handshake, Loader2, Mail, Phone as PhoneIcon, Sparkles } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { CustomerDeal, CustomerWithOwner } from '@/lib/customers/get-customers-data'
@@ -52,8 +51,6 @@ export function CustomerDetail({
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
-  const { confirm, ConfirmDialog } = useConfirm()
 
   async function handleSave() {
     setSaving(true)
@@ -80,25 +77,6 @@ export function CustomerDetail({
     setSaved(true)
     router.refresh()
     setTimeout(() => setSaved(false), 2000)
-  }
-
-  async function handleDelete() {
-    const ok = await confirm({
-      title: 'Delete member?',
-      description: `Are you sure you want to delete ${customer.full_name}? This action cannot be undone.`,
-      confirmLabel: 'Delete',
-      destructive: true,
-    })
-    if (!ok) return
-    setDeleting(true)
-    const supabase = createClient()
-    const { error: deleteErr } = await supabase.from('customers').delete().eq('id', customer.id)
-    setDeleting(false)
-    if (deleteErr) {
-      setError(deleteErr.message)
-      return
-    }
-    router.push('/customers')
   }
 
   return (
@@ -244,14 +222,9 @@ export function CustomerDetail({
               {saving ? <Loader2 className="animate-spin" /> : saved ? <Check data-icon="inline-start" /> : null}
               {saved ? 'Saved' : 'Save changes'}
             </Button>
-            <Button variant="destructive" disabled={deleting} onClick={handleDelete}>
-              {deleting ? <Loader2 className="animate-spin" /> : <Trash2 data-icon="inline-start" />}
-              Delete
-            </Button>
           </div>
         </CardContent>
       </Card>
-      <ConfirmDialog />
     </div>
   )
 }

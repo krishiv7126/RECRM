@@ -175,6 +175,39 @@ export async function getAnalyticsData(range: RangeKey = '30d') {
       conversion: s.lead_conversion_pct,
     }))
 
+  // Leaderboards for fixed calendar windows (IST), independent of the page
+  // range: this month, this quarter, this year.
+  const istNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+  const periodStart = {
+    monthly: new Date(istNow.getFullYear(), istNow.getMonth(), 1),
+    quarterly: new Date(istNow.getFullYear(), Math.floor(istNow.getMonth() / 3) * 3, 1),
+    yearly: new Date(istNow.getFullYear(), 0, 1),
+  }
+  const leaderboard = (start: Date) =>
+    allUsers
+      .filter((u) => u.is_active && (u.role === 'manager' || u.role === 'user'))
+      .map((u) => {
+        const myLeads = allLeads.filter((l) => l.owner_id === u.id && within(l.created_at, start, to))
+        const myBooked = allDeals.filter((d) => d.owner_id === u.id && d.stage === 'booked' && within(bookedAt(d), start, to))
+        const won = myLeads.filter((l) => l.stage === 'won').length
+        return {
+          name: u.full_name,
+          deals: myBooked.length,
+          revenue: myBooked.reduce((s, d) => s + (d.value ?? 0), 0),
+          conversion: myLeads.length > 0 ? Math.round((won / myLeads.length) * 1000) / 10 : 0,
+          active: myLeads.length > 0 || myBooked.length > 0,
+        }
+      })
+      .filter((p) => p.active)
+      .sort((a, b) => b.revenue - a.revenue || b.deals - a.deals)
+      .slice(0, 5)
+      .map(({ active: _active, ...p }, i) => ({ rank: i + 1, ...p }))
+  const topPerformersByPeriod = {
+    monthly: leaderboard(periodStart.monthly),
+    quarterly: leaderboard(periodStart.quarterly),
+    yearly: leaderboard(periodStart.yearly),
+  }
+
   const bookedByLead = new Map<string, number>()
   for (const d of inRange.booked) {
     if (!d.lead_id) continue
@@ -221,7 +254,7 @@ export async function getAnalyticsData(range: RangeKey = '30d') {
     })
     .sort((a, b) => b.revenue - a.revenue || b.total - a.total)
 
-  return { kpis, revenueTrend, leadFunnel, dealsByStage, topPerformers, leadSources, cpPerformance, staffPerformance }
+  return { kpis, revenueTrend, leadFunnel, dealsByStage, topPerformers, topPerformersByPeriod, leadSources, cpPerformance, staffPerformance }
 }
 
 export type AnalyticsData = Awaited<ReturnType<typeof getAnalyticsData>>

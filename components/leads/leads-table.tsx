@@ -38,6 +38,8 @@ import { autoScoreLead } from '@/lib/leads/auto-score'
 import { cn } from '@/lib/utils'
 import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { Database } from '@/lib/supabase/types'
+import { TransferLeadDialog } from '@/components/leads/transfer-lead-dialog'
+import { useRole } from '@/lib/role-context'
 import { LEAD_CATEGORIES, LEAD_STAGE_LABELS, leadCategoryLabel } from '@/lib/leads/lead-fields'
 
 type LeadStage = Database['public']['Enums']['lead_stage']
@@ -58,6 +60,7 @@ interface LeadRow {
   created_at: string
   city: string | null
   tags: string[] | null
+  owner_id: string | null
   owner: { full_name: string } | null
   has_pending?: boolean
 }
@@ -105,6 +108,9 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
   const router = useRouter()
   const [leads, setLeads] = useState(initialLeads)
   const [activeTab, setActiveTab] = useState<FilterTab>('all')
+  const role = useRole()
+  const canTransfer = role === 'admin' || role === 'super_admin' || role === 'manager'
+  const [transferLead, setTransferLead] = useState<LeadRow | null>(null)
   const [query, setQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [sourceFilter, setSourceFilter] = useState('')
@@ -569,6 +575,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                           <DropdownMenuItem render={<Link href={`/leads/${lead.id}`} />}>View profile</DropdownMenuItem>
                           <DropdownMenuItem render={<Link href={`/leads/${lead.id}`} />}>Edit lead</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleConvert(lead)}>Convert to member</DropdownMenuItem>
+                          {canTransfer && <DropdownMenuItem onClick={() => setTransferLead(lead)}>Transfer lead</DropdownMenuItem>}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem variant="destructive" onClick={() => handleDelete(lead)}>
                             Delete lead
@@ -591,6 +598,16 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
         </div>
       </div>
       <ConfirmDialog />
+      <TransferLeadDialog
+        open={!!transferLead}
+        onOpenChange={(o) => !o && setTransferLead(null)}
+        lead={transferLead}
+        onTransferred={(ownerId, ownerName) =>
+          setLeads((prev) =>
+            prev.map((l) => (l.id === transferLead?.id ? { ...l, owner_id: ownerId, owner: { full_name: ownerName } } : l)),
+          )
+        }
+      />
     </>
   )
 }

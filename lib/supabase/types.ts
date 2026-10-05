@@ -1087,6 +1087,7 @@ export type Database = {
           decided_by: string | null
           device_id: string
           id: string
+          is_second_device: boolean
           platform_user_id: string
           requested_at: string
           status: Database["public"]["Enums"]["login_status"]
@@ -1096,6 +1097,7 @@ export type Database = {
           decided_by?: string | null
           device_id: string
           id?: string
+          is_second_device?: boolean
           platform_user_id: string
           requested_at?: string
           status?: Database["public"]["Enums"]["login_status"]
@@ -1105,6 +1107,7 @@ export type Database = {
           decided_by?: string | null
           device_id?: string
           id?: string
+          is_second_device?: boolean
           platform_user_id?: string
           requested_at?: string
           status?: Database["public"]["Enums"]["login_status"]
@@ -1384,6 +1387,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      org_wallets: {
+        Row: {
+          balance: number
+          cost_per_message: number
+          low_balance_threshold: number
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          cost_per_message?: number
+          low_balance_threshold?: number
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          cost_per_message?: number
+          low_balance_threshold?: number
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       organizations: {
         Row: {
@@ -2037,6 +2064,42 @@ export type Database = {
           },
         ]
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          note: string | null
+          org_id: string
+          reference_id: string | null
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          note?: string | null
+          org_id: string
+          reference_id?: string | null
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          org_id?: string
+          reference_id?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_campaigns: {
         Row: {
           audience_type: string
@@ -2174,6 +2237,18 @@ export type Database = {
       find_phone_duplicate: {
         Args: { p_phone: string; p_exclude_lead?: string }
         Returns: { type: string; id: string; full_name: string; stage: string | null }[]
+      }
+      wallet_charge_whatsapp: {
+        Args: { p_messages: number; p_campaign_id?: string }
+        Returns: number
+      }
+      wallet_refund_whatsapp: {
+        Args: { p_messages: number; p_campaign_id?: string }
+        Returns: number
+      }
+      wallet_topup: {
+        Args: { p_org_id: string; p_amount: number; p_note?: string; p_kind?: string }
+        Returns: number
       }
       fn_current_org_id: { Args: never; Returns: string }
       fn_current_org_id_text: { Args: never; Returns: string }

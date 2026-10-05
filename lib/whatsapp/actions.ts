@@ -131,6 +131,21 @@ export async function sendCampaign(campaignId: string): Promise<{ ok: boolean; m
   const recipients = ((campaign.recipients as unknown as CampaignRecipient[]) ?? []).filter((r) => r.phone)
   if (recipients.length === 0) return { ok: false, message: 'No recipients with a phone number.' }
 
+  // Reserve credits for every recipient up front; failed sends are refunded
+  // below. The DB refuses the charge if the wallet can't cover it.
+  const { error: chargeErr } = await supabase.rpc('wallet_charge_whatsapp', {
+    p_messages: recipients.length,
+    p_campaign_id: campaignId,
+  })
+  if (chargeErr) {
+    return {
+      ok: false,
+      message: chargeErr.message.includes('Not enough')
+        ? `Not enough WhatsApp credits for ${recipients.length} messages. Ask your platform admin to top up the wallet.`
+        : chargeErr.message,
+    }
+  }
+
   let sent = 0
   let failed = 0
   let lastError: string | null = null
@@ -197,6 +212,10 @@ export async function sendCampaign(campaignId: string): Promise<{ ok: boolean; m
       failed++
       lastError = err instanceof Error ? err.message : 'Send failed.'
     }
+  }
+
+  if (failed > 0) {
+    await supabase.rpc('wallet_refund_whatsapp', { p_messages: failed, p_campaign_id: campaignId })
   }
 
   const status = failed === 0 ? 'sent' : sent === 0 ? 'failed' : 'partial'

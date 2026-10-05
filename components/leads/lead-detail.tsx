@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, Loader2, Mail, Phone as PhoneIcon, Repeat, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowLeftRight, Check, Loader2, Mail, Phone as PhoneIcon, Repeat, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { PageHeader } from '@/components/dashboard/page-header'
@@ -22,6 +22,8 @@ import { CP_SOURCE, LEAD_SOURCES } from '@/lib/leads/cp-source'
 import { ChannelPartnerField } from '@/components/leads/channel-partner-field'
 import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
 import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
+import { TransferLeadDialog } from '@/components/leads/transfer-lead-dialog'
+import { useRole } from '@/lib/role-context'
 import { LEAD_CATEGORIES, LEAD_STAGE_LABELS, SELECTABLE_LEAD_STAGES } from '@/lib/leads/lead-fields'
 
 const stages = SELECTABLE_LEAD_STAGES
@@ -48,6 +50,9 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [deleting, setDeleting] = useState(false)
   const [liveScore, setLiveScore] = useState(lead.ai_score)
   const { confirm, ConfirmDialog } = useConfirm()
+  const role = useRole()
+  const canTransfer = role === 'admin' || role === 'super_admin' || role === 'manager'
+  const [transferOpen, setTransferOpen] = useState(false)
   // Only re-check when the number is actually being changed.
   const phoneChanged = phone.trim() !== (lead.phone ?? '')
   const { checking: checkingPhone, match: duplicateMatch } = useDuplicatePhoneCheck(phoneChanged ? phone : '', lead.id)
@@ -159,6 +164,12 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
           />
           <div className="flex items-center gap-2">
             {lead.owner?.full_name && <Badge variant="outline">Owner: {lead.owner.full_name}</Badge>}
+            {canTransfer && (
+              <Button variant="outline" size="sm" onClick={() => setTransferOpen(true)}>
+                <ArrowLeftRight data-icon="inline-start" />
+                Transfer
+              </Button>
+            )}
             {liveScore !== null && <Badge className="bg-primary/15 text-primary">AI Score {liveScore}</Badge>}
             {deriveTemperature(liveScore) && (
               <Badge variant="outline" className={`capitalize ${TEMPERATURE_STYLES[deriveTemperature(liveScore)!]}`}>
@@ -319,6 +330,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
         </CardContent>
       </Card>
       <ConfirmDialog />
+      <TransferLeadDialog open={transferOpen} onOpenChange={setTransferOpen} lead={lead} />
     </div>
   )
 }

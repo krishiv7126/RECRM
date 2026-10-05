@@ -19,6 +19,8 @@ import {
 import { CreateLeadDialog } from '@/components/leads/create-lead-dialog'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
+import { WalletChip } from '@/components/wallet/wallet-chip'
+import { useRole } from '@/lib/role-context'
 import { cn } from '@/lib/utils'
 
 interface SearchResult {
@@ -68,6 +70,9 @@ function formatNotificationTime(iso: string) {
 }
 
 export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
+  // Only roles that can run WhatsApp broadcasts see the credit balance.
+  const role = useRole()
+  const canSeeWallet = role === 'admin' || role === 'super_admin' || role === 'manager'
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -245,6 +250,7 @@ export function DashboardTopbar({ onToggleSidebar }: { onToggleSidebar: () => vo
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        {canSeeWallet && <WalletChip />}
         <Button
           variant="secondary"
           className="rounded-full bg-secondary text-foreground hover:bg-secondary/80"

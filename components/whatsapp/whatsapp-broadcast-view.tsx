@@ -13,6 +13,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { sendCampaign } from '@/lib/whatsapp/actions'
+import { WalletCard } from '@/components/wallet/wallet-card'
+import { useWallet } from '@/lib/wallet/use-wallet'
 import { cn } from '@/lib/utils'
 import type { WhatsappCampaign } from '@/lib/whatsapp/get-whatsapp-data'
 
@@ -48,6 +50,7 @@ export function WhatsappBroadcastView({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [campaigns, setCampaigns] = useState(initialCampaigns)
+  const { wallet, transactions, reload: reloadWallet } = useWallet({ withTransactions: true })
   const [sendingId, setSendingId] = useState<string | null>(null)
   const { confirm, ConfirmDialog } = useConfirm()
 
@@ -137,6 +140,7 @@ export function WhatsappBroadcastView({
     setSendingId(campaign.id)
     const result = await sendCampaign(campaign.id)
     setSendingId(null)
+    void reloadWallet()
 
     if (result.ok) {
       toast.success(result.message)
@@ -180,6 +184,8 @@ export function WhatsappBroadcastView({
         title="WhatsApp Broadcast"
         description="Build an audience, write a message, and message people one tap at a time."
       />
+
+      <WalletCard wallet={wallet} transactions={transactions} recipientCount={recipients.length} />
 
       <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground">
         Save a campaign, then hit Send from Past Campaigns to actually dispatch it via the WhatsApp Business API. Plain

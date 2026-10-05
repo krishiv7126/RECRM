@@ -117,9 +117,9 @@ function withoutGroups(sections: NavSection[], labelsToRemove: string[]): NavSec
 }
 
 // Manager: no Automation (workflow rules are an org-level admin concern), no
-// Approvals (only admins decide manager/user login approvals), no Staff (org-wide
+// Staff (org-wide
 // performance + access control is an admin-only concern).
-export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Approvals', 'Staff'])
+export const managerNav: NavSection[] = withoutGroups(adminNav, ['Automation', 'Staff'])
 
 // User: no Automation, no Analytics (individual contributors don't see org-wide
 // reporting), no Approvals, no WhatsApp Broadcast (mass messaging is a

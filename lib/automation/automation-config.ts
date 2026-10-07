@@ -88,7 +88,7 @@ export const actionTypes = [
   { value: 'create_follow_up', label: 'Schedule follow-up' },
   { value: 'create_notification', label: 'Notify owner' },
   { value: 'assign_owner', label: 'Reassign owner' },
-  { value: 'send_whatsapp', label: 'Queue WhatsApp' },
+  { value: 'send_whatsapp', label: 'Send WhatsApp template' },
   { value: 'send_email', label: 'Queue email' },
 ]
 
@@ -111,7 +111,7 @@ export interface Condition {
 
 export interface Action {
   type: string
-  config: Record<string, string | number>
+  config: Record<string, unknown>
 }
 
 export function entityForTrigger(trigger: string): Entity {

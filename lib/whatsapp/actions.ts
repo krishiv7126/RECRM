@@ -15,6 +15,7 @@ import {
   type WhatsAppTemplate,
 } from '@/lib/whatsapp/client'
 import {
+  recordOutbound,
   findOrCreateWhatsAppConversation,
   getAccountById,
   getConnectedAccountForUser,
@@ -247,37 +248,6 @@ async function loadChat(conversationId: string) {
   return { caller, admin, convo: convo as typeof convo & { external_identifier: string }, sender }
 }
 
-async function recordOutbound(
-  admin: ReturnType<typeof createAdminClient>,
-  input: {
-    conversationId: string
-    orgId: string
-    senderId: string
-    content: string | null
-    mediaUrl?: string | null
-    externalId: string | undefined
-  },
-) {
-  const now = new Date().toISOString()
-  const { data } = await admin
-    .from('messages')
-    .insert({
-      conversation_id: input.conversationId,
-      org_id: input.orgId,
-      direction: 'outbound',
-      channel: 'whatsapp',
-      sender_platform_user_id: input.senderId,
-      content: input.content,
-      media_url: input.mediaUrl ?? null,
-      external_message_id: input.externalId ?? null,
-      status: 'sent',
-    })
-    .select('id, conversation_id, direction, content, media_url, status, created_at, sender_platform_user_id')
-    .single()
-  await admin.from('conversations').update({ last_message_at: now, status: 'open' }).eq('id', input.conversationId)
-  return data
-}
-
 /** Free-form reply — only allowed inside the 24h customer service window. */
 export async function sendWhatsAppChatMessage(conversationId: string, text: string) {
   const body = text.trim()
@@ -388,6 +358,32 @@ export async function getWhatsAppTemplates(conversationId?: string): Promise<Res
       sender = await getSender(admin, account)
     }
     return { ok: true, templates: await listApprovedTemplates(sender) }
+  } catch (err) {
+    return { ok: false, message: errorMessage(err, 'Could not load templates.') }
+  }
+}
+
+/**
+ * Templates on a teammate's number (for automation rules that send from a
+ * specific person). RLS on whatsapp_accounts decides whose number the caller
+ * may look at; without a senderId this is the caller's own number.
+ */
+export async function getWhatsAppTemplatesForSender(senderId?: string | null): Promise<Result<{ templates: WhatsAppTemplate[] }>> {
+  if (!senderId) return getWhatsAppTemplates()
+  try {
+    const caller = await getCaller()
+    if (!caller) throw new Error('Not signed in.')
+    const { data: visible } = await caller.supabase
+      .from('whatsapp_accounts')
+      .select('id')
+      .eq('platform_user_id', senderId)
+      .eq('status', 'connected')
+      .maybeSingle()
+    if (!visible) throw new Error('That person has no connected WhatsApp number.')
+    const admin = createAdminClient()
+    const account = await getConnectedAccountForUser(admin, senderId)
+    if (!account) throw new Error('That person has no connected WhatsApp number.')
+    return { ok: true, templates: await listApprovedTemplates(await getSender(admin, account)) }
   } catch (err) {
     return { ok: false, message: errorMessage(err, 'Could not load templates.') }
   }

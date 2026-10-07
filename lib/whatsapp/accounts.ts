@@ -139,3 +139,35 @@ export async function findOrCreateWhatsAppConversation(
   }
   return created.id
 }
+
+/** Logs a message we sent and bumps the thread. */
+export async function recordOutbound(
+  admin: Admin,
+  input: {
+    conversationId: string
+    orgId: string
+    senderId: string
+    content: string | null
+    mediaUrl?: string | null
+    externalId: string | undefined
+  },
+) {
+  const now = new Date().toISOString()
+  const { data } = await admin
+    .from('messages')
+    .insert({
+      conversation_id: input.conversationId,
+      org_id: input.orgId,
+      direction: 'outbound',
+      channel: 'whatsapp',
+      sender_platform_user_id: input.senderId,
+      content: input.content,
+      media_url: input.mediaUrl ?? null,
+      external_message_id: input.externalId ?? null,
+      status: 'sent',
+    })
+    .select('id, conversation_id, direction, content, media_url, status, created_at, sender_platform_user_id')
+    .single()
+  await admin.from('conversations').update({ last_message_at: now, status: 'open' }).eq('id', input.conversationId)
+  return data
+}

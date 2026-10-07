@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
+import { WhatsAppActionConfig } from '@/components/automation/whatsapp-action-config'
 import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import {
   type Action,
@@ -96,7 +97,7 @@ export function RuleDialog({
     setConditions((prev) => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)))
   }
 
-  function updateActionConfig(i: number, patch: Record<string, string | number>) {
+  function updateActionConfig(i: number, patch: Record<string, unknown>) {
     setActions((prev) => prev.map((a, idx) => (idx === i ? { ...a, config: { ...a.config, ...patch } } : a)))
   }
 
@@ -350,7 +351,11 @@ export function RuleDialog({
       )
     }
 
-    // send_whatsapp / send_email
+    if (action.type === 'send_whatsapp') {
+      return <WhatsAppActionConfig cfg={cfg} owners={owners} onChange={(patch) => updateActionConfig(i, patch)} />
+    }
+
+    // send_email
     return (
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-col gap-1.5">

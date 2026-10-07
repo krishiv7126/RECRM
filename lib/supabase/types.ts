@@ -2337,6 +2337,116 @@ export type Database = {
           },
         ]
       }
+      whatsapp_outbox: {
+        Row: {
+          attempts: number
+          conversation_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          last_error: string | null
+          lead_id: string | null
+          org_id: string
+          phone: string
+          processed_at: string | null
+          recipient_name: string | null
+          rule_id: string | null
+          sender_id: string | null
+          status: string
+          template_language: string
+          template_name: string
+          template_params: Json
+        }
+        Insert: {
+          attempts?: number
+          conversation_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          last_error?: string | null
+          lead_id?: string | null
+          org_id: string
+          phone: string
+          processed_at?: string | null
+          recipient_name?: string | null
+          rule_id?: string | null
+          sender_id?: string | null
+          status?: string
+          template_language?: string
+          template_name: string
+          template_params?: Json
+        }
+        Update: {
+          attempts?: number
+          conversation_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          last_error?: string | null
+          lead_id?: string | null
+          org_id?: string
+          phone?: string
+          processed_at?: string | null
+          recipient_name?: string | null
+          rule_id?: string | null
+          sender_id?: string | null
+          status?: string
+          template_language?: string
+          template_name?: string
+          template_params?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_outbox_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_outbox_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_outbox_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_outbox_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_outbox_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_outbox_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_outbox_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "v_staff_performance"
+            referencedColumns: ["staff_id"]
+          },
+        ]
+      }
     }
     Views: {
       v_staff_performance: {
@@ -2437,6 +2547,18 @@ export type Database = {
         Args: { target_org_id: string; target_owner_id: string }
         Returns: boolean
       }
+      fn_queue_whatsapp_action: {
+        Args: {
+          cfg: Json
+          p_org_id: string
+          p_owner_id: string
+          p_record: Json
+          p_record_id: string
+          p_record_table: string
+          p_rule_id: string
+        }
+        Returns: string
+      }
       fn_run_automations: {
         Args: {
           p_org_id: string
@@ -2456,8 +2578,16 @@ export type Database = {
         }
         Returns: number
       }
+      wallet_charge_org: {
+        Args: { p_messages: number; p_org_id: string; p_reference: string }
+        Returns: number
+      }
       wallet_charge_whatsapp: {
         Args: { p_campaign_id?: string; p_messages: number }
+        Returns: number
+      }
+      wallet_refund_org: {
+        Args: { p_messages: number; p_org_id: string; p_reference: string }
         Returns: number
       }
       wallet_refund_whatsapp: {
@@ -2476,14 +2606,43 @@ export type Database = {
       whatsapp_match_contact: {
         Args: { p_org_id: string; p_phone: string }
         Returns: {
-          customer_id: string | null
-          customer_name: string | null
-          customer_owner_id: string | null
-          lead_id: string | null
-          lead_name: string | null
-          lead_owner_id: string | null
+          customer_id: string
+          customer_name: string
+          customer_owner_id: string
+          lead_id: string
+          lead_name: string
+          lead_owner_id: string
         }[]
       }
+      whatsapp_outbox_claim: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempts: number
+          conversation_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          last_error: string | null
+          lead_id: string | null
+          org_id: string
+          phone: string
+          processed_at: string | null
+          recipient_name: string | null
+          rule_id: string | null
+          sender_id: string | null
+          status: string
+          template_language: string
+          template_name: string
+          template_params: Json
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "whatsapp_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      whatsapp_outbox_expire: { Args: never; Returns: undefined }
     }
     Enums: {
       ai_content_type:

@@ -23,6 +23,7 @@ import {
   ClipboardList,
   ClipboardPlus,
   MessageCircle,
+  MessagesSquare,
   UserCog,
 } from 'lucide-react'
 
@@ -100,6 +101,7 @@ export const adminNav: NavSection[] = [
     label: 'System',
     groups: [
       { label: 'Staff', icon: UserCog, href: '/staff' },
+      { label: 'WhatsApp', icon: MessagesSquare, href: '/whatsapp' },
       { label: 'Inbox', icon: Inbox, href: '/inbox' },
       { label: 'Approvals', icon: ShieldCheck, href: '/approvals' },
       { label: 'Settings', icon: Settings, href: '/settings' },

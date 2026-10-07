@@ -16,11 +16,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ManageAccessDialog } from '@/components/settings/manage-access-dialog'
 import { ReassignDialog } from '@/components/settings/reassign-dialog'
 import { createClient } from '@/lib/supabase/client'
-import { connectWhatsAppIntegration, disconnectWhatsAppIntegration } from '@/lib/whatsapp/actions'
+import { WhatsAppConnectPanel } from '@/components/whatsapp/whatsapp-connect'
 import { cn } from '@/lib/utils'
 import type { SettingsData } from '@/lib/settings/get-settings-data'
 
-type TabKey = 'profile' | 'organization' | 'team' | 'integrations' | 'notifications'
+type TabKey = 'profile' | 'whatsapp' | 'organization' | 'team' | 'integrations' | 'notifications'
 
 interface TabDef {
   key: TabKey
@@ -30,6 +30,7 @@ interface TabDef {
 
 const TABS: TabDef[] = [
   { key: 'profile', label: 'Profile', adminOnly: false },
+  { key: 'whatsapp', label: 'WhatsApp', adminOnly: false },
   { key: 'organization', label: 'Organization', adminOnly: true },
   { key: 'team', label: 'Team Management', adminOnly: true },
   { key: 'integrations', label: 'Integrations', adminOnly: true },
@@ -59,16 +60,19 @@ function getInitials(name: string) {
 function canAccessTab(tab: TabKey, role: string) {
   const isAdmin = role === 'admin' || role === 'super_admin'
   if (tab === 'team') return isAdmin || role === 'manager'
+  if (tab === 'whatsapp') return role !== 'receptionist'
   return isAdmin || !TABS.find((t) => t.key === tab)?.adminOnly
 }
 
-export function SettingsView({ data }: { data: SettingsData }) {
+export function SettingsView({ data, initialTab }: { data: SettingsData; initialTab?: string }) {
   const router = useRouter()
-  const { me, organization, staff, managers, providers, orgIntegrations } = data
+  const { me, organization, staff, managers, providers, orgIntegrations, whatsappAccounts } = data
   const role = me.role
   const isAdmin = role === 'admin' || role === 'super_admin'
 
-  const [activeTab, setActiveTab] = useState<TabKey>('profile')
+  const [activeTab, setActiveTab] = useState<TabKey>(() =>
+    TABS.some((t) => t.key === initialTab) && canAccessTab(initialTab as TabKey, role) ? (initialTab as TabKey) : 'profile',
+  )
 
   const [fullName, setFullName] = useState(me.full_name)
   const [phone, setPhone] = useState(me.phone ?? '')
@@ -89,28 +93,11 @@ export function SettingsView({ data }: { data: SettingsData }) {
     Object.fromEntries(notificationPrefs.map((p) => [p.key, initialPrefs[p.key] ?? true])),
   )
   const [savingPrefs, setSavingPrefs] = useState(false)
-  const [connectingProviderId, setConnectingProviderId] = useState<string | null>(null)
-
   const integrationStatusByProvider = useMemo(() => {
     const map = new Map<string, string>()
     for (const oi of orgIntegrations) map.set(oi.provider_id, oi.status)
     return map
   }, [orgIntegrations])
-
-  async function handleToggleIntegration(provider: { id: string; key: string }) {
-    // Only WhatsApp actually connects to anything right now -- Facebook/Instagram
-    // stay disabled (is_active: false) until those integrations are built.
-    if (provider.key !== 'whatsapp') return
-
-    setConnectingProviderId(provider.id)
-    const alreadyConnected = integrationStatusByProvider.get(provider.id) === 'connected'
-    const result = alreadyConnected ? await disconnectWhatsAppIntegration() : await connectWhatsAppIntegration()
-    setConnectingProviderId(null)
-
-    if (result.ok) toast.success(result.message)
-    else toast.error(result.message)
-    router.refresh()
-  }
 
   async function handleSaveProfile() {
     setSavingProfile(true)
@@ -338,6 +325,15 @@ export function SettingsView({ data }: { data: SettingsData }) {
               </Card>
             )}
 
+            {activeTab === 'whatsapp' && canAccessTab('whatsapp', role) && (
+              <WhatsAppConnectPanel
+                meId={me.id}
+                isAdmin={isAdmin}
+                accounts={whatsappAccounts}
+                team={staffRows.filter((m) => m.role !== 'receptionist')}
+              />
+            )}
+
             {activeTab === 'organization' && isAdmin && (
               <Card className="rounded-2xl border-border shadow-sm">
                 <CardHeader>
@@ -467,18 +463,26 @@ export function SettingsView({ data }: { data: SettingsData }) {
                   {providers.map((provider) => {
                     const meta = integrationMeta[provider.key] ?? { icon: MessageCircle, color: 'bg-muted-foreground' }
                     const Icon = meta.icon
-                    const status = integrationStatusByProvider.get(provider.id) ?? 'disconnected'
-                    const isConnecting = connectingProviderId === provider.id
+                    // WhatsApp is per person: each member links their own number.
+                    const isWhatsApp = provider.key === 'whatsapp'
+                    const status = isWhatsApp
+                      ? whatsappAccounts.length > 0
+                        ? 'connected'
+                        : 'disconnected'
+                      : (integrationStatusByProvider.get(provider.id) ?? 'disconnected')
                     const connectButton = (
                       <Button
                         variant="outline"
                         size="sm"
                         className="w-full"
-                        disabled={!provider.is_active || isConnecting}
-                        onClick={() => handleToggleIntegration(provider)}
+                        disabled={!isWhatsApp}
+                        onClick={() => isWhatsApp && setActiveTab('whatsapp')}
                       >
-                        {isConnecting && <Loader2 className="animate-spin" data-icon="inline-start" />}
-                        {status === 'connected' ? 'Disconnect' : 'Connect'}
+                        {isWhatsApp
+                          ? whatsappAccounts.length > 0
+                            ? `Manage numbers (${whatsappAccounts.length} connected)`
+                            : 'Connect numbers'
+                          : 'Connect'}
                       </Button>
                     )
                     return (
@@ -506,7 +510,7 @@ export function SettingsView({ data }: { data: SettingsData }) {
                               {provider.category}
                             </Badge>
                           </div>
-                          {provider.is_active ? (
+                          {provider.is_active || provider.key === 'whatsapp' ? (
                             connectButton
                           ) : (
                             <Tooltip>

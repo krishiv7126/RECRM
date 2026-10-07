@@ -15,22 +15,33 @@ export async function getSettingsData() {
     .single()
   if (!me) return null
 
-  const [{ data: organization }, { data: staff }, { data: managers }, { data: providers }, { data: orgIntegrations }] =
-    await Promise.all([
-      me.org_id ? supabase.from('organizations').select('id, name, city').eq('id', me.org_id).single() : Promise.resolve({ data: null }),
-      // RLS already scopes this to what the caller is allowed to see:
-      // admin -> whole org, manager -> self + direct reports, user -> self only.
-      supabase
-        .from('platform_users')
-        .select('id, full_name, role, is_active, parent_id, nav_overrides, manager:parent_id(full_name)')
-        .order('full_name'),
-      me.role === 'admin' || me.role === 'super_admin'
-        ? supabase.from('platform_users').select('id, full_name').eq('role', 'manager')
-        : Promise.resolve({ data: [] as { id: string; full_name: string }[] }),
-      supabase.from('integration_providers').select('id, key, name, category, is_active').order('name'),
-      me.org_id
-        ? supabase.from('org_integrations').select('id, provider_id, status').eq('org_id', me.org_id)
-        : Promise.resolve({ data: [] as { id: string; provider_id: string; status: string }[] }),
+  const [
+    { data: organization },
+    { data: staff },
+    { data: managers },
+    { data: providers },
+    { data: orgIntegrations },
+    { data: whatsappAccounts },
+  ] = await Promise.all([
+    me.org_id ? supabase.from('organizations').select('id, name, city').eq('id', me.org_id).single() : Promise.resolve({ data: null }),
+    // RLS already scopes this to what the caller is allowed to see:
+    // admin -> whole org, manager -> self + direct reports, user -> self only.
+    supabase
+      .from('platform_users')
+      .select('id, full_name, role, is_active, parent_id, nav_overrides, manager:parent_id(full_name)')
+      .order('full_name'),
+    me.role === 'admin' || me.role === 'super_admin'
+      ? supabase.from('platform_users').select('id, full_name').eq('role', 'manager')
+      : Promise.resolve({ data: [] as { id: string; full_name: string }[] }),
+    supabase.from('integration_providers').select('id, key, name, category, is_active').order('name'),
+    me.org_id
+      ? supabase.from('org_integrations').select('id, provider_id, status').eq('org_id', me.org_id)
+      : Promise.resolve({ data: [] as { id: string; provider_id: string; status: string }[] }),
+    // RLS: own number for users, reports' for managers, whole org for admins.
+    supabase
+      .from('whatsapp_accounts')
+      .select('id, platform_user_id, display_phone_number, verified_name, quality_rating, is_coexistence, status, connected_at')
+      .eq('status', 'connected'),
     ])
 
   return {
@@ -40,6 +51,7 @@ export async function getSettingsData() {
     managers: managers ?? [],
     providers: providers ?? [],
     orgIntegrations: orgIntegrations ?? [],
+    whatsappAccounts: whatsappAccounts ?? [],
   }
 }
 

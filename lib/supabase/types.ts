@@ -410,6 +410,7 @@ export type Database = {
           status: Database["public"]["Enums"]["conversation_status"]
           subject: string | null
           updated_at: string
+          whatsapp_account_id: string | null
         }
         Insert: {
           channel: Database["public"]["Enums"]["channel_type"]
@@ -424,6 +425,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["conversation_status"]
           subject?: string | null
           updated_at?: string
+          whatsapp_account_id?: string | null
         }
         Update: {
           channel?: Database["public"]["Enums"]["channel_type"]
@@ -438,6 +440,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["conversation_status"]
           subject?: string | null
           updated_at?: string
+          whatsapp_account_id?: string | null
         }
         Relationships: [
           {
@@ -474,6 +477,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_staff_performance"
             referencedColumns: ["staff_id"]
+          },
+          {
+            foreignKeyName: "conversations_whatsapp_account_id_fkey"
+            columns: ["whatsapp_account_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_accounts"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1410,7 +1420,15 @@ export type Database = {
           org_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "org_wallets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organizations: {
         Row: {
@@ -2098,7 +2116,131 @@ export type Database = {
           org_id?: string
           reference_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_staff_performance"
+            referencedColumns: ["staff_id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_account_secrets: {
+        Row: {
+          access_token: string
+          account_id: string
+          registration_pin: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          account_id: string
+          registration_pin?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          account_id?: string
+          registration_pin?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_account_secrets_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: true
+            referencedRelation: "whatsapp_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_accounts: {
+        Row: {
+          connected_at: string
+          created_at: string
+          display_phone_number: string | null
+          id: string
+          is_coexistence: boolean
+          last_error: string | null
+          org_id: string
+          phone_number_id: string
+          platform_user_id: string
+          quality_rating: string | null
+          status: string
+          updated_at: string
+          verified_name: string | null
+          waba_id: string
+        }
+        Insert: {
+          connected_at?: string
+          created_at?: string
+          display_phone_number?: string | null
+          id?: string
+          is_coexistence?: boolean
+          last_error?: string | null
+          org_id: string
+          phone_number_id: string
+          platform_user_id: string
+          quality_rating?: string | null
+          status?: string
+          updated_at?: string
+          verified_name?: string | null
+          waba_id: string
+        }
+        Update: {
+          connected_at?: string
+          created_at?: string
+          display_phone_number?: string | null
+          id?: string
+          is_coexistence?: boolean
+          last_error?: string | null
+          org_id?: string
+          phone_number_id?: string
+          platform_user_id?: string
+          quality_rating?: string | null
+          status?: string
+          updated_at?: string
+          verified_name?: string | null
+          waba_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_accounts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_accounts_platform_user_id_fkey"
+            columns: ["platform_user_id"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_accounts_platform_user_id_fkey"
+            columns: ["platform_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_staff_performance"
+            referencedColumns: ["staff_id"]
+          },
+        ]
       }
       whatsapp_campaigns: {
         Row: {
@@ -2116,8 +2258,11 @@ export type Database = {
           sent_at: string | null
           sent_count: number
           status: string
+          template_language: string | null
           template_name: string | null
+          template_params: Json | null
           title: string
+          whatsapp_account_id: string | null
         }
         Insert: {
           audience_type: string
@@ -2134,8 +2279,11 @@ export type Database = {
           sent_at?: string | null
           sent_count?: number
           status?: string
+          template_language?: string | null
           template_name?: string | null
+          template_params?: Json | null
           title: string
+          whatsapp_account_id?: string | null
         }
         Update: {
           audience_type?: string
@@ -2152,8 +2300,11 @@ export type Database = {
           sent_at?: string | null
           sent_count?: number
           status?: string
+          template_language?: string | null
           template_name?: string | null
+          template_params?: Json | null
           title?: string
+          whatsapp_account_id?: string | null
         }
         Relationships: [
           {
@@ -2175,6 +2326,13 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_campaigns_whatsapp_account_id_fkey"
+            columns: ["whatsapp_account_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -2213,6 +2371,15 @@ export type Database = {
       }
     }
     Functions: {
+      find_phone_duplicate: {
+        Args: { p_exclude_lead?: string; p_phone: string }
+        Returns: {
+          full_name: string
+          id: string
+          stage: string
+          type: string
+        }[]
+      }
       fn_auto_assign_lead: { Args: { p_org_id: string }; Returns: string }
       fn_can_access_conversation: {
         Args: { p_conversation_id: string }
@@ -2233,22 +2400,6 @@ export type Database = {
       fn_convert_lead_to_customer: {
         Args: { p_lead_id: string }
         Returns: string
-      }
-      find_phone_duplicate: {
-        Args: { p_phone: string; p_exclude_lead?: string }
-        Returns: { type: string; id: string; full_name: string; stage: string | null }[]
-      }
-      wallet_charge_whatsapp: {
-        Args: { p_messages: number; p_campaign_id?: string }
-        Returns: number
-      }
-      wallet_refund_whatsapp: {
-        Args: { p_messages: number; p_campaign_id?: string }
-        Returns: number
-      }
-      wallet_topup: {
-        Args: { p_org_id: string; p_amount: number; p_note?: string; p_kind?: string }
-        Returns: number
       }
       fn_current_org_id: { Args: never; Returns: string }
       fn_current_org_id_text: { Args: never; Returns: string }
@@ -2294,6 +2445,44 @@ export type Database = {
           p_trigger_type: string
         }
         Returns: undefined
+      }
+      phone_key: { Args: { p: string }; Returns: string }
+      wallet_admin_adjust: {
+        Args: {
+          p_amount: number
+          p_kind?: string
+          p_note?: string
+          p_org_id: string
+        }
+        Returns: number
+      }
+      wallet_charge_whatsapp: {
+        Args: { p_campaign_id?: string; p_messages: number }
+        Returns: number
+      }
+      wallet_refund_whatsapp: {
+        Args: { p_campaign_id?: string; p_messages: number }
+        Returns: number
+      }
+      wallet_topup: {
+        Args: {
+          p_amount: number
+          p_kind?: string
+          p_note?: string
+          p_org_id: string
+        }
+        Returns: number
+      }
+      whatsapp_match_contact: {
+        Args: { p_org_id: string; p_phone: string }
+        Returns: {
+          customer_id: string | null
+          customer_name: string | null
+          customer_owner_id: string | null
+          lead_id: string | null
+          lead_name: string | null
+          lead_owner_id: string | null
+        }[]
       }
     }
     Enums: {
@@ -2595,7 +2784,15 @@ export const Constants = {
         "project",
       ],
       follow_up_status: ["pending", "done", "missed"],
-      follow_up_type: ["call", "email", "whatsapp", "meeting", "site_visit", "re_visit", "other"],
+      follow_up_type: [
+        "call",
+        "email",
+        "whatsapp",
+        "meeting",
+        "site_visit",
+        "re_visit",
+        "other",
+      ],
       integration_auth_type: ["api_key", "oauth2", "webhook"],
       integration_status: ["disconnected", "connected", "error"],
       lead_stage: [

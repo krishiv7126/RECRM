@@ -4,8 +4,8 @@ import { getSettingsData } from '@/lib/settings/get-settings-data'
 
 export const metadata: Metadata = { title: 'Settings' }
 
-export default async function SettingsPage() {
-  const data = await getSettingsData()
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const [data, { tab }] = await Promise.all([getSettingsData(), searchParams])
 
   if (!data) {
     return (
@@ -15,5 +15,5 @@ export default async function SettingsPage() {
     )
   }
 
-  return <SettingsView data={data} />
+  return <SettingsView data={data} initialTab={tab} />
 }

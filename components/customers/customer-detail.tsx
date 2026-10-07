@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Check, Handshake, Loader2, Mail, Phone as PhoneIcon, Sparkles } from 'lucide-react'
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
+import { WhatsAppChatButton } from '@/components/whatsapp/whatsapp-chat-button'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -168,16 +168,7 @@ export function CustomerDetail({
                 >
                   <PhoneIcon className="size-3.5" />
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  disabled={!phone}
-                  aria-label={`WhatsApp ${customer.full_name}`}
-                  render={<a href={phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
-                  nativeButton={false}
-                >
-                  <WhatsAppIcon className="size-3.5" />
-                </Button>
+                <WhatsAppChatButton variant="outline" phone={phone} name={customer.full_name} customerId={customer.id} />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">

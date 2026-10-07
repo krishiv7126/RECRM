@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
+import { WhatsAppChatButton } from '@/components/whatsapp/whatsapp-chat-button'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -389,16 +389,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                       >
                         <Phone className="size-3.5" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={!customer.phone}
-                        aria-label={`WhatsApp ${customer.full_name}`}
-                        render={<a href={customer.phone ? `https://wa.me/${customer.phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
-                        nativeButton={false}
-                      >
-                        <WhatsAppIcon className="size-3.5" />
-                      </Button>
+                      <WhatsAppChatButton variant="ghost" phone={customer.phone} name={customer.full_name} customerId={customer.id} />
                       <Button
                         variant="ghost"
                         size="icon-sm"

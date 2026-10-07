@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
+import { WhatsAppChatButton } from '@/components/whatsapp/whatsapp-chat-button'
 import { deriveTemperature, TEMPERATURE_STYLES, TEMPERATURE_COLORS } from '@/lib/leads/temperature'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -543,16 +543,7 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                       >
                         <Phone className="size-3.5" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={!lead.phone}
-                        aria-label={`WhatsApp ${lead.full_name}`}
-                        render={<a href={lead.phone ? `https://wa.me/${lead.phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
-                        nativeButton={false}
-                      >
-                        <WhatsAppIcon className="size-3.5" />
-                      </Button>
+                      <WhatsAppChatButton variant="ghost" phone={lead.phone} name={lead.full_name} leadId={lead.id} />
                       <Button
                         variant="ghost"
                         size="icon-sm"

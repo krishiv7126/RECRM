@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ArrowLeftRight, Check, Loader2, Mail, Phone as PhoneIcon, Repeat, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
+import { WhatsAppChatButton } from '@/components/whatsapp/whatsapp-chat-button'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -202,16 +202,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
                 >
                   <PhoneIcon className="size-3.5" />
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  disabled={!phone}
-                  aria-label={`WhatsApp ${lead.full_name}`}
-                  render={<a href={phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : undefined} target="_blank" rel="noreferrer" />}
-                  nativeButton={false}
-                >
-                  <WhatsAppIcon className="size-3.5" />
-                </Button>
+                <WhatsAppChatButton variant="outline" phone={phone} name={lead.full_name} leadId={lead.id} />
               </div>
               <DuplicatePhoneNotice checking={checkingPhone} match={duplicateMatch} />
             </div>

@@ -58,6 +58,7 @@ const relatedTypeRoutes: Record<string, (id: string | null) => string> = {
   follow_ups: () => '/follow-ups',
   site_visits: () => '/site-visits',
   login_approval_queue: () => '/approvals',
+  conversations: (id) => (id ? `/whatsapp?c=${id}` : '/whatsapp'),
 }
 
 function formatNotificationTime(iso: string) {

@@ -14,6 +14,7 @@ import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { sendCampaign } from '@/lib/whatsapp/actions'
 import { WalletCard } from '@/components/wallet/wallet-card'
+import { TemplatePickerDialog, type ChosenTemplate } from '@/components/whatsapp/template-picker-dialog'
 import { useWallet } from '@/lib/wallet/use-wallet'
 import { cn } from '@/lib/utils'
 import type { WhatsappCampaign } from '@/lib/whatsapp/get-whatsapp-data'
@@ -46,7 +47,8 @@ export function WhatsappBroadcastView({
   const [tagFilter, setTagFilter] = useState('')
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
-  const [templateName, setTemplateName] = useState('')
+  const [template, setTemplate] = useState<ChosenTemplate | null>(null)
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [campaigns, setCampaigns] = useState(initialCampaigns)
@@ -117,7 +119,9 @@ export function WhatsappBroadcastView({
         filters: { city: cityFilter || null, tag: tagFilter || null },
         recipients: recipients.map((r) => ({ id: r.id, name: r.full_name, phone: r.phone })),
         recipient_count: recipients.length,
-        template_name: templateName.trim() || null,
+        template_name: template?.name ?? null,
+        template_language: template?.language ?? null,
+        template_params: template?.params ?? null,
         status: 'draft',
       })
       .select('*, created_by_user:platform_users!whatsapp_campaigns_created_by_fkey(full_name)')
@@ -132,7 +136,7 @@ export function WhatsappBroadcastView({
     setCampaigns((prev) => [inserted as WhatsappCampaign, ...prev])
     setTitle('')
     setMessage('')
-    setTemplateName('')
+    setTemplate(null)
     toast.success('Campaign saved')
   }
 
@@ -188,9 +192,9 @@ export function WhatsappBroadcastView({
       <WalletCard wallet={wallet} transactions={transactions} recipientCount={recipients.length} />
 
       <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground">
-        Save a campaign, then hit Send from Past Campaigns to actually dispatch it via the WhatsApp Business API. Plain
-        messages only reach people who&apos;ve messaged your business number in the last 24 hours — for anyone else
-        (most cold leads), set an approved template name below, or use the per-contact WhatsApp button to send manually.
+        Save a campaign, then hit Send from Past Campaigns — it goes out from <strong>your own connected WhatsApp
+        number</strong> (Settings → WhatsApp), and replies land in your WhatsApp chats. Plain messages only reach people
+        who&apos;ve messaged you in the last 24 hours — for everyone else (most cold leads), choose an approved template.
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -272,18 +276,32 @@ export function WhatsappBroadcastView({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="wa_template" className="text-sm font-medium text-foreground">
-                Template name <span className="font-normal text-muted-foreground">(optional)</span>
-              </label>
-              <Input
-                id="wa_template"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                placeholder="e.g. diwali_offer_2026"
-              />
+              <span className="text-sm font-medium text-foreground">
+                Approved template <span className="font-normal text-muted-foreground">(needed for cold leads)</span>
+              </span>
+              {template ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] font-medium text-foreground">{template.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {template.language}
+                      {template.params.length > 0 && ` · ${template.params.join(', ')}`}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setTemplate(null)}>
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <div>
+                  <Button variant="outline" size="sm" onClick={() => setTemplatePickerOpen(true)}>
+                    Choose template
+                  </Button>
+                </div>
+              )}
               <p className="text-[11px] text-muted-foreground">
-                Must already be approved in Meta Business Manager. Required for anyone who hasn&apos;t messaged you in
-                the last 24 hours — leave blank only if every recipient has an active conversation.
+                Templates come from your WhatsApp number&apos;s Meta account. Put {'{{name}}'} in a placeholder to use
+                each recipient&apos;s name.
               </p>
             </div>
 
@@ -417,6 +435,18 @@ export function WhatsappBroadcastView({
           </div>
         </div>
       </div>
+      <TemplatePickerDialog
+        open={templatePickerOpen}
+        onOpenChange={setTemplatePickerOpen}
+        description="Pick the approved template this campaign sends. Fill placeholders — {{name}} becomes each recipient's name."
+        submitLabel="Use template"
+        paramHint="{{name}}"
+        onSubmit={async (t) => {
+          setTemplate(t)
+          if (!message.trim()) setMessage(t.body)
+          return true
+        }}
+      />
       <ConfirmDialog />
     </div>
   )

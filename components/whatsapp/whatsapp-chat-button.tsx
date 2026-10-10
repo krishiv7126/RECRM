@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon'
 import { Button } from '@/components/ui/button'
 import { openWhatsAppChat } from '@/lib/whatsapp/actions'
+import { safeCall } from '@/lib/whatsapp/safe-call'
 
 /**
  * Opens the CRM WhatsApp chat with this person on the caller's own connected
@@ -34,7 +35,9 @@ export function WhatsAppChatButton({
     e.preventDefault()
     if (!phone || busy) return
     setBusy(true)
-    const res = await openWhatsAppChat({ phone, name, leadId: leadId ?? null, customerId: customerId ?? null })
+    const res = await safeCall(() =>
+      openWhatsAppChat({ phone, name, leadId: leadId ?? null, customerId: customerId ?? null }),
+    )
     setBusy(false)
     if (res.ok) {
       router.push(`/whatsapp?c=${res.conversationId}`)

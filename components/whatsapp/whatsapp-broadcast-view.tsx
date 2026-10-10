@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
 import { sendCampaign } from '@/lib/whatsapp/actions'
+import { safeCall } from '@/lib/whatsapp/safe-call'
 import { WalletCard } from '@/components/wallet/wallet-card'
 import { TemplatePickerDialog, type ChosenTemplate } from '@/components/whatsapp/template-picker-dialog'
 import { useWallet } from '@/lib/wallet/use-wallet'
@@ -142,7 +143,7 @@ export function WhatsappBroadcastView({
 
   async function handleSend(campaign: WhatsappCampaign) {
     setSendingId(campaign.id)
-    const result = await sendCampaign(campaign.id)
+    const result = await safeCall(() => sendCampaign(campaign.id))
     setSendingId(null)
     void reloadWallet()
 

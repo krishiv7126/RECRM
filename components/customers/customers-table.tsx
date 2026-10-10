@@ -41,6 +41,7 @@ interface CustomerRow {
   city: string | null
   tags: string[] | null
   reference: string | null
+  reference_phone?: string | null
   booked_by: string | null
   ai_summary: string | null
   owner: { full_name: string } | null
@@ -117,6 +118,7 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
         city: pick(r, 'area', 'city', 'location') || null,
         address: pick(r, 'address') || null,
         reference: pick(r, 'reference', 'referred by') || null,
+        reference_phone: pick(r, 'reference number', 'reference phone', 'referrer phone') || null,
         notes: pick(r, 'remarks', 'notes') || null,
       })
     }
@@ -354,6 +356,9 @@ export function CustomersTable({ initialCustomers }: { initialCustomers: Custome
                   <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{customer.city ?? '—'}</td>
                   <td className="max-w-[200px] px-4 py-3 text-foreground/80">
                     <span className="line-clamp-2">{customer.reference ?? '—'}</span>
+                    {customer.reference_phone && (
+                      <span className="block text-[11px] text-muted-foreground">{customer.reference_phone}</span>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{customer.booked_by ?? '—'}</td>
                   <td className="max-w-[280px] px-4 py-3 text-foreground/80">

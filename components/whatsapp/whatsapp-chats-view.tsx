@@ -22,6 +22,7 @@ import {
   sendWhatsAppChatMessage,
   sendWhatsAppChatTemplate,
 } from '@/lib/whatsapp/actions'
+import { safeCall } from '@/lib/whatsapp/safe-call'
 import { cn } from '@/lib/utils'
 import type { WhatsAppChat, WhatsAppChatsData } from '@/lib/whatsapp/get-whatsapp-chats'
 
@@ -81,7 +82,7 @@ function NewChatDialog({ open, onOpenChange, onOpened }: { open: boolean; onOpen
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setBusy(true)
-    const res = await openWhatsAppChat({ phone, name: name.trim() || null })
+    const res = await safeCall(() => openWhatsAppChat({ phone, name: name.trim() || null }))
     setBusy(false)
     if (!res.ok) {
       toast.error(res.message)
@@ -342,7 +343,7 @@ export function WhatsAppChatsView({ data }: { data: WhatsAppChatsData }) {
               <p className="text-[12px] text-muted-foreground">Takes a minute — scan a QR from the WhatsApp Business app.</p>
             </div>
           </div>
-          <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-600/90" render={<Link href="/settings?tab=whatsapp" />}>
+          <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-600/90" render={<Link href="/settings?tab=whatsapp" />} nativeButton={false}>
             Connect WhatsApp
           </Button>
         </div>
@@ -461,12 +462,12 @@ export function WhatsAppChatsView({ data }: { data: WhatsAppChatsData }) {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {active.lead_id && (
-                    <Button variant="outline" size="sm" render={<Link href={`/leads/${active.lead_id}`} />}>
+                    <Button variant="outline" size="sm" render={<Link href={`/leads/${active.lead_id}`} />} nativeButton={false}>
                       Lead
                     </Button>
                   )}
                   {active.customer_id && (
-                    <Button variant="outline" size="sm" render={<Link href={`/customers/${active.customer_id}`} />}>
+                    <Button variant="outline" size="sm" render={<Link href={`/customers/${active.customer_id}`} />} nativeButton={false}>
                       Member
                     </Button>
                   )}
@@ -596,7 +597,7 @@ export function WhatsAppChatsView({ data }: { data: WhatsAppChatsData }) {
           conversationId={active.id}
           paramHint={active.name}
           onSubmit={async (template) => {
-            const res = await sendWhatsAppChatTemplate(active.id, template)
+            const res = await safeCall(() => sendWhatsAppChatTemplate(active.id, template))
             if (!res.ok) {
               toast.error(res.message)
               return false

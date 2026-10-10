@@ -21,8 +21,9 @@ import { autoScoreLead } from '@/lib/leads/auto-score'
 import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
 import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
 import { sanitizeDigits } from '@/lib/sanitize-number-input'
-import { CP_SOURCE, LEAD_SOURCES } from '@/lib/leads/cp-source'
-import { ChannelPartnerField } from '@/components/leads/channel-partner-field'
+import { CP_SOURCE, LEAD_SOURCES, REFERRAL_SOURCE } from '@/lib/leads/cp-source'
+import { ChannelPartnerField, EMPTY_CP, validateChannelPartner, type ChannelPartner } from '@/components/leads/channel-partner-field'
+import { ReferenceField, validateReference, type ReferenceValue } from '@/components/leads/reference-field'
 import { LEAD_CATEGORIES } from '@/lib/leads/lead-fields'
 import { toast } from 'sonner'
 
@@ -37,7 +38,8 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
   const [email, setEmail] = useState('')
   const [source, setSource] = useState('')
   const [budget, setBudget] = useState('')
-  const [channelPartner, setChannelPartner] = useState('')
+  const [channelPartner, setChannelPartner] = useState<ChannelPartner>(EMPTY_CP)
+  const [reference, setReference] = useState<ReferenceValue>({ name: '', phone: '' })
   const [requirement, setRequirement] = useState('')
   const [category, setCategory] = useState('')
   const [city, setCity] = useState('')
@@ -65,7 +67,8 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
     setEmail('')
     setSource('')
     setBudget('')
-    setChannelPartner('')
+    setChannelPartner(EMPTY_CP)
+    setReference({ name: '', phone: '' })
     setRequirement('')
     setCategory('')
     setCity('')
@@ -82,8 +85,14 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
       setError('Full name is required.')
       return
     }
-    if (source === CP_SOURCE && !channelPartner.trim()) {
-      setError('Pick which channel partner (CP) this lead came from.')
+    const detailsError =
+      source === CP_SOURCE
+        ? validateChannelPartner(channelPartner)
+        : source === REFERRAL_SOURCE
+          ? validateReference(reference, true)
+          : null
+    if (detailsError) {
+      setError(detailsError)
       return
     }
     if (scheduleVisit && !visitAt) {
@@ -133,7 +142,11 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
         // automation conditions keep working.
         budget_min: budget ? Number(budget) : null,
         budget_max: budget ? Number(budget) : null,
-        channel_partner: source === CP_SOURCE ? channelPartner.trim() : null,
+        channel_partner: source === CP_SOURCE ? channelPartner.name.trim() : null,
+        cp_phone: source === CP_SOURCE ? channelPartner.phone.trim() : null,
+        cp_firm: source === CP_SOURCE ? channelPartner.firm.trim() || null : null,
+        reference: source === REFERRAL_SOURCE ? reference.name.trim() : null,
+        reference_phone: source === REFERRAL_SOURCE ? reference.phone.trim() : null,
         requirement: requirement.trim() || null,
         category: category || null,
         city: city.trim() || null,
@@ -233,6 +246,11 @@ export function CreateLeadDialog({ trigger }: { trigger: React.ReactElement }) {
           </div>
 
           {source === CP_SOURCE && <ChannelPartnerField value={channelPartner} onChange={setChannelPartner} />}
+          {source === REFERRAL_SOURCE && (
+            <div className="grid grid-cols-2 gap-3">
+              <ReferenceField value={reference} onChange={setReference} required />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">

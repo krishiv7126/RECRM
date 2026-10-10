@@ -13,7 +13,7 @@ import {
 
 const chartConfig: ChartConfig = {
   overdue: { label: 'Overdue', color: 'var(--destructive)' },
-  pending: { label: 'Pending', color: 'var(--chart-3)' },
+  pending: { label: 'Pending', color: '#d97706' },
   done: { label: 'Completed', color: 'var(--chart-1)' },
 }
 

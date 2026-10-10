@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { getWhatsAppTemplates } from '@/lib/whatsapp/actions'
+import { safeCall } from '@/lib/whatsapp/safe-call'
 import type { WhatsAppTemplate } from '@/lib/whatsapp/client'
 import { cn } from '@/lib/utils'
 
@@ -54,7 +55,7 @@ export function TemplatePickerDialog({
     setTemplates(null)
     setError(null)
     setSelected(null)
-    getWhatsAppTemplates(conversationId).then((res) => {
+    safeCall(() => getWhatsAppTemplates(conversationId)).then((res) => {
       if (cancelled) return
       if (res.ok) setTemplates(res.templates)
       else setError(res.message)

@@ -8,7 +8,9 @@ import type { Database } from "./types"
 // Mirrors superCRM's lib/supabase/admin.ts. Never import into a "use client"
 // component; the "server-only" import throws a build error if that happens.
 export function createAdminClient() {
-  return createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!serviceKey) throw new Error('Server is not configured (missing SUPABASE_SERVICE_ROLE_KEY).')
+  return createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 }

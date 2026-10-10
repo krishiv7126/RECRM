@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Check, Handshake, Loader2, Mail, Phone as PhoneIcon, Sparkles } from 'lucide-react'
 import { WhatsAppChatButton } from '@/components/whatsapp/whatsapp-chat-button'
+import { ReferenceField, validateReference, type ReferenceValue } from '@/components/leads/reference-field'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,7 +46,7 @@ export function CustomerDetail({
   const [email, setEmail] = useState(customer.email ?? '')
   const [city, setCity] = useState(customer.city ?? '')
   const [address, setAddress] = useState(customer.address ?? '')
-  const [reference, setReference] = useState(customer.reference ?? '')
+  const [reference, setReference] = useState<ReferenceValue>({ name: customer.reference ?? '', phone: customer.reference_phone ?? '' })
   const [notes, setNotes] = useState(customer.notes ?? '')
 
   const [saving, setSaving] = useState(false)
@@ -53,6 +54,13 @@ export function CustomerDetail({
   const [error, setError] = useState<string | null>(null)
 
   async function handleSave() {
+    const referenceTouched =
+      reference.name !== (customer.reference ?? '') || reference.phone !== (customer.reference_phone ?? '')
+    const referenceError = referenceTouched ? validateReference(reference, false) : null
+    if (referenceError) {
+      setError(referenceError)
+      return
+    }
     setSaving(true)
     setSaved(false)
     setError(null)
@@ -65,7 +73,8 @@ export function CustomerDetail({
         email: email.trim() || null,
         city: city.trim() || null,
         address: address.trim() || null,
-        reference: reference.trim() || null,
+        reference: reference.name.trim() || null,
+        reference_phone: reference.phone.trim() || null,
         notes: notes.trim() || null,
       })
       .eq('id', customer.id)
@@ -195,10 +204,7 @@ export function CustomerDetail({
               <label className="text-sm font-medium text-foreground">Address</label>
               <Input value={address} onChange={(e) => setAddress(e.target.value)} />
             </div>
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <label className="text-sm font-medium text-foreground">Reference</label>
-              <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. Referred by Rohan Kapoor" />
-            </div>
+            <ReferenceField value={reference} onChange={setReference} />
           </div>
 
           <div className="flex flex-col gap-1.5">

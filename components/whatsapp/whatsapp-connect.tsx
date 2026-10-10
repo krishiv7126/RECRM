@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { completeWhatsAppSignup, disconnectWhatsAppAccount } from '@/lib/whatsapp/actions'
+import { safeCall } from '@/lib/whatsapp/safe-call'
 import { cn } from '@/lib/utils'
 
 export interface WhatsAppAccountRow {
@@ -76,12 +77,8 @@ function useEmbeddedSignup(onDone: () => void) {
     const s = session.current
     if (!s?.code || !s.wabaId || !s.phoneNumberId) return
     session.current = null
-    const result = await completeWhatsAppSignup({
-      code: s.code,
-      wabaId: s.wabaId,
-      phoneNumberId: s.phoneNumberId,
-      coexistence: s.coexistence,
-    })
+    const input = { code: s.code, wabaId: s.wabaId, phoneNumberId: s.phoneNumberId, coexistence: s.coexistence }
+    const result = await safeCall(() => completeWhatsAppSignup(input))
     setBusy(false)
     if (result.ok) {
       toast.success(result.message ?? 'WhatsApp connected.')
@@ -197,7 +194,7 @@ export function WhatsAppConnectPanel({
     })
     if (!ok) return
     setDisconnectingId(account.id)
-    const result = await disconnectWhatsAppAccount(account.id)
+    const result = await safeCall(() => disconnectWhatsAppAccount(account.id))
     setDisconnectingId(null)
     if (result.ok) toast.success(result.message ?? 'Disconnected.')
     else toast.error(result.message)

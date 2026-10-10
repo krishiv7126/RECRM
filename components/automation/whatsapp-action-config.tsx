@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { getWhatsAppTemplatesForSender } from '@/lib/whatsapp/actions'
+import { safeCall } from '@/lib/whatsapp/safe-call'
 import type { WhatsAppTemplate } from '@/lib/whatsapp/client'
 
 const selectClass =
@@ -35,7 +36,7 @@ export function WhatsAppActionConfig({
     let cancelled = false
     setTemplates(null)
     setError(null)
-    getWhatsAppTemplatesForSender(senderId || null).then((res) => {
+    safeCall(() => getWhatsAppTemplatesForSender(senderId || null)).then((res) => {
       if (cancelled) return
       if (res.ok) setTemplates(res.templates)
       else setError(res.message)

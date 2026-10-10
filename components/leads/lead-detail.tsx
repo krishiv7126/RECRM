@@ -18,8 +18,9 @@ import { autoScoreLead } from '@/lib/leads/auto-score'
 import { deriveTemperature, TEMPERATURE_STYLES } from '@/lib/leads/temperature'
 import { sanitizeDigits } from '@/lib/sanitize-number-input'
 import type { LeadWithOwner } from '@/lib/leads/get-leads-data'
-import { CP_SOURCE, LEAD_SOURCES } from '@/lib/leads/cp-source'
-import { ChannelPartnerField } from '@/components/leads/channel-partner-field'
+import { CP_SOURCE, LEAD_SOURCES, REFERRAL_SOURCE } from '@/lib/leads/cp-source'
+import { ChannelPartnerField, validateChannelPartner, type ChannelPartner } from '@/components/leads/channel-partner-field'
+import { ReferenceField, validateReference, type ReferenceValue } from '@/components/leads/reference-field'
 import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
 import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
 import { TransferLeadDialog } from '@/components/leads/transfer-lead-dialog'
@@ -39,8 +40,12 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const [requirement, setRequirement] = useState(lead.requirement ?? '')
   const [category, setCategory] = useState(lead.category ?? '')
   const [city, setCity] = useState(lead.city ?? '')
-  const [reference, setReference] = useState(lead.reference ?? '')
-  const [channelPartner, setChannelPartner] = useState(lead.channel_partner ?? '')
+  const [reference, setReference] = useState<ReferenceValue>({ name: lead.reference ?? '', phone: lead.reference_phone ?? '' })
+  const [channelPartner, setChannelPartner] = useState<ChannelPartner>({
+    name: lead.channel_partner ?? '',
+    phone: lead.cp_phone ?? '',
+    firm: lead.cp_firm ?? '',
+  })
   const [notes, setNotes] = useState(lead.notes ?? '')
 
   const [saving, setSaving] = useState(false)
@@ -67,8 +72,21 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
   const sourceOptions = source && !LEAD_SOURCES.includes(source) ? [...LEAD_SOURCES, source] : LEAD_SOURCES
 
   async function handleSave() {
-    if (source === CP_SOURCE && !channelPartner.trim()) {
-      setError('Pick which channel partner (CP) this lead came from.')
+    // Only enforce on what was touched, so older leads saved before CP and
+    // reference numbers existed can still be edited.
+    const sourceChanged = source !== (lead.source ?? '')
+    const cpTouched =
+      sourceChanged ||
+      channelPartner.name !== (lead.channel_partner ?? '') ||
+      channelPartner.phone !== (lead.cp_phone ?? '') ||
+      channelPartner.firm !== (lead.cp_firm ?? '')
+    const referenceTouched =
+      sourceChanged || reference.name !== (lead.reference ?? '') || reference.phone !== (lead.reference_phone ?? '')
+    const detailsError =
+      (source === CP_SOURCE && cpTouched ? validateChannelPartner(channelPartner) : null) ??
+      (referenceTouched ? validateReference(reference, source === REFERRAL_SOURCE) : null)
+    if (detailsError) {
+      setError(detailsError)
       return
     }
     if (duplicateMatch) {
@@ -92,8 +110,11 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
         requirement: requirement.trim() || null,
         category: category || null,
         city: city.trim() || null,
-        reference: reference.trim() || null,
-        channel_partner: source === CP_SOURCE ? channelPartner.trim() : null,
+        reference: reference.name.trim() || null,
+        reference_phone: reference.phone.trim() || null,
+        channel_partner: source === CP_SOURCE ? channelPartner.name.trim() : null,
+        cp_phone: source === CP_SOURCE ? channelPartner.phone.trim() : null,
+        cp_firm: source === CP_SOURCE ? channelPartner.firm.trim() || null : null,
         notes: notes.trim() || null,
       })
       .eq('id', lead.id)
@@ -265,10 +286,7 @@ export function LeadDetail({ lead }: { lead: LeadWithOwner }) {
               />
             </div>
             {source === CP_SOURCE && <ChannelPartnerField value={channelPartner} onChange={setChannelPartner} />}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground">Reference</label>
-              <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. Referred by Rohan Kapoor" />
-            </div>
+            <ReferenceField value={reference} onChange={setReference} required={source === REFERRAL_SOURCE} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

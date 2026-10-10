@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { DuplicatePhoneNotice } from '@/components/leads/duplicate-phone-notice'
+import { ReferenceField, validateReference, type ReferenceValue } from '@/components/leads/reference-field'
 import { createClient } from '@/lib/supabase/client'
 import { autoScoreLead } from '@/lib/leads/auto-score'
 import { useDuplicatePhoneCheck } from '@/lib/leads/use-duplicate-phone-check'
@@ -23,7 +24,7 @@ export function InquiryForm() {
   const [email, setEmail] = useState('')
   const [city, setCity] = useState('')
   const [budget, setBudget] = useState('')
-  const [reference, setReference] = useState('')
+  const [reference, setReference] = useState<ReferenceValue>({ name: '', phone: '' })
   const [requirement, setRequirement] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -39,7 +40,7 @@ export function InquiryForm() {
     setEmail('')
     setCity('')
     setBudget('')
-    setReference('')
+    setReference({ name: '', phone: '' })
     setRequirement('')
     setNotes('')
     setError(null)
@@ -49,6 +50,11 @@ export function InquiryForm() {
     e.preventDefault()
     if (!fullName.trim()) {
       setError('Full name is required.')
+      return
+    }
+    const referenceError = validateReference(reference, false)
+    if (referenceError) {
+      setError(referenceError)
       return
     }
     if (checkingPhone) {
@@ -91,7 +97,8 @@ export function InquiryForm() {
         city: city.trim() || null,
         budget_min: budget ? Number(budget) : null,
         budget_max: budget ? Number(budget) : null,
-        reference: reference.trim() || null,
+        reference: reference.name.trim() || null,
+        reference_phone: reference.phone.trim() || null,
         requirement: requirement.trim() || null,
         notes: notes.trim() || null,
         source: INQUIRY_SOURCE,
@@ -182,16 +189,8 @@ export function InquiryForm() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="inq_reference" className="text-sm font-medium text-foreground">
-                Reference
-              </label>
-              <Input
-                id="inq_reference"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-                placeholder="e.g. Referred by Rohan Kapoor"
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <ReferenceField value={reference} onChange={setReference} />
             </div>
 
             <div className="flex flex-col gap-1.5">

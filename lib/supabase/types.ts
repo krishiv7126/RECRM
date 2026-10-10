@@ -501,6 +501,7 @@ export type Database = {
           owner_id: string
           phone: string | null
           reference: string | null
+          reference_phone: string | null
           tags: string[] | null
           updated_at: string
         }
@@ -517,6 +518,7 @@ export type Database = {
           owner_id: string
           phone?: string | null
           reference?: string | null
+          reference_phone?: string | null
           tags?: string[] | null
           updated_at?: string
         }
@@ -533,6 +535,7 @@ export type Database = {
           owner_id?: string
           phone?: string | null
           reference?: string | null
+          reference_phone?: string | null
           tags?: string[] | null
           updated_at?: string
         }
@@ -829,6 +832,68 @@ export type Database = {
           },
         ]
       }
+      follow_up_reschedules: {
+        Row: {
+          created_at: string
+          follow_up_id: string
+          id: string
+          new_due_at: string
+          old_due_at: string
+          org_id: string
+          reason: string | null
+          rescheduled_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          follow_up_id: string
+          id?: string
+          new_due_at: string
+          old_due_at: string
+          org_id: string
+          reason?: string | null
+          rescheduled_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          follow_up_id?: string
+          id?: string
+          new_due_at?: string
+          old_due_at?: string
+          org_id?: string
+          reason?: string | null
+          rescheduled_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_reschedules_follow_up_id_fkey"
+            columns: ["follow_up_id"]
+            isOneToOne: false
+            referencedRelation: "follow_ups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follow_up_reschedules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follow_up_reschedules_rescheduled_by_fkey"
+            columns: ["rescheduled_by"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follow_up_reschedules_rescheduled_by_fkey"
+            columns: ["rescheduled_by"]
+            isOneToOne: false
+            referencedRelation: "v_staff_performance"
+            referencedColumns: ["staff_id"]
+          },
+        ]
+      }
       follow_ups: {
         Row: {
           completed_at: string | null
@@ -841,6 +906,7 @@ export type Database = {
           notes: string | null
           org_id: string
           owner_id: string
+          reschedule_count: number
           status: Database["public"]["Enums"]["follow_up_status"]
           type: Database["public"]["Enums"]["follow_up_type"]
           updated_at: string
@@ -856,6 +922,7 @@ export type Database = {
           notes?: string | null
           org_id: string
           owner_id: string
+          reschedule_count?: number
           status?: Database["public"]["Enums"]["follow_up_status"]
           type?: Database["public"]["Enums"]["follow_up_type"]
           updated_at?: string
@@ -871,6 +938,7 @@ export type Database = {
           notes?: string | null
           org_id?: string
           owner_id?: string
+          reschedule_count?: number
           status?: Database["public"]["Enums"]["follow_up_status"]
           type?: Database["public"]["Enums"]["follow_up_type"]
           updated_at?: string
@@ -983,6 +1051,8 @@ export type Database = {
           channel_partner: string | null
           city: string | null
           converted_customer_id: string | null
+          cp_firm: string | null
+          cp_phone: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -994,6 +1064,7 @@ export type Database = {
           owner_id: string | null
           phone: string | null
           reference: string | null
+          reference_phone: string | null
           requirement: string | null
           source: string | null
           stage: Database["public"]["Enums"]["lead_stage"]
@@ -1009,6 +1080,8 @@ export type Database = {
           channel_partner?: string | null
           city?: string | null
           converted_customer_id?: string | null
+          cp_firm?: string | null
+          cp_phone?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -1020,6 +1093,7 @@ export type Database = {
           owner_id?: string | null
           phone?: string | null
           reference?: string | null
+          reference_phone?: string | null
           requirement?: string | null
           source?: string | null
           stage?: Database["public"]["Enums"]["lead_stage"]
@@ -1035,6 +1109,8 @@ export type Database = {
           channel_partner?: string | null
           city?: string | null
           converted_customer_id?: string | null
+          cp_firm?: string | null
+          cp_phone?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -1046,6 +1122,7 @@ export type Database = {
           owner_id?: string | null
           phone?: string | null
           reference?: string | null
+          reference_phone?: string | null
           requirement?: string | null
           source?: string | null
           stage?: Database["public"]["Enums"]["lead_stage"]
@@ -2569,6 +2646,31 @@ export type Database = {
         Returns: undefined
       }
       phone_key: { Args: { p: string }; Returns: string }
+      reschedule_follow_up: {
+        Args: { p_due_at: string; p_follow_up_id: string; p_reason?: string }
+        Returns: {
+          completed_at: string | null
+          created_at: string
+          customer_id: string | null
+          deal_id: string | null
+          due_at: string
+          id: string
+          lead_id: string | null
+          notes: string | null
+          org_id: string
+          owner_id: string
+          reschedule_count: number
+          status: Database["public"]["Enums"]["follow_up_status"]
+          type: Database["public"]["Enums"]["follow_up_type"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "follow_ups"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       wallet_admin_adjust: {
         Args: {
           p_amount: number
@@ -2643,6 +2745,7 @@ export type Database = {
         }
       }
       whatsapp_outbox_expire: { Args: never; Returns: undefined }
+      whatsapp_outbox_kick: { Args: never; Returns: undefined }
     }
     Enums: {
       ai_content_type:

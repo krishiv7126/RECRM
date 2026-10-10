@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Calendar,
+  CalendarClock,
   Clock,
   Filter,
   Mail,
@@ -28,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { FollowUpDialog } from '@/components/follow-ups/follow-up-dialog'
+import { RescheduleDialog } from '@/components/follow-ups/reschedule-dialog'
 import { CelebrationBurst } from '@/components/ui/celebration-burst'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { createClient } from '@/lib/supabase/client'
@@ -124,6 +126,7 @@ export function FollowUpsList({
   const [typeFilter, setTypeFilter] = useState('')
   const [ownerFilter, setOwnerFilter] = useState('')
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUpWithRelations | null>(null)
+  const [reschedulingFollowUp, setReschedulingFollowUp] = useState<FollowUpWithRelations | null>(null)
   const [celebratingId, setCelebratingId] = useState<string | null>(null)
   const { confirm, ConfirmDialog } = useConfirm()
 
@@ -392,7 +395,7 @@ export function FollowUpsList({
           return (
             <div
               key={followUp.id}
-              className="flex items-center gap-4 rounded-2xl bg-card px-4 py-3.5 ring-1 ring-border transition-colors hover:bg-accent/40"
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-card px-4 py-3.5 ring-1 ring-border transition-colors hover:bg-accent/40"
             >
               <div
                 className={cn(
@@ -403,7 +406,7 @@ export function FollowUpsList({
                 <TypeIcon className="size-4" />
               </div>
 
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <div className="flex min-w-[140px] flex-1 basis-40 flex-col gap-0.5">
                 <span className="truncate font-medium text-foreground">{linkedRecordLabel(followUp)}</span>
                 <span className="truncate text-[12px] text-muted-foreground">{followUp.notes ?? '—'}</span>
               </div>
@@ -415,7 +418,14 @@ export function FollowUpsList({
                 )}
               >
                 <Clock className="size-3.5" />
-                {formatDueLabel(followUp.due_at)}
+                <span className="flex flex-col leading-tight">
+                  {formatDueLabel(followUp.due_at)}
+                  {followUp.reschedule_count > 0 && (
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      Rescheduled {followUp.reschedule_count}×
+                    </span>
+                  )}
+                </span>
               </div>
 
               <div className="hidden shrink-0 items-center gap-2 sm:flex">
@@ -429,7 +439,7 @@ export function FollowUpsList({
                 {statusLabels[followUp.status]}
               </Badge>
 
-              <div className="relative flex shrink-0 items-center gap-1">
+              <div className="relative ml-auto flex shrink-0 items-center gap-1">
                 <CelebrationBurst show={celebratingId === followUp.id} />
                 <Button
                   variant="outline"
@@ -439,6 +449,17 @@ export function FollowUpsList({
                   onClick={() => handleMarkDone(followUp)}
                 >
                   Mark complete
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={followUp.status === 'done'}
+                  className="text-[12px]"
+                  aria-label={`Reschedule ${linkedRecordLabel(followUp)}`}
+                  onClick={() => setReschedulingFollowUp(followUp)}
+                >
+                  <CalendarClock className="size-3.5" />
+                  <span className="hidden sm:inline">Reschedule</span>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger
@@ -452,8 +473,10 @@ export function FollowUpsList({
                     <DropdownMenuItem disabled={!hasRecord} onClick={() => handleViewRecord(followUp)}>
                       View record
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setEditingFollowUp(followUp)}>Reschedule</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setEditingFollowUp(followUp)}>Reassign owner</DropdownMenuItem>
+                    <DropdownMenuItem disabled={followUp.status === 'done'} onClick={() => setReschedulingFollowUp(followUp)}>
+                      Reschedule
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setEditingFollowUp(followUp)}>Edit / reassign owner</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onClick={() => handleDelete(followUp)}>
                       Delete follow-up
@@ -471,6 +494,18 @@ export function FollowUpsList({
           </div>
         )}
       </div>
+      <RescheduleDialog
+        followUp={reschedulingFollowUp}
+        title={reschedulingFollowUp ? linkedRecordLabel(reschedulingFollowUp) : ''}
+        onOpenChange={(open) => !open && setReschedulingFollowUp(null)}
+        onRescheduled={(id, dueAt, count) =>
+          setFollowUps((prev) =>
+            prev.map((f) =>
+              f.id === id ? { ...f, due_at: dueAt, reschedule_count: count, status: 'pending' as FollowUpStatus } : f,
+            ),
+          )
+        }
+      />
       <ConfirmDialog />
     </div>
   )

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { WhatsAppChatButton } from '@/components/whatsapp/whatsapp-chat-button'
+import { CP_SOURCE, REFERRAL_SOURCE } from '@/lib/leads/cp-source'
 import { deriveTemperature, TEMPERATURE_STYLES, TEMPERATURE_COLORS } from '@/lib/leads/temperature'
 import { PageHeader } from '@/components/dashboard/page-header'
 import { Button } from '@/components/ui/button'
@@ -55,6 +56,9 @@ interface LeadRow {
   budget_min: number | null
   budget_max: number | null
   source: string | null
+  channel_partner?: string | null
+  cp_firm?: string | null
+  reference?: string | null
   stage: LeadStage
   ai_score: number | null
   created_at: string
@@ -505,7 +509,18 @@ export function LeadsTable({ initialLeads }: { initialLeads: LeadRow[] }) {
                   <td className="whitespace-nowrap px-4 py-3 font-medium text-foreground">
                     {formatBudget(lead.budget_min, lead.budget_max)}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-foreground/80">{lead.source ?? '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-foreground/80">
+                    {lead.source ?? '—'}
+                    {(() => {
+                      const via =
+                        lead.source === CP_SOURCE
+                          ? [lead.channel_partner, lead.cp_firm].filter(Boolean).join(' · ')
+                          : lead.source === REFERRAL_SOURCE
+                            ? lead.reference
+                            : null
+                      return via ? <span className="block text-[11px] text-muted-foreground">{via}</span> : null
+                    })()}
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3">
                     <Badge className={cn('rounded-full', stageStyles[lead.stage])} variant="outline">
                       {stageLabels[lead.stage]}

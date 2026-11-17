@@ -8,6 +8,13 @@
       "port": 3000
     },
     {
+      "name": "vardaan-website",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd ~/Desktop/vardaan-website && pnpm run dev --port 3002"],
+      "port": 3002,
+      "autoPort": true
+    },
+    {
       "name": "supercrm-dev",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "cd ~/Desktop/superCRM && pnpm run dev"],

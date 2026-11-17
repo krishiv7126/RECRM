@@ -36,12 +36,8 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isLoginPage = pathname === "/login"
-  // The marketing landing page: public for anyone not fully signed in.
-  // Approved users still get sent to their dashboard (below), as before.
-  const isLandingPage = pathname === "/"
 
   if (!user) {
-    if (isLandingPage) return response
     if (!isLoginPage) {
       const url = request.nextUrl.clone()
       url.pathname = "/login"
@@ -69,7 +65,6 @@ export async function updateSession(request: NextRequest) {
   const isApproved = (me?.login_sessions?.length ?? 0) > 0
 
   if (!isApproved) {
-    if (isLandingPage) return response
     // Keep the Supabase session (the /login page's own client logic re-checks
     // approval status and resumes the waiting screen) but never let it reach
     // anything past /login until login_sessions confirms approval.
@@ -81,7 +76,7 @@ export async function updateSession(request: NextRequest) {
     return response
   }
 
-  if (isLoginPage || isLandingPage) {
+  if (isLoginPage) {
     const url = request.nextUrl.clone()
     url.pathname = me ? redirectPathForRole(me.role as UserRole) : "/dashboard"
     return NextResponse.redirect(url)
